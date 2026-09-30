@@ -1,0 +1,38 @@
+$positions: (fixed, absolute, relative, static, sticky);
+
+@each $position in $positions {
+  .mf-position-#{$position} {
+    position: $position;
+  }
+}
+
+.mf-top-0 {
+  top: 0;
+}
+
+.mf-bottom-0 {
+  bottom: 0;
+}
+
+.mf-right-0 {
+  right: 0;
+}
+
+.mf-left-0 {
+  left: 0;
+}
+
+.mf-top-50 {
+  top: 50%;
+}
+
+.mf-left-50 {
+  left: 50%;
+}
+
+.mf-fixed-center {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}

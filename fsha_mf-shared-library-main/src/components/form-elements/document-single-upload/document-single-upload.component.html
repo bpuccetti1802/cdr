@@ -1,0 +1,86 @@
+<div class="upload-container">
+  <label
+    class="upload-label"
+    [for]="id"
+    data-bs-toggle="tooltip"
+    [attr.title]="descrizione + (required ? ' *' : '')"
+    [ngClass]="{ 'text-danger': !valid && touched }"
+  >
+    {{ descrizione + (required ? ' *' : '') }}
+  </label>
+
+  <div class="upload-box" [ngClass]="{ 'has-file': hasFile, 'has-error': !valid && touched }">
+    <div class="file-info" *ngIf="hasFile; else noFile">
+      <div class="file-name-container">
+        <div data-bs-toggle="tooltip" [title]="'Nome file:' + ' ' + (fileName || nomeFile)">
+          <img
+            [src]="baseUrl + '/assets/svg/upload-cloud-icon.svg'"
+            alt="Upload Icon"
+            class="icon"
+          />
+          <span class="file-name">
+            {{ fileName || getShortFileName(nomeFile) }}
+          </span>
+        </div>
+        <div
+          *ngIf="!readonly"
+          [attr.disabled]="formControl && (formControl.disabled || disabled) ? true : null"
+          tabindex="-1"
+          (keypress)="removeFile()"
+          (click)="removeFile()"
+          class="remove-icon"
+        >
+          <app-rc-icon name="it-close-circle" color="primary" [size]="IconSize.xs"></app-rc-icon>
+        </div>
+      </div>
+      <button
+        [attr.disabled]="
+          formControl && (formControl.disabled || (!urlDownload && !fileURL)) ? true : null
+        "
+        type="button"
+        class="btn btn-primary pt-2 pb-2"
+        (click)="viewFile($event)"
+      >
+        Visualizza
+        <app-rc-icon [name]="'fa-eye'" [color]="'#fff'" [size]="IconSize.sm"> </app-rc-icon>
+      </button>
+    </div>
+    <ng-template #noFile>
+      <div class="no-file-container">
+        <img [src]="baseUrl + '/assets/svg/upload-cloud-icon.svg'" alt="Upload Icon" class="icon" />
+        <span class="file-placeholder" [ngClass]="{ 'text-danger': !valid && touched }"
+          >Nessun file allegato...</span
+        >
+      </div>
+      <button
+        [attr.disabled]="
+          formControl && (formControl.disabled || disabled || readonly) ? true : null
+        "
+        type="button"
+        class="btn btn-secondary pt-2 pb-2"
+        (click)="resetFileInput()"
+      >
+        Carica File
+        <app-rc-icon [name]="'fa-upload'" [color]="'#fff'" [size]="IconSize.sm"> </app-rc-icon>
+      </button>
+    </ng-template>
+    <input
+      [id]="id"
+      [accept]="accept"
+      type="file"
+      (change)="onFileSelected($event)"
+      hidden
+      #fileInput
+    />
+  </div>
+  <ng-container *ngIf="(hasFile ? uploadedFileNote : note) !== '' && (valid || !touched)">
+    <small class="note">
+      <strong>NB:</strong>
+      {{ hasFile ? uploadedFileNote : note }}
+    </small>
+  </ng-container>
+</div>
+
+<div *ngIf="formControl && formControl.invalid && formControl.touched" class="text-danger">
+  {{ errorMessage }}
+</div>

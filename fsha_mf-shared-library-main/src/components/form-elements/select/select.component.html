@@ -1,0 +1,25 @@
+<div class="position-relative">
+  <label *ngIf="label !== ''" [ngClass]="{'text-danger': !valid && !!touched}" [for]="id" class="pb-1">{{ label +
+    (required ? ' *' : '') }}</label>
+  <select (keydown)="onKeyDown($event)" (mousedown)="onMouseDown($event)" [id]="id" [formControl]="formControl" (change)="onChange($event)"
+    class="form-control border rounded"
+    [ngClass]="{ 'select-disabled': disabled , 'outline-danger': !valid && !!touched}">
+    <option *ngIf="!placeholder" [value]="''">
+      {{ placeholder }}
+    </option>
+    <option *ngIf="placeholder" [value]="placeholderValue">
+      {{ placeholder }}
+    </option>
+    <option *ngFor="let option of options; trackBy: trackByOption" [value]="option.value">
+      {{ option.label }}
+    </option>
+  </select>
+  <div class="chevron-icon pe-2" [ngClass]="{'chevron-icon-without-label': !label}">
+    <app-rc-icon name="fa-chevron-down" [size]="IconSize.xs"></app-rc-icon>
+  </div>
+</div>
+
+
+<div *ngIf="!valid && !!touched" class="text-danger error-message">
+  {{ errorMessage }}
+</div>

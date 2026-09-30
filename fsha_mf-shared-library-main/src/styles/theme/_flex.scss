@@ -1,0 +1,157 @@
+@import './breakpoints';
+
+$directions: (row, row-reverse, column, column-reverse);
+
+@each $direction in $directions {
+  .mf-flex-#{$direction} {
+    flex-direction: $direction;
+  }
+}
+
+// With media query (higher priority since declared after the above ones).
+
+@each $breakpoint in map-keys(map_remove($grid-breakpoints, xs)) {
+  @include media-breakpoint-up($breakpoint) {
+    @each $direction in $directions {
+      .mf-flex-#{$breakpoint}-#{$direction} {
+        flex-direction: $direction;
+      }
+    }
+  }
+}
+
+$justify-content-map: (
+  'start': flex-start,
+  'end': flex-end,
+  'center': center,
+  'between': space-between,
+  'around': space-around,
+);
+
+@each $name, $value in $justify-content-map {
+  .mf-justify-content-#{$name} {
+    justify-content: $value;
+  }
+}
+
+@each $breakpoint in map-keys(map_remove($grid-breakpoints, xs)) {
+  @include media-breakpoint-up($breakpoint) {
+    @each $name, $value in $justify-content-map {
+      .mf-justify-content-#{$breakpoint}-#{$name} {
+        justify-content: $value;
+      }
+    }
+  }
+}
+
+$align-items-map: (
+  'start': flex-start,
+  'end': flex-end,
+  'center': center,
+  'baseline': baseline,
+  'stretch': stretch,
+);
+
+@each $name, $value in $align-items-map {
+  .mf-align-items-#{$name} {
+    align-items: $value;
+  }
+}
+
+@each $breakpoint in map-keys(map_remove($grid-breakpoints, xs)) {
+  @include media-breakpoint-up($breakpoint) {
+    @each $name, $value in $align-items-map {
+      .mf-align-items-#{$breakpoint}-#{$name} {
+        align-items: $value;
+      }
+    }
+  }
+}
+
+$align-self-map: (
+  'start': flex-start,
+  'end': flex-end,
+  'center': center,
+  'baseline': baseline,
+  'stretch': stretch,
+);
+
+@each $name, $value in $align-self-map {
+  .mf-align-self-#{$name} {
+    align-self: $value;
+  }
+}
+
+@each $breakpoint in map-keys(map_remove($grid-breakpoints, xs)) {
+  @include media-breakpoint-up($breakpoint) {
+    @each $name, $value in $align-self-map {
+      .mf-align-self-#{$breakpoint}-#{$name} {
+        align-self: $value;
+      }
+    }
+  }
+}
+
+$flex-wraps: (wrap, nowrap, wrap-reverse);
+
+@each $wrap in $flex-wraps {
+  .mf-flex-#{$wrap} {
+    flex-wrap: $wrap;
+  }
+}
+
+// With media query (higher priority since declared after the above ones).
+
+@each $breakpoint in map-keys(map_remove($grid-breakpoints, xs)) {
+  @include media-breakpoint-up($breakpoint) {
+    @each $wrap in $flex-wraps {
+      .mf-flex-#{$breakpoint}-#{$wrap} {
+        flex-wrap: $wrap;
+      }
+    }
+  }
+}
+
+$orders: (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
+
+@each $order in $orders {
+  .mf-order-#{$order} {
+    order: $order;
+  }
+}
+
+// With media query (higher priority since declared after the above ones).
+
+@each $breakpoint in map-keys(map_remove($grid-breakpoints, xs)) {
+  @include media-breakpoint-up($breakpoint) {
+    @each $order in $orders {
+      .mf-order-#{$breakpoint}-#{$order} {
+        order: $order;
+      }
+    }
+  }
+}
+
+$align-content-map: (
+  'start': flex-start,
+  'end': flex-end,
+  'center': center,
+  'between': space-between,
+  'around': space-between,
+);
+
+@each $name, $value in $align-content-map {
+  .mf-align-content-#{$name} {
+    align-content: $value;
+  }
+}
+
+@each $breakpoint in map-keys(map_remove($grid-breakpoints, xs)) {
+  @include media-breakpoint-up($breakpoint) {
+    @each $name, $value in $align-content-map {
+      .mf-align-content-#{$breakpoint}-#{$name} {
+        align-content: $value;
+      }
+    }
+  }
+}

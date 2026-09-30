@@ -1,0 +1,13 @@
+.text-truncate-1,
+.text-truncate-2,
+.text-truncate-3 {
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+.text-truncate-1 { -webkit-line-clamp: 1; }
+.text-truncate-2 { -webkit-line-clamp: 2; }
+.text-truncate-3 { -webkit-line-clamp: 3; }
+
+// usato nelle tables passando nelle columns la classe di bootstrap truncate

@@ -1,0 +1,59 @@
+@import './breakpoints';
+
+@mixin gridRules($breakpoint: '') {
+
+    @if $breakpoint != '' {
+        $breakpoint: -#{$breakpoint};
+    }
+    
+    // Gap (risultato: mf-gap-<number>, mf-column-gap-<number>, mf-row-gap-<number>) 
+    $gapTypes: (row, column);
+
+    @each $type in $gapTypes {
+        @for $size from 1 through 6 {
+            .mf-gap#{$breakpoint}-#{$size} {
+                gap: #{(5 * $size)}px;
+            }
+
+            .mf-#{$type}-gap#{$breakpoint}-#{$size} {
+                #{$type}-gap: #{(5 * $size)}px;
+            }
+        }
+    }
+
+    // Number of columns and behavior (risultato: mf-grid-<number>, mf-grid-<number>-fixed) 
+    @for $colNum from 1 through 6 {
+        .mf-grid#{$breakpoint}-#{$colNum} {
+            grid-template-columns: repeat($colNum, auto);
+
+            &-fixed {
+                grid-template-columns: repeat($colNum, 1fr);
+            }
+        }
+    }
+
+
+    // Column size (risultato: mf-row-span-<number>, mf-row-span-full)
+    .mf-row-span#{$breakpoint} {
+        @for $span from 1 through 6 {
+            &-#{$span} {
+                grid-column: span $span;
+            }
+        }
+
+        &-full {
+            grid-column: 1 / -1;
+        }
+    }
+
+}
+
+// Print default rules for display grid
+@include gridRules();
+
+// Print display grid rules with media query (higher priority since declared after the above ones)
+@each $breakpoint in map-keys(map_remove($grid-breakpoints, xs)) {
+    @include media-breakpoint-up($breakpoint) {
+        @include gridRules($breakpoint);
+    }
+}

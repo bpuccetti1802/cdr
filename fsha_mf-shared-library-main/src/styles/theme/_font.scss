@@ -1,0 +1,52 @@
+@import 'palette';
+@import './breakpoints';
+
+.mf-font-color-inherit {
+  color: inherit;
+}
+
+.mf-font-italic {
+  font-style: italic;
+}
+
+@each $color, $shades in $colors {
+  @each $shade, $value in $shades {
+    .mf-font-color-#{$color}-#{$shade} {
+      color: $value !important;
+    }
+  }
+}
+
+@each $color, $shades in $colors {
+  @each $shade, $value in $shades {
+    .mf-icon-color-#{$color}-#{$shade} {
+      fill: $value !important;
+    }
+  }
+}
+
+$font-sizes: ( 12, 14, 16, 18, 20 );
+
+@each $fontSize in $font-sizes {
+  .mf-font-size-#{$fontSize} {
+    font-size: ($fontSize / 16) + unquote(rem) !important;
+  }
+}
+
+$font-weights: (300, 500, 600, 700, 800, 900);
+
+@each $weight in $font-weights {
+  .mf-font-w#{$weight / 100} {
+    font-weight: $weight;
+  }
+}
+
+@each $breakpoint in map-keys(map_remove($grid-breakpoints, xs)) {
+  @include media-breakpoint-up($breakpoint) {
+    @each $size in $font-sizes {
+      .mf-font-size-#{$breakpoint}-#{$size} {
+        font-size: ($size / 16) + unquote(rem) !important;
+      }
+    }
+  }
+}

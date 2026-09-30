@@ -1,0 +1,25 @@
+<!-- eslint-disable  -->
+<!-- Da fare eslint -->
+<div *ngIf="openNotification" [@.disabled]="disableEnterAnimation" [@toastAnimation] class="notification-wrapper">
+  <div [class]="'notification top-fix dismissable with-icon ' + toastType + ' shadow'"
+    [ngClass]="{'show': openNotification, 'w-100': fullWidth}" role="alert" id="notificationTop{{id}}"
+    style="display: block;" (mouseenter)="togglePause()" (mouseleave)="toggleRestart()">
+    <h5>
+      <app-rc-icon [name]="icon" [useClass]="true" [colorClass]="iconColorClass"></app-rc-icon>
+      {{titleContent}}
+    </h5>
+    <p>{{message}}</p>
+    <div *ngIf="useTimer" class="progress-bar " [ngClass]="{
+    'mf-background-color-success-darker': toastType === ToastTypes.SUCCESS,
+    'mf-background-color-error-darker': toastType === ToastTypes.ERROR,
+    'mf-background-color-warning-darker': toastType === ToastTypes.WARNING,
+    'mf-background-color-info-darker': toastType === ToastTypes.INFO
+  }" [style.width.%]="progress"></div>
+    <button type="button" class="btn notification-close" data-bs-dismiss="notification" data-focus-mouse="false"
+      (click)="closeNotification()">
+      <app-rc-icon name="it-close" [useClass]="true"
+        [colorClass]="'mf-font-color-secondary-main'"></app-rc-icon>
+      <span class="visually-hidden">Chiudi notifica</span>
+    </button>
+  </div>
+</div>

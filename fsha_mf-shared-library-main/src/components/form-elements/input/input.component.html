@@ -1,0 +1,40 @@
+<label *ngIf="label" [ngClass]="{'text-danger': !valid && !!touched}" class="pb-1" [for]="id">{{ label + (required ? ' *' : '') }}</label>
+
+<input *ngIf="formControl"  [readonly]="disabled" [class.disabled-input]="disabled" [formControl]="formControl" [id]="id" [type]="type"
+    [placeholder]="placeholder" class="form-control border rounded" [ngClass]="{
+      'width-auto': width === 'auto',
+      'outline-danger': !valid && !!touched
+    }" [attr.maxlength]="maxLength ? maxLength : null"
+     (input)="onChangeInput($event)"/>
+    <input
+    *ngIf="!formControl"
+     [readonly]="disabled"
+    [attr.value]="value" [class.disabled-input]="disabled" [id]="id" [type]="type"
+    (input)="onChangeInput($event)"
+    [placeholder]="placeholder" class="form-control border rounded" [ngClass]="{
+      'width-auto': width === 'auto',
+      'outline-danger': !valid && !!touched
+    }" [attr.maxlength]="maxLength ? maxLength : null"
+    aria-describedby="strengthMeterInfo"/>
+  <div *ngIf="(!valid && !!touched && errorMessage)" class="text-danger error-message">
+    {{ errorMessage }}
+  </div>
+  <div *ngIf="misuratoreSicurezza" class="password-strength-meter">
+    <p
+      id="strengthMeterInfo"
+      class="strength-meter-info small form-text text-muted pt-0"
+      aria-live="polite"
+    >
+      {{ strengthText }}
+    </p>
+
+    <div class="password-meter progress rounded-0 position-absolute">
+      <div class="progress-bar"
+          [ngClass]="[strengthClass, widthClass]"
+          role="progressbar"
+          [attr.aria-valuenow]="strength"
+          aria-valuemin="0"
+          aria-valuemax="100">
+      </div>
+    </div>
+  </div>

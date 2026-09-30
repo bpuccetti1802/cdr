@@ -1,0 +1,33 @@
+@import './palette';
+@import './breakpoints';
+ 
+@for $width from 1 through 3 {
+  @each $color, $shades in $colors {
+    @each $shade, $value in $shades {
+        .mf-underline-color-#{$color}-#{$shade}-#{$width} {
+          border-bottom: #{$width}px solid #{$value} !important;
+        }
+    }
+  }
+}
+
+.mf-underline-none {
+  border-bottom: none !important;
+}
+
+
+
+// With media query (higher priority since declared after the above ones).
+@each $breakpoint in map-keys(map_remove($grid-breakpoints, xs)) {
+  @include media-breakpoint-up($breakpoint) {
+    @for $width from 1 through 3 {
+      @each $color, $shades in $colors {
+        @each $shade, $value in $shades {
+            .mf-underline-color-#{$breakpoint}-#{$color}-#{$shade}-#{$width} {
+              border-bottom: #{$width}px solid #{$value} !important;
+            }
+        }
+      }
+    }
+  }
+}

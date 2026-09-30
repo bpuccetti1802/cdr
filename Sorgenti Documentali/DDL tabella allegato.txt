@@ -1,0 +1,33 @@
+-- atti.allegato definition
+
+-- Drop table
+
+-- DROP TABLE atti.allegato;
+
+CREATE TABLE atti.allegato (
+	id_allegato bigserial NOT NULL,
+	id_evento int8 NOT NULL,
+	id_ansc_allegato varchar(15) NULL,
+	ty_allegato varchar(10) NULL,
+	ds_tipo_allegato varchar(250) NULL,
+	ty_file varchar(10) NULL,
+	nm_file varchar(250) NULL,
+	oj_allegato bytea NULL,
+	cd_hash varchar(250) NULL,
+	cd_stato varchar(10) NULL,
+	cd_ope_ins_dt bpchar(6) NOT NULL,
+	ts_ins_dt timestamp NOT NULL,
+	cd_ope_ult_agg_dt bpchar(6) NULL,
+	ts_ult_agg_dt timestamp NULL,
+	ds_note_dt varchar(50) NULL,
+	fg_attestazione bpchar(1) NULL,
+	fg_incluso_att_conformita bpchar(1) NULL,
+	CONSTRAINT allegato_fg_attestazione_check CHECK ((fg_attestazione = ANY (ARRAY['0'::bpchar, '1'::bpchar]))),
+	CONSTRAINT allegato_fg_incluso_att_conformita_check CHECK ((fg_incluso_att_conformita = ANY (ARRAY['0'::bpchar, '1'::bpchar]))),
+	CONSTRAINT allegato_pk PRIMARY KEY (id_allegato)
+);
+
+
+-- atti.allegato foreign keys
+
+ALTER TABLE atti.allegato ADD CONSTRAINT allegato_evento_fk FOREIGN KEY (id_evento) REFERENCES atti.evento(id_evento);

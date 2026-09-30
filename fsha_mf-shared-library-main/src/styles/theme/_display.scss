@@ -1,0 +1,20 @@
+@import './breakpoints';
+
+$displays: (none, inline, inline-block, block, flex, inline-flex, grid);
+
+@each $display in $displays {
+  .mf-d-#{$display} {
+    display: $display;
+  }
+}
+
+// With media query (higher priority since declared after the above ones).
+@each $breakpoint in map-keys(map_remove($grid-breakpoints, xs)) {
+  @include media-breakpoint-up($breakpoint) {
+    @each $display in $displays {
+      .mf-d-#{$breakpoint}-#{$display} {
+        display: $display;
+      }
+    }
+  }
+}

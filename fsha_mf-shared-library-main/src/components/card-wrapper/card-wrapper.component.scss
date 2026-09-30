@@ -1,0 +1,29 @@
+.width-small {
+  width: 200px;
+}
+
+.width-medium {
+  width: 400px;
+}
+
+.width-large {
+  width: 600px;
+}
+
+.width-full {
+  width: 100%;
+}
+
+.height-100{
+  height: 100%;
+}
+
+.overflow-custom{
+  overflow: auto;
+  max-width: 100%;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+.bg-light-yellow{
+  background-color: #FFF6D6;
+}

@@ -1,0 +1,33 @@
+<nav *ngIf="breadcrumbs.length > 1" class="breadcrumb-container" aria-label="Percorso di navigazione">
+  <ol class="breadcrumb">
+    <ng-container *ngFor="let crumb of breadcrumbs; let i = index; let last = last; trackBy: trackByCrumb">
+      
+      <li class="breadcrumb-item"
+          [class.collapsed]="shouldCollapse(i)"
+          [class.expandable]="isExpandable(i)">
+        
+        <!-- elemento cliccabile normale -->
+        <a *ngIf="!last && !shouldCollapse(i)" 
+           (click)="navigateTo(crumb.url, $event)"
+           (keyup.enter)="navigateTo(crumb.url, $event)"
+           tabindex="0"
+           role="link"
+           >{{ crumb.label }}</a>
+        
+        <!-- ultimo breadcrumb (non link) -->
+        <span *ngIf="last">{{ crumb.label }}</span>
+
+        <!-- puntini cliccabili -->
+        <button *ngIf="shouldCollapse(i)" 
+                type="button" 
+                class="ellipsis-button"
+                (click)="onExpand(i)"
+                aria-label="Espandi breadcrumb">...</button>
+      </li>
+
+      <!-- separatore, fuori dal breadcrumb item per maggiore chiarezza -->
+      <li *ngIf="!last" class="breadcrumb-separator" aria-hidden="true">/</li>
+
+    </ng-container>
+  </ol>
+</nav>

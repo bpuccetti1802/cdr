@@ -1,0 +1,10 @@
+@import '../theme/palette';
+
+.btn-success.disabled, .btn-success:disabled {
+    background-color: map-get($colors, "success", "main") !important;
+    border-color: map-get($colors, "success", "main") !important;
+}
+
+.btn-link {
+    color: map-get($colors, "secondary", "main") !important;
+}

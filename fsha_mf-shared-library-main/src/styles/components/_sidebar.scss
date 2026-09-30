@@ -1,0 +1,33 @@
+@import '../theme/palette';
+
+.sidebar-toggle-icon {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+}
+
+.d-none {
+  display: none;
+}
+
+.link-list-wrapper ul li a span {
+  color: map-get($colors, 'secondary', 'main') !important;
+  font-weight: normal;
+}
+
+.link-list li a.active span {
+  color: map-get($colors, 'primary', 'main') !important;
+  font-weight: bold !important;
+}
+
+.link-sublist li a.active span {
+  color: map-get($colors, 'primary', 'main') !important;
+  font-weight: normal !important;
+  text-decoration: none !important;
+}
+
+@media (min-width: 768px) {
+  .menu-wrapper {
+    padding: 0 !important;
+  }
+}

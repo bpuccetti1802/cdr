@@ -1,0 +1,52 @@
+
+<div class="steppers">
+    <div class="steppers-content p-4 rounded" aria-live="polite">
+        <div *ngFor="let template of templates; trackBy: trackByTemplate">
+            <ng-container *ngIf="template.slot === slotIndex">
+                <ng-container *ngTemplateOutlet="template.templateRef"></ng-container>
+            </ng-container>
+        </div>
+        <p class="text-center pt-3" *ngIf="templates && templates.length === 0">Contenuto non disponibile</p>
+    </div>
+    <nav class="steppers-nav">
+        <button *ngIf="actionProps.backButton" type="button" (click)="back()"
+        [disabled]="actionProps.backButton?.disabled"
+            class="btn btn-secondary btn-sm steppers-btn-prev">
+            {{ actionProps.backButton?.label || '' }}</button>
+        <div *ngIf="!actionProps.backButton"></div>
+            <div class="d-flex flex-column justify-content-center align-items-center w-75">
+        <ng-container *ngIf="isBarType">
+                <p *ngIf="showRatio" class="text-center mb-0 pmi-font-size-14">
+                    {{slotIndex
+                    + ' di '+
+                    templates.length}}</p>
+                <div class="steppers-progress">
+                    <div class="progress">
+                        <div
+                        class="progress-bar"
+                        role="progressbar"
+                        [ngClass]="progressBarWidthClass"
+                        [attr.aria-valuenow]="percentageSum"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                      ></div>
+                    </div>
+                </div>
+                <p *ngIf="showPercentage"
+                    class="text-center pmi-font-w6 pmi-font-size-14">
+                    {{percentageSum + '%'}}</p>
+        </ng-container>
+        <ng-container *ngIf="isDotsType">
+            <ul class="steppers-dots">
+                <ng-container *ngFor="let template of templates; ; trackBy: trackByTemplate; let index=index">
+                    <li [class]="index <= currentIndex ?'done': ''"></li>
+                </ng-container>
+            </ul>
+        </ng-container>
+    </div>
+
+<button type="button"
+    (click)="forward()" [disabled]="actionProps.forwardButton?.disabled" class="btn btn-primary btn-sm steppers-btn-next">{{actionProps.forwardButton?.label || ''}}
+</button>
+</nav>
+</div>

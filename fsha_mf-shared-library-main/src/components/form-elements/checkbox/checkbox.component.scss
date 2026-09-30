@@ -1,0 +1,34 @@
+@import '../../../styles/theme/palette';
+
+.form-check input[type='checkbox']:disabled + label::after {
+  opacity: .8;
+}
+
+.form-check [type='checkbox']:not(:checked).outline-danger-checkbox + label::after {
+  background-color: transparent;
+  border: 2px solid map-get(map-get($colors, 'error'), 'main') !important;
+  z-index: 0;
+}
+
+.form-check [type='checkbox']:not(:checked).bg-white + label::after {
+  background-color: white;
+}
+
+.form-check {
+  display: flex;
+}
+
+.form-check-input:checked + label.checked-class::after {
+  border: 2px solid currentColor;
+  background-color: currentColor;
+}
+
+.disabled-input {
+  pointer-events: none;
+}
+
+.form-check {
+  display: inline-flex;
+  gap: 0.5rem;
+  width: auto;
+}

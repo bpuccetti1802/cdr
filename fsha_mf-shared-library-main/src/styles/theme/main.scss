@@ -1,0 +1,53 @@
+@import './anchor';
+@import './border';
+@import './breakpoints';
+@import './cursor';
+@import './display';
+@import './flex';
+@import './grid';
+@import './font';
+@import './outline';
+@import './overflow';
+@import './palette';
+@import './position';
+@import './scrollbar';
+@import './sizing';
+@import './spacing';
+@import './text';
+@import './background';
+@import './underline';
+@import './truncate';
+
+:root {
+  @each $color, $shades in $colors {
+    @each $shade, $value in $shades {
+      --color-#{$color}-#{$shade}: #{$value};
+    }
+  }
+}
+
+.outline-danger {
+  outline: 2px solid map-get($colors, "error", "main") !important;
+}
+
+@media print {
+
+  body.toPrint {
+    overflow: hidden !important;
+  }
+  body.toPrint #root {
+    visibility: hidden;
+    overflow: hidden !important;
+    height: 0px;
+  }
+  body.toPrint #root * {
+    visibility: hidden;
+    transition: none !important;
+    position: static;
+    z-index: 0;
+  }
+
+  .onlyPrint {
+    display: block;
+  }
+}

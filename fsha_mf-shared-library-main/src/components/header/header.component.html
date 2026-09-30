@@ -1,0 +1,160 @@
+<header class="it-header-wrapper" #headerDiv>
+  <div #itHeaderSlimWrapper [class]="'it-header-slim-wrapper p-0 ' + bottomUnderlineClass">
+    <div appWideContainer class="container-wide">
+      <div class="row">
+        <div class="col-12">
+          <div #itHeaderSlimWrapperContent
+            class="it-header-slim-wrapper-content mobile-collapse-underline mf-underline-none mf-underline-color-lg-secondary-light-1">
+            <!-- Toogle expanded layout -->
+            <div class="form-check form-check-inline pt-2" *ngIf="isExtendedLayout">
+              <div class="toggles">
+                <label for="toggleExpandedLayout" class="p-0 m-0">
+                  {{ layoutModeLabel }}
+                  <input type="checkbox" id="toggleExpandedLayout" [checked]="isExpanded" (change)="toggleLayout()" />
+                  <span class="lever"></span>
+                </label>
+              </div>
+            </div>
+            <!-- Toogle expanded layout -->
+            <div *ngIf="slimHeaderMenuLinks" class="nav-mobile">
+              <nav aria-label="Navigazione secondaria">
+                <a class="it-opener d-lg-none" data-bs-toggle="collapse" href="#menuC1" role="button"
+                  aria-expanded="false" aria-controls="menuC1">
+                  <span>{{enteAppartenenza}}</span>
+                  <app-rc-icon [useClass]="true"
+                    [colorClass]="useGreyScaleTheme ? iconColorClass: greyScaleColorIconClass"
+                    [attr]="{'aria-hidden':'true'}" name="it-expand" />
+                </a>
+                <div class="link-list-wrapper collapse" id="menuC1">
+                  <ul class="link-list">
+                    <li *ngFor="let menuLink of slimHeaderMenuLinks; trackBy: trackByMenuLink">
+                      <a class="list-item" [routerLinkActive]="['active']" [routerLink]="menuLink.route"
+                        [title]="'Vai alla pagina: ' + menuLink.label">{{ menuLink.label }}</a>
+                    </li>
+                  </ul>
+                </div>
+              </nav>
+            </div>
+            <div class="it-header-slim-right-zone">
+              <a *ngIf="actionLink"
+                href="#"
+                class="nav-link d-flex align-items-center gap-1 text-decoration-none me-2"
+                (click)="actionLink!.onClick(); $event.preventDefault()">
+                {{ actionLink!.label }}
+                <app-rc-icon *ngIf="actionLink!.iconName"
+                  [name]="actionLink!.iconName"
+                  [useClass]="true"
+                  [colorClass]="useGreyScaleTheme ? colorFontClass : greyScaleColorClass"
+                  [size]="IconSize.xs" />
+              </a>
+              <span *ngIf="actionLink" aria-hidden="true" class="header-action-separator"></span>
+              <div *ngIf="isVisibleLanguages" class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                  aria-expanded="false">
+                  <span class="visually-hidden">Selezione lingua: lingua selezionata</span>
+                  <span>ITA</span>
+                  <app-rc-icon [useClass]="true"
+                    [colorClass]="useGreyScaleTheme ? iconColorClass : greyScaleColorIconClass" name="it-expand" />
+                </a>
+                <div class="dropdown-menu">
+                  <div class="row">
+                    <div class="col-12">
+                      <div class="link-list-wrapper">
+                        <ul class="link-list">
+                          <li><a class="dropdown-item list-item" href="#"><span>ITA <span
+                                  class="visually-hidden">selezionata</span></span></a></li>
+                          <li><a class="dropdown-item list-item" href="#"><span>ENG</span></a></li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="it-access-top-wrapper pt-1 pt-lg-0" *ngIf="isVisibleLogin">
+                <button #loginButton type="button" *ngIf="!isLogged" class="btn btn-sm"
+                  (click)="logIn()">Accedi</button>
+                <li *ngIf="isLogged" class="nav-item dropdown">
+                  <a aria-expanded="false" #userNameButton href="#"
+                    class="text-decoration-none btn dropdown-toggle show btn-icon btn-full" role="button"
+                    data-bs-toggle="dropdown" id="mainNavDropdown2">
+                    <span class="me-3">{{userName}}</span>
+
+                    <div *ngIf="userInitial" class="container-user-initial">{{userInitial}}</div>
+                    <span *ngIf="!userInitial" #roundedIcon class="user-icon-container">
+                      <app-rc-icon [useClass]="true"
+                        [colorClass]="useGreyScaleTheme ? greyScaleColorIconClass : iconColorClass" [size]="IconSize.xs"
+                        name="it-user"></app-rc-icon>
+                    </span>
+                    <app-rc-icon [useClass]="true"
+                      [colorClass]="useGreyScaleTheme ? iconColorClass : greyScaleColorIconClass" name="it-expand"
+                      [size]="IconSize.md" class="icon d-flex align-items-center" />
+                  </a>
+                  <div class="dropdown-menu" role="region" aria-labelledby="mainNavDropdown2">
+                    <div class="link-list-wrapper">
+                      <ul class="link-list">
+                        <li *ngIf="profileEditShouldVisible"><a class="dropdown-item list-item cursor-pointer"
+                            [routerLink]="profileEditUrl"><span>Modifica Profilo</span></a></li>
+                        <li *ngIf="profileEditShouldVisible"><span class="divider"></span></li>
+                        <li><a class="dropdown-item list-item cursor-pointer" (click)="logOut()" (keypress)="logOut()"
+                            tabindex="0"><span>Log Out</span></a></li>
+                      </ul>
+                    </div>
+                  </div>
+                </li>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="it-nav-wrapper">
+    <div #itHeaderCenterWrapper [class]="'it-header-center-wrapper '+ bottomUnderlineClass">
+      <div appWideContainer class="container-wide">
+        <div class="row">
+          <div class="col-12">
+            <div class="it-header-center-content-wrapper p-0">
+              <div class="it-brand-wrapper ps-0">
+                <a routerLink="/">
+                  <img *ngIf="logo" [src]="baseUrl + logo" alt="Logo" class="me-3 style-image">
+                  <div class="it-brand-text">
+                    <!-- <div #itBrandTitle class="it-brand-title">{{ente.label}}</div> -->
+                    <div #itBrandTagline class="it-brand-tagline d-block">{{ente.tagline}}</div>
+                  </div>
+                </a>
+              </div>
+              <div class="it-right-zone">
+                <div *ngIf="isVisibleSocials" class="it-socials d-none d-md-flex">
+                  <span>Seguici su</span>
+                  <ul>
+                    <li>
+                      <a href="#" aria-label="Facebook" target="_blank">
+                        <app-rc-icon name="it-facebook" />
+                      </a>
+                    </li>
+                    <li>
+                      <a href="#" aria-label="Github" target="_blank">
+                        <app-rc-icon name="it-github" />
+                      </a>
+                    </li>
+                    <li>
+                      <a href="#" aria-label="Twitter" target="_blank">
+                        <app-rc-icon name="it-twitter" />
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+                <div *ngIf="isVisibleSearch" class="it-search-wrapper">
+                  <span class="d-none d-md-block">Cerca</span>
+                  <a class="search-link rounded-icon" aria-label="Cerca nel sito" href="#">
+                    <app-rc-icon name="it-search" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>

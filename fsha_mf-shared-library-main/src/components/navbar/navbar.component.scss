@@ -1,0 +1,38 @@
+.navbar-fixed {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 100;
+}
+
+.bs-is-sticky {
+  z-index: 1000 !important;
+}
+
+.nav-item {
+  border-left: 0 !important;
+}
+
+.custom-navbar-toggler {
+  color: currentColor !important;
+}
+
+.close-div {
+  cursor: pointer;
+  pointer-events: inherit;
+
+  .ng-fa-icon {
+    font-size: 3em;
+  }
+}
+
+.other-links {
+
+  left: unset;
+  right: 0;
+
+  &::before {
+    left: 80%;
+  }
+
+}

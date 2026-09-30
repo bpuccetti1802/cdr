@@ -1,0 +1,22 @@
+@import 'palette';
+
+.mf-anchor {
+  text-decoration: none;
+  color: initial;
+}
+
+@each $color, $shades in $colors {
+  @each $shade, $value in $shades {
+    .mf-anchor-#{$color}-#{$shade} {
+      color: darken($value, 2%);
+      cursor: pointer;
+      text-decoration: none;
+
+      &:hover,
+      &:focus {
+        text-decoration: underline;
+        color: darken($value, 2%);
+      }
+    }
+  }
+}

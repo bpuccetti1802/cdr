@@ -1,0 +1,72 @@
+.modal-scroll-height {
+    max-height: 70vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+/* Evita che un ancestor crei un containing block per i fixed */
+.modal, .modal * {
+  transform: none !important;
+  filter: none !important;
+  perspective: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Backdrop base */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  --bs-backdrop-bg: rgba(0, 0, 0, 1);
+}
+
+/* 3 livelli di profondità */
+.modal-backdrop.level-0 {
+  z-index: 1050;
+  --bs-backdrop-opacity: 0.5;
+}
+
+.modal-backdrop.level-1 {
+  z-index: 1070;
+  --bs-backdrop-opacity: 0.35;
+}
+
+.modal-backdrop.level-2 {
+  z-index: 1090;
+  --bs-backdrop-opacity: 0.2;
+}
+
+/* Modal corrispondente */
+.modal.level-0 { z-index: 1055; }
+.modal.level-1 { z-index: 1075; }
+.modal.level-2 { z-index: 1095; }
+
+/* Padding scalato sul dialog */
+.modal-dialog.level-0 { padding: 0; }
+.modal-dialog.level-1 { padding: 20px; }
+.modal-dialog.level-2 { padding: 40px; }
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header .modal-title {
+  margin: 0;
+  display: inline-block;
+  position: relative;  // importantissimo se da qualche parte è absolute
+  width: auto;         // evita che prenda tutta la riga
+}
+
+.modal-header .btn-close {
+  position: relative;  // in caso ci siano overlay strani
+  z-index: 2;
+  flex: 0 0 auto;
+}
+
+.modal-header .modal-title::before,
+.modal-header .modal-title::after {
+  content: none;  // nel caso ci siano pseudo-elementi che fanno da barra
+}
+
+ 

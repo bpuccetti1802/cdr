@@ -1,0 +1,483 @@
+openapi: 3.0.3
+
+info:
+  title: Integrazione SIPO - ANSC — processo di automazione
+  version: 1.0.0
+  summary: Governo delle sole attività non presidiate ammesse verso ANSC — letture e code.
+  description: |
+    Interfacce esposte dal **processo di automazione**, il componente che esegue le sole attività
+    verso ANSC che non richiedono la presenza dell'operatore: scarico delle notifiche, solleciti,
+    consultazioni in lettura.
+
+    ## Che cosa questo componente non fa
+
+    **Non forma e non firma atti.** La formazione dell'atto è presidiata per costruzione: il deposito
+    consuma un identificativo nazionale e la firma è un atto personale dell'Ufficiale di Stato
+    Civile, che vi appone credenziali proprie. Nessuna attività automatica può sostituirvisi, e
+    nessuna operazione di questo contratto lo consente.
+
+    **Non aggiorna i dizionari.** L'aggiornamento delle decodifiche è un comando manuale, affidato al
+    componente dedicato con contratto proprio.
+
+    Questo è quindi l'unico ambito dell'integrazione in cui abbiano ancora senso pianificazione,
+    coda di lavoro e ritentativo automatico: sono operazioni che non mutano lo stato degli atti.
+
+    ## Condizione di esistenza
+
+    Il perimetro qui descritto **poggia su un assunto da confermare con il fornitore**: che le letture
+    e le operazioni di coda possano essere eseguite senza l'OTP del singolo operatore. La nota
+    tecnica sui servizi cooperativi elenca l'attributo OTP fra quelli del token senza dichiararne
+    l'opzionalità, e l'allegato del decreto che disciplinerebbe la modalità senza presenza di utente
+    non è disponibile.
+
+    Se l'assunto cadesse, questo componente non sarebbe realizzabile nella forma descritta e le
+    stesse funzioni andrebbero ricondotte a operazioni presidiate del back-office. Il punto è
+    tracciato come open point nell'analisi ed è **propedeutico alla realizzazione**: non si costruisca
+    su questo contratto prima che sia chiuso.
+
+    Documentazione di analisi: `ANALISI_Integrazione-ANSC_v2.6.docx`.
+  contact:
+    name: Dipartimento Trasformazione Digitale — Roma Capitale
+  x-componente: processo-automazione
+  x-standard-nomenclatura: Naming_convention_X_API_v1.00.docx
+  x-lingua: it
+  x-condizione-di-esistenza: |
+    Subordinato alla conferma che letture e code siano eseguibili senza l'OTP del singolo operatore.
+
+servers:
+  - url: https://sipo-svil.comune.roma.it
+    description: Ambiente di sviluppo SIPO
+  - url: https://sipo-test.comune.roma.it
+    description: Ambiente di test SIPO
+  - url: https://sipo.comune.roma.it
+    description: Ambiente di esercizio SIPO
+
+tags:
+  - name: attivita
+    description: |
+      Le attività non presidiate configurate, con la loro pianificazione e il loro stato. Ciascuna è
+      una risorsa: se ne legge lo stato, se ne comanda un'esecuzione fuori pianificazione, se ne
+      consulta lo storico.
+  - name: notifiche
+    description: Le notifiche scaricate da ANSC e il loro esito di lavorazione.
+
+security:
+  - bearerJwt: []
+
+paths:
+
+  /ansc/v1/automazione/attivita:
+    get:
+      operationId: elencaAttivita
+      summary: Elenca le attività non presidiate configurate
+      description: |
+        Restituisce le attività configurate, con periodicità, stato di abilitazione, esito e istante
+        dell'ultima esecuzione.
+
+        Si usa dalla schermata di esercizio del back-office per sapere se l'automazione stia
+        lavorando e da quanto.
+
+        **Effetti**: nessuno.
+      tags: [attivita]
+      parameters:
+        - name: flagAbilitata
+          in: query
+          required: false
+          description: Limita alle attività abilitate o a quelle sospese.
+          schema: { type: boolean }
+      responses:
+        '200':
+          description: Le attività configurate.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati:
+                        type: object
+                        properties:
+                          attivita:
+                            type: array
+                            description: Le attività configurate.
+                            items: { $ref: '#/components/schemas/Attivita' }
+              examples:
+                esempioAttivita:
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      attivita:
+                        - codAttivita: SCARICO_NOTIFICHE
+                          descAttivita: Scarico delle notifiche pubblicate da ANSC
+                          codServizio: R008
+                          codPeriodicita: OGNI_15_MINUTI
+                          flagAbilitata: true
+                          esitoUltimaEsecuzione: OK
+                          dataUltimaEsecuzione: '2026-07-23T08:45:00+02:00'
+                        - codAttivita: SOLLECITI
+                          descAttivita: Recupero dei solleciti verso il Comune
+                          codServizio: R021
+                          codPeriodicita: GIORNALIERA
+                          flagAbilitata: true
+                          esitoUltimaEsecuzione: OK
+                          dataUltimaEsecuzione: '2026-07-23T06:00:00+02:00'
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE, SUPPORTO]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+  /ansc/v1/automazione/attivita/{codAttivita}:
+    parameters:
+      - $ref: '#/components/parameters/CodAttivita'
+    get:
+      operationId: leggiAttivita
+      summary: Legge la configurazione e lo stato di un'attività
+      description: |
+        Restituisce una singola attività con la sua configurazione e l'esito dell'ultima esecuzione.
+
+        Si usa in diagnosi, quando un'attività risulta ferma o in errore.
+
+        **Effetti**: nessuno.
+      tags: [attivita]
+      responses:
+        '200':
+          description: L'attività richiesta.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Attivita' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE, SUPPORTO]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+  /ansc/v1/automazione/attivita/{codAttivita}/esecuzioni:
+    parameters:
+      - $ref: '#/components/parameters/CodAttivita'
+    post:
+      operationId: eseguiAttivita
+      summary: Comanda un'esecuzione dell'attività fuori pianificazione
+      description: |
+        Avvia immediatamente l'attività indicata, indipendentemente dalla sua pianificazione.
+
+        Si usa dopo aver rimosso la causa di un guasto, per non attendere il ciclo successivo, e in
+        fase di collaudo.
+
+        **Effetti**: esegue l'attività. **Ammesso soltanto per attività di lettura**: nessuna
+        operazione di questo contratto modifica lo stato di un atto in ANSC, e il comando non fa
+        eccezione. Ripetibile: l'attività è per costruzione riprendibile e una seconda esecuzione non
+        duplica il lavoro già svolto.
+
+        **Prerequisiti**: l'attività deve essere abilitata; non deve essercene un'altra esecuzione in
+        corso.
+      tags: [attivita]
+      responses:
+        '200':
+          description: Esito dell'esecuzione.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Esecuzione' }
+              examples:
+                esempioEsecuzioneRiuscita:
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      idEsecuzione: 8841
+                      codAttivita: SCARICO_NOTIFICHE
+                      codOrigine: COMANDO
+                      esito: OK
+                      numElaborati: 12
+                      numInErrore: 0
+                      dataInizio: '2026-07-23T09:02:00+02:00'
+                      dataFine: '2026-07-23T09:02:04+02:00'
+        '409':
+          description: Un'altra esecuzione della stessa attività è in corso, oppure l'attività è sospesa.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+              examples:
+                esempioGiaInCorso:
+                  value:
+                    esito: KO
+                    messaggi:
+                      - tipo: ERROR
+                        codice: ESECUZIONE_GIA_IN_CORSO
+                        descrizione: Un'esecuzione dell'attività SCARICO_NOTIFICHE è già in corso
+                    dati: null
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '502': { $ref: '#/components/responses/AnscNonRaggiungibile' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE]
+      x-effetti: |
+        Esegue l'attività. Nessun effetto sullo stato degli atti in ANSC. Ripetibile.
+      x-codici-errore:
+        - codice: ESECUZIONE_GIA_IN_CORSO
+          condizione: Un'altra esecuzione della stessa attività non è ancora conclusa.
+        - codice: ATTIVITA_SOSPESA
+          condizione: L'attività è configurata come non abilitata.
+
+    get:
+      operationId: elencaEsecuzioni
+      summary: Elenca le esecuzioni dell'attività
+      description: |
+        Restituisce lo storico delle esecuzioni dell'attività, con origine, esito e conteggi.
+
+        Si usa per verificare la continuità del servizio e per risalire al momento in cui
+        un'anomalia è comparsa.
+
+        **Effetti**: nessuno.
+      tags: [attivita]
+      parameters:
+        - name: esito
+          in: query
+          required: false
+          description: Limita a un esito.
+          schema: { type: string, enum: [OK, PARZIALE, KO] }
+        - $ref: '#/components/parameters/NumPagina'
+        - $ref: '#/components/parameters/NumElementi'
+      responses:
+        '200':
+          description: Storico delle esecuzioni.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati:
+                        type: object
+                        properties:
+                          esecuzioni:
+                            type: array
+                            description: Le esecuzioni della pagina richiesta, dalla più recente.
+                            items: { $ref: '#/components/schemas/Esecuzione' }
+                          navigazione: { $ref: '#/components/schemas/Navigazione' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE, SUPPORTO, AUDITOR]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+  /ansc/v1/automazione/notifiche:
+    get:
+      operationId: elencaNotifiche
+      summary: Elenca le notifiche scaricate da ANSC
+      description: |
+        Restituisce le notifiche scaricate da ANSC, con tipo, atto di riferimento ed esito della
+        lavorazione locale.
+
+        Si usa per verificare che le comunicazioni provenienti dal sistema nazionale siano state
+        recepite e lavorate.
+
+        **Le notifiche allineano lo stato, non formano atti.** Una notifica che segnala un
+        cambiamento di stato aggiorna lo store locale; qualunque azione dispositiva che ne consegua
+        resta presidiata e avviene nelle maschere SIPO.
+
+        **Effetti**: nessuno.
+      tags: [notifiche]
+      parameters:
+        - name: codTipoNotifica
+          in: query
+          required: false
+          description: Tipo di notifica secondo la decodifica ANSC dei generi di notifica.
+          schema: { type: string }
+        - name: idAtto
+          in: query
+          required: false
+          description: Atto SIPO cui la notifica è stata ricondotta.
+          schema: { type: integer, format: int64 }
+        - name: esitoLavorazione
+          in: query
+          required: false
+          description: Esito della lavorazione locale della notifica.
+          schema: { type: string, enum: [LAVORATA, NON_RICONDOTTA, IN_ERRORE] }
+        - $ref: '#/components/parameters/NumPagina'
+        - $ref: '#/components/parameters/NumElementi'
+      responses:
+        '200':
+          description: Elenco paginato delle notifiche.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati:
+                        type: object
+                        properties:
+                          notifiche:
+                            type: array
+                            description: Le notifiche della pagina richiesta.
+                            items: { $ref: '#/components/schemas/Notifica' }
+                          navigazione: { $ref: '#/components/schemas/Navigazione' }
+              examples:
+                esempioNotifiche:
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      notifiche:
+                        - idNotifica: 55210
+                          codTipoNotifica: '12'
+                          descTipoNotifica: Variazione di stato dell'atto
+                          idAnsc: '2026-058091-000123'
+                          idAttoSipo: 88012
+                          esitoLavorazione: LAVORATA
+                          dataRicezione: '2026-07-23T08:45:02+02:00'
+                      navigazione: { numPagina: 1, numElementi: 25, numTotale: 12 }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE, SUPPORTO, AUDITOR]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+components:
+
+  securitySchemes:
+    bearerJwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token di sessione interno a SIPO.
+
+  parameters:
+    CodAttivita:
+      name: codAttivita
+      in: path
+      required: true
+      description: Codice dell'attività non presidiata.
+      schema: { type: string }
+      example: SCARICO_NOTIFICHE
+    NumPagina:
+      name: numPagina
+      in: query
+      required: false
+      description: Numero della pagina richiesta, a partire da 1.
+      schema: { type: integer, minimum: 1, default: 1 }
+    NumElementi:
+      name: numElementi
+      in: query
+      required: false
+      description: Numero massimo di elementi per pagina.
+      schema: { type: integer, minimum: 1, maximum: 200, default: 25 }
+
+  responses:
+    NonAutenticato:
+      description: Chiamante non autenticato o token scaduto.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+    NonAutorizzato:
+      description: Il ruolo del chiamante non consente l'operazione.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+    NonTrovato:
+      description: L'attività indicata non esiste.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+    AnscNonRaggiungibile:
+      description: ANSC non ha risposto. L'attività sarà ritentata al ciclo successivo.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+    ErroreInterno:
+      description: Errore non previsto del componente.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+
+  schemas:
+
+    Busta:
+      type: object
+      description: Busta applicativa comune, nella stessa forma degli altri componenti dell'integrazione.
+      required: [esito]
+      properties:
+        esito:
+          type: string
+          enum: [OK, KO]
+          description: Esito applicativo dell'operazione, indipendente dal codice di stato HTTP.
+        messaggi:
+          type: array
+          description: Messaggi diagnostici, di errore o informativi.
+          items: { $ref: '#/components/schemas/Messaggio' }
+        dati:
+          nullable: true
+          description: Il contenuto proprio della risposta.
+
+    Messaggio:
+      type: object
+      description: Singolo messaggio della busta.
+      required: [tipo, codice, descrizione]
+      properties:
+        tipo: { type: string, enum: [ERROR, WARNING, INFO], description: 'Gravità del messaggio.' }
+        campo: { type: string, nullable: true, description: 'Percorso del campo cui il messaggio si riferisce.' }
+        codice: { type: string, description: 'Codice applicativo stabile, nella forma «ambito_condizione».' }
+        descrizione: { type: string, description: 'Testo destinato alle persone.' }
+
+    Navigazione:
+      type: object
+      description: Dati di navigazione di una collezione paginata.
+      properties:
+        numPagina: { type: integer, description: 'Pagina restituita.' }
+        numElementi: { type: integer, description: 'Elementi per pagina.' }
+        numTotale: { type: integer, description: 'Elementi totali che soddisfano il filtro.' }
+
+    Attivita:
+      type: object
+      description: Un'attività non presidiata configurata.
+      properties:
+        codAttivita: { type: string, description: 'Codice dell''attività.' }
+        descAttivita: { type: string, description: 'Che cosa fa l''attività.' }
+        codServizio: { type: string, description: 'Servizio cooperativo ANSC invocato.' }
+        codPeriodicita: { type: string, description: 'Periodicità con cui l''attività è pianificata.' }
+        flagAbilitata: { type: boolean, description: 'Indica se l''attività sia in esercizio o sospesa.' }
+        esitoUltimaEsecuzione: { type: string, nullable: true, enum: [OK, PARZIALE, KO], description: 'Esito dell''ultima esecuzione.' }
+        dataUltimaEsecuzione: { type: string, format: date-time, nullable: true, description: 'Istante dell''ultima esecuzione, con fuso esplicito.' }
+
+    Esecuzione:
+      type: object
+      description: Una esecuzione di un'attività.
+      properties:
+        idEsecuzione: { type: integer, format: int64, description: 'Identificativo dell''esecuzione.' }
+        codAttivita: { type: string, description: 'Attività eseguita.' }
+        codOrigine: { type: string, enum: [PIANIFICAZIONE, COMANDO], description: 'Se l''esecuzione sia partita da pianificazione o da comando.' }
+        esito: { type: string, enum: [OK, PARZIALE, KO], description: 'Esito complessivo.' }
+        numElaborati: { type: integer, description: 'Elementi elaborati con successo.' }
+        numInErrore: { type: integer, description: 'Elementi non elaborati.' }
+        dataInizio: { type: string, format: date-time, description: 'Istante di avvio, con fuso esplicito.' }
+        dataFine: { type: string, format: date-time, nullable: true, description: 'Istante di conclusione, con fuso esplicito.' }
+
+    Notifica:
+      type: object
+      description: Una notifica scaricata da ANSC.
+      properties:
+        idNotifica: { type: integer, format: int64, description: 'Identificativo locale della notifica.' }
+        codTipoNotifica: { type: string, description: 'Tipo secondo la decodifica ANSC dei generi di notifica.' }
+        descTipoNotifica: { type: string, description: 'Descrizione del tipo, risolta sul dizionario replicato.' }
+        idAnsc: { type: string, nullable: true, description: 'Atto nazionale cui la notifica si riferisce.' }
+        idAttoSipo: { type: integer, format: int64, nullable: true, description: 'Atto SIPO cui la notifica è stata ricondotta; nullo se non riconducibile.' }
+        esitoLavorazione: { type: string, enum: [LAVORATA, NON_RICONDOTTA, IN_ERRORE], description: 'Esito della lavorazione locale.' }
+        dataRicezione: { type: string, format: date-time, description: 'Istante dello scarico, con fuso esplicito.' }

@@ -1,0 +1,20 @@
+<button [attr.type]="buttonType" [attr.disabled]="disabled ? true : null" [ngClass]="[
+    'btn',
+    styleType && !classes.includes('btn')  ? 'btn-' + styleType : '',
+    disabled ? 'btn-disabled' : '',
+    classes,
+  ]" (click)="handleClick($event)">
+  <ng-container *ngIf="iconName && iconPosition === 'left'">
+    <div class="icon-wrapper pr-2">
+      <app-rc-icon [name]="iconName" [color]="iconColor" [size]="iconSize"> </app-rc-icon>
+    </div>
+  </ng-container>
+
+  <span class="btn-content">{{ label }}</span>
+
+  <ng-container *ngIf="iconName && iconPosition === 'right'">
+    <div class="icon-wrapper pl-2">
+      <app-rc-icon [name]="iconName" [color]="iconColor" [size]="iconSize"> </app-rc-icon>
+    </div>
+  </ng-container>
+</button>

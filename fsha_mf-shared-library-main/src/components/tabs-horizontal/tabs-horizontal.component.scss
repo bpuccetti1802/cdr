@@ -1,0 +1,48 @@
+@import '../../styles/theme/palette';
+
+.nav-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-horizontal:disabled {
+  background-color: map-get($colors, 'grey', '300');
+}
+
+.tab-horizontal:hover:not(.active) {
+  color: inherit;
+}
+
+.tab-horizontal:not(.active) {
+  border-bottom: 0;
+}
+
+.tab-horizontal:not([disabled]) {
+  background-color: transparent !important; //
+}
+
+.tabs-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+
+  ul.nav {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    scrollbar-width: none;
+    /* nasconde scrollbar su Firefox */
+    -ms-overflow-style: none;
+    /* IE */
+  }
+
+  ul.nav::-webkit-scrollbar {
+    display: none;
+    /* nasconde scrollbar su Chrome */
+  }
+
+  .nav-item {
+    flex: 0 0 auto;
+  }
+}

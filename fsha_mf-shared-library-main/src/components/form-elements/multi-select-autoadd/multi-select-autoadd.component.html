@@ -1,0 +1,45 @@
+
+<div>
+  <label [ngClass]="{'text-danger': !formControl.valid && !!formControl.touched}" for="tag-input" class="form-label">{{ label + (required ? ' *' : '') }}</label>
+  <div
+    class="chip-input-container form-control"
+[ngClass]="{ 'chip-input-disabled': disabled, 'outline-danger': !formControl.valid && formControl.touched }"
+  >
+    <!-- Mostra i chip -->
+    <div *ngFor="let tag of tags; let i = index; trackBy: trackByTag" class="chip">
+      <span>{{ tag }}</span>
+      <button type="button" class="btn-close" (click)="removeTag(i)" aria-label="Rimuovi tag">
+        <fa-icon [icon]="faClose"></fa-icon>
+      </button>
+    </div>
+
+    <!-- Campo di input per aggiungere nuovi tag -->
+    <div class="input-container">
+      <input
+      *ngIf="!disabled"
+      [ngClass]="{ 'disabled-input': disabled, 'enabled-input': !disabled }"
+      [attr.tabindex]="disabled ? -1: null"
+      [id]="id"
+      type="text"
+      [(ngModel)]="tagInput"
+      (keydown.enter)="addTag()"
+      [placeholder]="tags.length === 0 ? placeholder : ''"
+      class="chip-input"
+      (blur)="addTag()"
+    />
+      <button
+        *ngIf="!disabled"
+        type="button"
+        class="add-tag-button btn-primary"
+        (click)="addTag()"
+        [disabled]="!tagInput.trim()"
+        aria-label="Aggiungi tag"
+      >
+        +
+      </button>
+    </div>
+  </div>
+  <div *ngIf="formControl.invalid && formControl.touched" class="text-danger error-message">
+    {{ errorMessage }}
+  </div>
+</div>

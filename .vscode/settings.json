@@ -1,0 +1,66 @@
+{
+    // ---------------------------------------------------------------------
+    // Impostazione preesistente — non toccata
+    // ---------------------------------------------------------------------
+    "jira-plugin.workingProject": "",
+
+    // ---------------------------------------------------------------------
+    // Questo workspace NON è un progetto Java: le cartelle back-end/,
+    // front-end/, common/, cross/, sipo-root/ e ansc/ sono sorgenti di
+    // EVIDENZA per la redazione documentale, non codice da compilare.
+    // Contengono 139 pom.xml: senza queste esclusioni i language server Java
+    // tentano di importarli tutti a ogni apertura del workspace.
+    // ---------------------------------------------------------------------
+
+    // Esclude i moduli Maven dall'import automatico (estensione redhat.java).
+    // I primi quattro pattern sono i default di VS Code: vanno ripetuti,
+    // perché questa chiave SOSTITUISCE il valore predefinito, non lo integra.
+    "java.import.exclusions": [
+        "**/node_modules/**",
+        "**/.metadata/**",
+        "**/archetype-resources/**",
+        "**/META-INF/maven/**",
+        "**/back-end/**",
+        "**/front-end/**",
+        "**/common/**",
+        "**/cross/**",
+        "**/sipo-root/**",
+        "**/ansc/**"
+    ],
+
+    // Nessun import Maven/Gradle, nessuna build in background, nessun
+    // download di sorgenti: qui non si compila nulla.
+    "java.import.maven.enabled": false,
+    "java.import.gradle.enabled": false,
+    "java.autobuild.enabled": false,
+    "java.maven.downloadSources": false,
+    "java.eclipse.downloadSources": false,
+
+    // Impedisce il re-import automatico alla modifica di un pom.xml.
+    // Con "disabled" resta comunque possibile forzarlo a mano dal
+    // Command Palette (Java: Reload Projects).
+    "java.configuration.updateBuildConfiguration": "disabled",
+
+    // Toglie dal file watcher gli alberi pesanti e gli output di build.
+    // Questa chiave è un oggetto: VS Code la FONDE con i default, quindi
+    // qui vanno solo le aggiunte.
+    "files.watcherExclude": {
+        "**/back-end/**": true,
+        "**/front-end/**": true,
+        "**/common/**": true,
+        "**/cross/**": true,
+        "**/sipo-root/**": true,
+        "**/ansc/**": true,
+        "**/anpr-9.2.9/**": true,
+        "**/target/**": true,
+        "**/.settings/**": true
+    }
+
+    // NOTA — volutamente NON impostati:
+    //   "search.exclude"  → le sorgenti SIPO/ANSC sono la base di evidenza:
+    //                       devono restare cercabili con ⇧⌘F.
+    //   "files.exclude"   → devono restare visibili nell'Explorer.
+    // NOTA — l'estensione Oracle Java (oracle.oracle-java) non espone alcuna
+    // impostazione per disattivare i "priming build": l'unica leva è
+    // disabilitarla nel workspace (Extensions: Disable (Workspace)).
+}

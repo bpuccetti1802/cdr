@@ -1,0 +1,191 @@
+app-rc-rich-text {
+  display: block;
+}
+
+quill-editor {
+  width: 100%;
+  padding: 0.5rem;
+}
+
+/* ------------------------------
+   Editor layout + scrollbar
+   ------------------------------ */
+
+/* Mantieni toolbar visibile e contenuto scrollabile */
+.ql-container.ql-snow {
+  max-height: 400px; /* altezza visibile dell'editor */
+  overflow-y: auto; /* scrollbar verticale */
+}
+
+/* Area editabile: stessa altezza minima del container */
+.ql-editor {
+  min-height: 400px;
+  line-height: 1.5; /* interlinea globale */
+  padding: 12px;
+}
+
+/* Scrollbar (WebKit) */
+.ql-container.ql-snow::-webkit-scrollbar {
+  width: 10px;
+}
+
+.ql-container.ql-snow::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+}
+
+.ql-container.ql-snow::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* Scrollbar (Firefox) */
+.ql-container.ql-snow {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.25) rgba(0, 0, 0, 0.06);
+}
+
+/* ------------------------------
+   Undo / Redo icons
+   ------------------------------ */
+
+/* Quill di default crea bottoni vuoti per gli header custom:
+   es. <button class="ql-undo"></button>
+   Quindi vanno settate icone e posizione
+*/
+.ql-toolbar.ql-snow button.ql-undo,
+.ql-toolbar.ql-snow button.ql-redo {
+  width: 28px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Icone */
+.ql-toolbar.ql-snow button.ql-undo::before {
+  content: '↶';
+  font-size: 16px;
+  line-height: 1;
+}
+
+.ql-toolbar.ql-snow button.ql-redo::before {
+  content: '↷';
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Hover/active coerenti con snow */
+.ql-toolbar.ql-snow button.ql-undo:hover,
+.ql-toolbar.ql-snow button.ql-redo:hover {
+  color: #06c;
+}
+
+/* ------------------------------
+   Font whitelist: contenuto
+   ------------------------------ */
+
+.ql-font-arial {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.ql-font-times-new-roman {
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.ql-font-calibri {
+  font-family: Calibri, Arial, sans-serif;
+}
+
+.ql-font-georgia {
+  font-family: Georgia, serif;
+}
+
+.ql-font-courier-new {
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* ------------------------------
+   Font dropdown: nomi + preview
+   ------------------------------ */
+
+/* Arial */
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value='arial']::before,
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value='arial']::before {
+  content: 'Arial';
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Times New Roman */
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value='times-new-roman']::before,
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value='times-new-roman']::before {
+  content: 'Times New Roman';
+  font-family: 'Times New Roman', Times, serif;
+}
+
+/* Calibri */
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value='calibri']::before,
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value='calibri']::before {
+  content: 'Calibri';
+  font-family: Calibri, Arial, sans-serif;
+}
+
+/* Georgia */
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value='georgia']::before,
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value='georgia']::before {
+  content: 'Georgia';
+  font-family: Georgia, serif;
+}
+
+/* Courier New */
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value='courier-new']::before,
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value='courier-new']::before {
+  content: 'Courier New';
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* ------------------------------
+   Size dropdown: nomi + preview
+   ------------------------------ */
+
+/* Nota: Quill mostra la label via ::before, quindi settiamo content */
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value='10px']::before,
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value='10px']::before {
+  content: '10';
+  font-size: 10px;
+}
+
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value='12px']::before,
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value='12px']::before {
+  content: '12';
+  font-size: 12px;
+}
+
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value='14px']::before,
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value='14px']::before {
+  content: '14';
+  font-size: 14px;
+}
+
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value='16px']::before,
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value='16px']::before {
+  content: '16';
+  font-size: 16px;
+}
+
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value='18px']::before,
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value='18px']::before {
+  content: '18';
+  font-size: 18px;
+}
+
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value='24px']::before,
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value='24px']::before {
+  content: '24';
+  font-size: 24px;
+}
+
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value='32px']::before,
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value='32px']::before {
+  content: '32';
+  font-size: 32px;
+}

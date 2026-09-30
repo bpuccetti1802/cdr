@@ -1,0 +1,49 @@
+<div class="bd-rc-tabs">
+  <div class="row flex-column flex-md-row flex-row-reverse">
+    <!-- Navbar verticale tabs o orizzontale su mobile -->
+    <div class="col-12 col-md-3 order-0 order-md-0" [ngClass]="isMobile ? 'mb-3' : ''">
+      <app-rc-card-wrapper width="full">
+        <div class="d-flex align-items-center">
+          <!-- Freccia sinistra (solo su mobile) -->
+          <div *ngIf="isMobile && showLeftArrow" class="mf-cursor-pointer left-arrow" (click)="scrollTabs('left')"
+            (keydown)="onArrowKeyDown($event)" tabindex="0">
+            <app-rc-icon [name]="'it-chevron-left'" color="secondary"></app-rc-icon>
+          </div>
+
+          <div #tabsWrapper class="nav nav-tabs"
+            [ngClass]="isMobile ? 'nav-tabs-horizontal overflow-hidden' : 'nav-tabs-vertical'" role="tablist"
+            [attr.aria-orientation]="isMobile ? 'horizontal' : 'vertical'" (scroll)="updateScrollButtons()">
+            <a *ngFor="let tab of tabs; trackBy: trackByTab" class="nav-link pt-4 pb-4 w-auto"
+              [class.active]="selectedTab === tab" (click)="onSelectTab(tab)" (keypress)="onSelectTab(tab)" role="tab"
+              tabindex="0" [attr.aria-controls]="tab.link" [attr.aria-selected]="selectedTab === tab">
+              {{ tab.label }}
+            </a>
+          </div>
+
+          <!-- Freccia destra (solo su mobile) -->
+          <div *ngIf="isMobile && showRightArrow" class="mf-cursor-pointer right-arrow" (click)="scrollTabs('right')"
+            (keydown)="onArrowKeyDown($event)" tabindex="0">
+            <app-rc-icon [name]="'it-chevron-right'" color="secondary"></app-rc-icon>
+          </div>
+        </div>
+      </app-rc-card-wrapper>
+    </div>
+
+    <!-- Contenuto delle tabs -->
+    <div class="col-12 col-md-9 h-100 order-1 order-md-1">
+      <div class="tab-content">
+        <div *ngIf="selectedTab" class="mb-3">
+          <h3>{{ selectedTab.label }}</h3>
+        </div>
+        <ng-container *ngIf="selectedTab">
+          <ng-container *ngIf="remoteApplicationType === RemoteApplicationType.REACT">
+            <ng-content></ng-content>
+          </ng-container>
+          <ng-container *ngIf="remoteApplicationType === RemoteApplicationType.ANGULAR">
+            <ng-container *ngComponentOutlet="selectedTab.component"></ng-container>
+          </ng-container>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div>

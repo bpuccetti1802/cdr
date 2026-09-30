@@ -1,0 +1,33 @@
+:host {
+  --tabs-sidebar-width: 20%;
+}
+
+@media (min-width: 768px) {
+  .col-md-3 {
+    flex: 0 0 var(--tabs-sidebar-width);
+    max-width: var(--tabs-sidebar-width);
+  }
+
+  .col-md-9 {
+    flex: 0 0 calc(100% - var(--tabs-sidebar-width));
+    max-width: calc(100% - var(--tabs-sidebar-width));
+  }
+}
+
+.focus--mouse {
+    color: inherit !important;
+    border-color: #8E001C !important; 
+  }
+
+  .nav-tabs-horizontal {
+    display: flex;
+    overflow-x: auto; /* Abilita lo scroll touch */
+    white-space: nowrap; /* Impedisce il wrapping */
+    -webkit-overflow-scrolling: touch; /* Ottimizza lo scroll su iOS */
+    scrollbar-width: none; /* Nasconde la scrollbar su Firefox */
+  }
+  
+  .nav-tabs-horizontal::-webkit-scrollbar {
+    display: none; /* Nasconde la scrollbar su Chrome/Safari */
+  }
+  

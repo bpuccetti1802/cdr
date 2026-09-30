@@ -1,0 +1,115 @@
+<footer class="it-footer">
+  <div class="it-footer-main" [ngClass]="backgroundColorTopContainerClass">
+    <div appWideContainer class="container-wide">
+      <section>
+        <div class="row clearfix">
+          <div class="col-sm-12">
+            <div class="it-brand-wrapper">
+              <a [routerLink]="" data-focus-mouse="false">
+                <app-rc-image *ngIf="logo" [name]="logo" class="me-3 footer-image" />
+                <!-- <app-rc-image *ngIf="logo" [src]="baseUrl + logo" alt="Logo" class="me-3 footer-image"> -->
+                <!-- <div class="it-brand-text">
+                  <h2>{{ente.label}}</h2>
+                  <h3 class="d-none d-md-block">{{ente.tagline}}</h3>
+                </div> -->
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="py-2">
+        <div class="row">
+          <div class="col-lg-3 col-md-3 ">
+            <h6 class="text-uppercase">Contatti</h6>
+            <div class="py-2 border-white border-top">
+              <address class="mb-0 fw-bold">{{contact.address}}</address>
+              <ul class="list-unstyled">
+                <li class="mb-0 small fw-semibold">{{contact.pIva}}
+                </li>
+                <li class="mb-0 small fw-semibold">
+                  {{contact.fiscalCode}}
+                </li>
+              </ul>
+              <div class="my-2">
+                <ul class="list-unstyled">
+                  <li class="fw-semibold"> <a class="mf-anchor-grey-0"
+                      href="/web/it/dipartimento-cybersecurity-e-sicurezza-urbana-uffici-e-contatti.page">Ufficio
+                      Responsabile Protezione Dati (RPD)</a>
+                  </li>
+                  <li class="fw-semibold">
+                    <a class="mf-anchor-grey-0" href="/web/it/gabinetto-del-sindaco-uffici-e-contatti.page?contentId=UFF892489">Direzione Ufficio
+                      Stampa e
+                      Media</a>
+                  </li>
+                  <li class="fw-semibold">
+                    <a class="mf-anchor-grey-0" href="/web/it/chiama-roma-060606.page">Chiama Roma 060606</a>
+                  </li>
+                  <li class="fw-semibold">
+                    <a class="mf-anchor-grey-0" href="/web/it/contatti.page">Tutti i contatti</a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="routesWithHome && routesWithHome.length > 0 && isLogged" class="col-lg-3 col-md-3 col-sm-6">
+            <h6 class="text-uppercase">Menu</h6>
+            <div class="link-list-wrapper py-2 border-white border-top">
+              <ul class="footer-list link-list clearfix">
+                <li *ngFor="let route of routesWithHome; trackBy: trackMenuLinkById">
+                  <ng-container *ngIf="route && route.data && route.data['label']">
+                    <a class="list-item" [routerLink]="[route.path]"
+                      [title]="'Vai alla pagina: ' + route.data['label']">{{ route.data['label'] }}</a>
+                  </ng-container>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div *ngIf="socialLinks && socialLinks.length > 0" class="col-lg-3 col-md-3">
+            <div class="pb-2">
+              <h6 class="text-uppercase">Seguici su</h6>
+              <div class="py-2 border-white border-top">
+                <ul class="list-inline mb-1 text-left social">
+                  <li *ngFor="let social of socialLinks; trackBy: trackSocialById"
+                    class="list-inline-item m-1  mf-background-color-grey-0 rounded-circle">
+                    <a class="text-secondary" [href]="social.route" target="_blank">
+                      <app-rc-icon [useClass]="true" [size]="IconSize.sm" class="icon-sm"
+                        colorClass="p-1 m-1 mf-icon-color-secondary-main" [name]="social.nameIcon" />
+                      <span class="visually-hidden">{{ social.label }}</span>
+                    </a>
+                  </li>
+                </ul>
+                <p class="fw-semibold mb-1">
+                  <a class="mf-anchor-grey-0" href="https://www.inforoma.it/" target="_blank">
+                    INFORoMA
+                  </a>
+                </p>
+                <div *ngIf="hasPNRRLogos" class="pnrr-logos">
+                  <div class="mb-3">
+                    <app-rc-image [name]="financedByLogo" alt="Finanziato da unione europea" />
+                  </div>
+                    <div class="mb-3">
+                    <app-rc-image [name]="dipartimentoLogo" alt="Logo dipartimento trasformazione digitale" />
+                  </div>
+                  <div>
+                    <app-rc-image [name]="ministerialLogo" alt="Logo ministero" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  <div *ngIf="menuItemsPolicy && menuItemsPolicy.length > 0" class="it-footer-small-prints clearfix"
+    [ngClass]="backgroundColorBottomContainerClass">
+    <div appWideContainer class="container-wide">
+      <ul class="it-footer-small-prints-list list-inline mb-0 d-flex flex-column flex-md-row">
+        <li *ngFor="let item of menuItemsPolicy; trackBy: trackMenuLinkByIdMenu" class="list-inline-item">
+          <a [href]="item.route" [title]="item.label">{{ item.label }}</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,9 @@
+<div class="w-100 rounded d-inline-block" appWideContainer
+  [ngClass]="[useShadow ? 'shadow': '', h100 ? 'h-100' : '', widthClass, bgClass, container ? 'container-wide' : '', usePadding ? 'p-4': '']">
+
+  <!-- Caso locale con ng-content -->
+  <ng-content *ngIf="!useDynamicContent"></ng-content>
+
+  <!-- Caso dinamico remoto -->
+  <ng-container #contentContainer></ng-container>
+</div>

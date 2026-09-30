@@ -1,0 +1,25 @@
+@import '../theme/palette';
+
+.accordion-header .accordion-button:not(.collapsed) {
+    color: map-get($colors, "grey", "900") !important;
+    border-bottom: 2px solid map-get($colors, "primary", "main") !important;
+    border-top: 0 !important;
+}
+
+.accordion {
+    border-bottom: 0 !important;
+}
+
+.accordion-body {
+    padding: 1rem !important;
+}
+
+.accordion-header .accordion-button.collapsed {
+    color: map-get($colors, "grey", "900") !important;
+    border-bottom: 0 !important;
+    border-top: 0 !important;
+}
+
+.accordion-header .accordion-button:hover {
+    color: map-get($colors, "primary", "main") !important;
+}

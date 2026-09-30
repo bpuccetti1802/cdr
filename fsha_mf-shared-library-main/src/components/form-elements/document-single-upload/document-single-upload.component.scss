@@ -1,0 +1,102 @@
+@import '../../../styles/theme/palette';
+
+.upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-family: Arial, sans-serif;
+}
+
+.upload-label {
+  font-weight: bold;
+  font-size: 14px;
+  border-color: map-get($colors, "secondary", "main");
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upload-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px dashed map-get($colors, "secondary", "main");
+  padding: 12px;
+  border-radius: 8px;
+  background-color: map-get($colors, "grey", "0");
+}
+
+.upload-box.has-file {
+  border-color: map-get($colors, "success", "main");
+  background-color: map-get($colors, "success", "lighter");
+}
+
+.upload-box.has-error {
+  border-color: map-get($colors, "error", "main");
+  background-color: map-get($colors, "grey", "0");
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  position: relative;
+}
+
+.file-name-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 20px;
+}
+
+.file-name {
+  font-size: 14px;
+  color: map-get($colors, "secondary", "main");
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.remove-icon {
+  position: absolute;
+  top: -11px;
+  right: -10px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+}
+
+.icon {
+  width: 32px;
+  height: 32px;
+}
+
+
+.no-file-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.note {
+  font-size: 12px;
+  color: map-get($colors, "secondary", "main");
+}
+
+.file-details {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.btn {
+  font-size: 12px;
+}
+
+.file-placeholder {
+  color: map-get($colors, "secondary", "main");
+}

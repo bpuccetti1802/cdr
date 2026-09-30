@@ -1,0 +1,74 @@
+<div class="pdf-viewer-container">
+  @if (pdfSource && !hasError()) {
+    <ng2-pdfjs-viewer
+      #pdfViewer
+      [pdfSrc]="pdfSource"
+      [viewerId]="viewerId"
+      [viewerFolder]="viewerFolder"
+      [externalWindow]="externalWindow"
+      [externalWindowOptions]="externalWindowOptions"
+      [target]="target"
+      [theme]="theme"
+      [primaryColor]="primaryColor"
+      [backgroundColor]="backgroundColor"
+      [pageBorderColor]="pageBorderColor"
+      [toolbarColor]="toolbarColor"
+      [textColor]="textColor"
+      [borderRadius]="borderRadius"
+      [customCSS]="customCSS"
+      [iframeTitle]="iframeTitle"
+      [spinnerClass]="spinnerClass"
+      [customErrorTpl]="customErrorTpl"
+      [errorClass]="errorClass"
+      [page]="viewerPage"
+      [namedDest]="namedDest"
+      [rotation]="rotation"
+      [layoutConfig]="layoutConfig"
+      [downloadFileName]="downloadFileName"
+      [controlVisibility]="controlVisibility"
+      [autoActions]="autoActions"
+      [errorHandling]="errorHandling"
+      [groupVisibility]="groupVisibility"
+      [urlValidation]="urlValidation"
+      [iframeBorder]="iframeBorder"
+      [zoom]="viewerZoom"
+      [cursor]="cursor"
+      [scroll]="scroll"
+      [spread]="spread"
+      [pageMode]="pageMode"
+      [showSpinner]="showSpinner"
+      [locale]="locale"
+      [useOnlyCssZoom]="useOnlyCssZoom"
+      [diagnosticLogs]="diagnosticLogs"
+      (onDocumentLoad)="onDocumentLoadHandler()"
+      (onDocumentError)="onDocumentErrorHandler($event)"
+      (onPageChange)="onPageChangeHandler($event)"
+      (onPagesInit)="onPagesInitHandler($event)"
+      (onScaleChange)="onScaleChangeHandler($event)"
+      (onRotationChange)="onRotationChangeHandler($event)"
+      (onPresentationModeChanged)="onPresentationModeChangedHandler($event)"
+      (onOpenFile)="onOpenFileHandler()"
+      (onFind)="onFindHandler($event)"
+      (onUpdateFindMatchesCount)="onUpdateFindMatchesCountHandler($event)"
+      (onOutlineLoaded)="onOutlineLoadedHandler($event)"
+      (onAnnotationLayerRendered)="onAnnotationLayerRenderedHandler($event)"
+      (onBookmarkClick)="onBookmarkClickHandler($event)"
+      (onIdle)="onIdleHandler()"
+      (onAfterPrint)="onAfterPrintHandler()"
+      (zoomChange)="onZoomChangeHandler($event)"
+      (cursorChange)="onCursorChangeHandler($event)"
+      (scrollChange)="onScrollChangeHandler($event)"
+      (spreadChange)="onSpreadChangeHandler($event)"
+      (pageModeChange)="onPageModeChangeHandler($event)"
+    >
+    </ng2-pdfjs-viewer>
+  } @else {
+    <div class="no-pdf-container">
+      <p>non è stato caricato nessun documento</p>
+    </div>
+  }
+</div>
+
+<ng-container *ngIf="isLoading() && !hasError()">
+  <app-spinner></app-spinner>
+</ng-container>

@@ -1,0 +1,25 @@
+@import '../../styles/theme/palette'; // Assicurati che il path sia corretto
+
+.footer-image {
+    width: 200px;
+    height: auto;
+}
+
+:host ::ng-deep .footer-image {
+    width: 200px;
+    height: auto;
+}
+
+.pnrr-logos {
+    img {
+        width: 200px;
+        height: auto;
+    }
+}
+
+:host ::ng-deep .pnrr-logos {
+    img {
+        width: 200px;
+        height: auto;
+    }
+}

@@ -1,0 +1,34 @@
+-- ansc.dominio_decodifica definition
+
+-- Drop table
+
+-- DROP TABLE ansc.dominio_decodifica;
+
+CREATE TABLE ansc.dominio_decodifica (
+	id_dominio int4 NOT NULL,
+	nm_dominio varchar(50) NOT NULL,
+	CONSTRAINT dominio_decodifica_pk PRIMARY KEY (id_dominio)
+);
+
+
+-- ansc.valore_dominio definition
+
+-- Drop table
+
+-- DROP TABLE ansc.valore_dominio;
+
+CREATE TABLE ansc.valore_dominio (
+	id_dominio int4 NOT NULL,
+	id_valore varchar(10) NOT NULL,
+	ds_valore text NULL,
+	dt_inizio_validita date NULL,
+	dt_fine_validita date NULL,
+	nr_ordinamento int4 NULL,
+	cd_valore varchar(10) NULL,
+	CONSTRAINT valore_dominio_pk PRIMARY KEY (id_dominio, id_valore)
+);
+
+
+-- ansc.valore_dominio foreign keys
+
+ALTER TABLE ansc.valore_dominio ADD CONSTRAINT valore_dominio_tipo_dominio_fk FOREIGN KEY (id_dominio) REFERENCES ansc.dominio_decodifica(id_dominio);

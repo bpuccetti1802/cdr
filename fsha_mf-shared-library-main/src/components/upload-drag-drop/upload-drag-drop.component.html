@@ -1,0 +1,32 @@
+<div class="upload-dragdrop" [class.disabled]="disabled" [class.loading]="isLoading" [class.dragover]="isDragover" [class.success]="isSuccess">
+  <div class="upload-dragdrop-image">
+    <img [src]="baseUrl + dragIcon" alt="drag-drop-icon" aria-hidden="true" [width]="180" [height]="180" />
+    <div class="upload-dragdrop-loading" [class.hidden]="!isLoading">
+      <div class="progress-donut" #donutElement></div>
+    </div>
+    <div class="upload-dragdrop-success">
+      <app-rc-icon name="it-check-circle" [size]="IconSize.xs"></app-rc-icon>
+    </div>
+  </div>
+  <div class="upload-dragdrop-text">
+    <p class="upload-dragdrop-weight">
+      <app-rc-icon name="it-file" [size]="IconSize.xs"></app-rc-icon>
+      {{ extension }} ({{ fileSize }})
+    </p>
+    <h5>{{ fileName || ('Trascina il file per caricarlo') }}</h5>
+    @if (isLoading) {
+    <p>{{ "Caricamento in corso" }}</p>
+    }
+    @if (isSuccess) {
+    <p>{{ "Caricamento Completato" }}</p>
+    }
+    @if (!isLoading && !isSuccess) {
+    <p>
+      {{ 'oppure' }}
+      <input type="file" [attr.disabled]="disabled ? true : null" [multiple]="isMultiUpload" id="uploadInput" class="upload-dragdrop-input"
+        [accept]="accept" (change)="onLoadFile($event)" />
+      <label for="uploadInput">{{ 'selezionalo dal dispositivo' }}</label>
+    </p>
+    }
+  </div>
+</div>

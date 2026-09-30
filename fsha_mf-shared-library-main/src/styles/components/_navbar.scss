@@ -1,0 +1,28 @@
+.dropdown-item.active,
+.dropdown-item:active {
+    font-weight: bold;
+}
+
+.navbar .dropdown-menu:before {
+    z-index: -1;
+}
+
+.navbar .navbar-collapsable .navbar-nav .nav-item .nav-link.active {
+    font-weight: bold !important;
+}
+
+
+.navbar .navbar-collapsable .navbar-nav li.nav-item a.nav-link.dropdown-toggle svg,
+.navbar .navbar-collapsable .navbar-nav li.nav-item button.nav-link.dropdown-toggle svg {
+    margin-top: 0px !important;
+}
+
+.navbar .navbar-collapsable .navbar-nav li.nav-item a.nav-link,
+.navbar .navbar-collapsable .navbar-nav li.nav-item button.nav-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.custom-navbar-toggler svg {
+    color: inherit;
+}

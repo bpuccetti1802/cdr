@@ -1,0 +1,1114 @@
+CREATE TABLE ELET_STORICO.ELETTORI
+(
+  ID_ELETTORE                    NUMBER         NOT NULL,
+  ID_SOGGETTO                    NUMBER         NOT NULL,
+  ID_LISTA                       NUMBER         NOT NULL,
+  DATA_ISCRIZIONE                DATE,
+  DATA_CANCELLAZIONE             DATE,
+  DATA_INIZIO_SOSPENSIONE        DATE,
+  DATA_FINE_SOSPENSIONE          DATE,
+  DATA_REVISIONE_LISTE_AGG       DATE,
+  DATA_CREAZIONE                 DATE,
+  DATA_ULTIMA_MODIFICA           DATE,
+  ID_PROGRAMMA                   NUMBER,
+  ID_MOTIVO_CANCELLAZIONE        NUMBER,
+  ID_MOTIVO_SOSPENSIONE          NUMBER,
+  ID_STATO                       NUMBER         NOT NULL,
+  TIPO_EVENTO_ELETTORALE         NUMBER,
+  ID_SEZIONE                     NUMBER,
+  NUM_LISTA_GENERALE             NUMBER,
+  NUM_LISTA_SEZIONALE            NUMBER,
+  FLG_VOTANTE_ASSISTITO          CHAR(1 BYTE),
+  DATA_INIZIO_VOTANTE_ASSISTITO  DATE,
+  CODICE_INDIVIDUALE             VARCHAR2(7 BYTE),
+  CODICE_FISCALE                 VARCHAR2(16 BYTE),
+  NOME                           VARCHAR2(80 BYTE),
+  COGNOME                        VARCHAR2(80 BYTE),
+  SESSO                          CHAR(1 BYTE),
+  ID_STATO_CIVILE                INTEGER,
+  ID_COMUNE_NASCITA              INTEGER,
+  DATA_NASCITA                   DATE,
+  ATTO_NASCITA                   VARCHAR2(20 BYTE),
+  ID_DOMICILIO                   INTEGER,
+  ID_COMUNE_MORTE                INTEGER,
+  ID_LOCALITA_MORTE              INTEGER,
+  ID_COMUNE_PROVENIENZA          INTEGER,
+  VERBALE_ISCRIZIONE             VARCHAR2(10 BYTE),
+  VERBALE_CANCELLAZIONE          VARCHAR2(10 BYTE),
+  ID_UTENTE                      NUMBER,
+  ID_MOTIVO_ISCRIZIONE           NUMBER,
+  FLG_AIRE                       CHAR(1 BYTE),
+  ANNO_LISTA_GEN                 NUMBER(4),
+  ID_LOCALITA_NASCITA            NUMBER,
+  NOM_PAD                        VARCHAR2(200 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+CREATE TABLE ELET_STORICO.DOMICILIO
+(
+  ID_DOMICILIO      NUMBER                      NOT NULL,
+  ID_SOGGETTO       NUMBER                      NOT NULL,
+  ID_TOPONIMO       NUMBER,
+  PALAZZINA         VARCHAR2(10 CHAR),
+  INTERNO           VARCHAR2(10 CHAR),
+  CIVICO            VARCHAR2(10 CHAR),
+  CHILOMETRO        VARCHAR2(10 CHAR),
+  ID_COMUNE         NUMBER,
+  LETTERA           VARCHAR2(10 CHAR),
+  SCALA             VARCHAR2(10 CHAR),
+  ID_PROVINCIA      NUMBER,
+  LOTTO             VARCHAR2(10 CHAR),
+  PIANO             VARCHAR2(10 CHAR),
+  FLG_ELIMINATO     CHAR(1 BYTE),
+  MOTIVO            VARCHAR2(80 BYTE),
+  ID_LOCALITA       NUMBER,
+  INDIRIZZO_ESTERO  VARCHAR2(100 BYTE),
+  FLG_ESTERO        VARCHAR2(20 BYTE),
+  CAP               VARCHAR2(10 BYTE),
+  ID_STATO          NUMBER,
+  ID_CONSOLATO      NUMBER,
+  CAP_AIRE          VARCHAR2(15 CHAR)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+CREATE TABLE ELET_STORICO.DIN_TAIRES
+(
+  COD_IND       VARCHAR2(7 CHAR),
+  SEX           CHAR(1 BYTE),
+  NUM_SEZ       NUMBER,
+  NUM_VER_ISC   VARCHAR2(5 CHAR),
+  DTA_VER_ISC   DATE,
+  NUM_VER_RET   VARCHAR2(5 CHAR),
+  DTA_VER_RET   DATE,
+  DTA_OPE       TIMESTAMP(6),
+  DTA_OPE_STOR  TIMESTAMP(6)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+CREATE TABLE ELET_STORICO.BREVI_PERMANENZE
+(
+  ID_STORICO               NUMBER               NOT NULL,
+  ID_BREVI_PERMANENZE      NUMBER CONSTRAINT NNC_BREVI_PERM_ID NOT NULL,
+  ID_SOGGETTO              NUMBER,
+  ID_PROGRAMMA             NUMBER CONSTRAINT NNC_ID_PROGRAMMA NOT NULL,
+  ID_COMUNE_PROV           NUMBER,
+  MOTIVO                   VARCHAR2(1 BYTE),
+  DATA_EMIGRAZIONE         DATE,
+  ID_COMUNE_EMIGRAZIONE    NUMBER,
+  DATA_DECESSO             DATE,
+  ANNO_PROTOCOLLO          NUMBER(4),
+  NUMERO_PROTOCOLLO        NUMBER,
+  ID_UTENTE                NUMBER,
+  DATA_MODIFICA            DATE,
+  ID_STATO                 NUMBER CONSTRAINT NNC_BREVI_PERMANENZE_ID_STATO NOT NULL,
+  ID_AMBITO                NUMBER,
+  ID_LOCALITA_PROV         NUMBER,
+  ID_LOCALITA_EMIGRAZIONE  NUMBER,
+  FLAG_AIRE                VARCHAR2(1 BYTE),
+  ID_GIORNALE              NUMBER,
+  COD_PRE_EVI              VARCHAR2(20 BYTE),
+  COD_EVI_OLD              VARCHAR2(20 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ELET_STORICO.BREVI_PERMANENZE.MOTIVO IS 'E - EMIGRAZIONE      
+D - DECESSO';
+
+COMMENT ON COLUMN ELET_STORICO.BREVI_PERMANENZE.ID_STATO IS '1)CREATO DA PROGRAMMA  
+2)LAVORATO - PROTOCOLLATO   
+3)ANNULLATO   
+4)CONVALIDATO DA OPERATORE   
+5)COMPLETATO - CHIUSO   ';
+
+
+
+CREATE UNIQUE INDEX ELET_STORICO.BREVI_PERMANENZE_PK ON ELET_STORICO.BREVI_PERMANENZE
+(ID_STORICO)
+LOGGING
+TABLESPACE ANAG_USR
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+NOPARALLEL;
+
+
+ALTER TABLE ELET_STORICO.BREVI_PERMANENZE ADD (
+  CONSTRAINT BREVI_PERMANENZE_PK
+  PRIMARY KEY
+  (ID_STORICO)
+  USING INDEX ELET_STORICO.BREVI_PERMANENZE_PK
+  ENABLE VALIDATE);
+CREATE TABLE ELET_STORICO.ETICHETTE_TESSERA_ELETT
+(
+  ID_STORICO         NUMBER                     NOT NULL,
+  ID_ETICHETTA       NUMBER                     NOT NULL,
+  ID_TESSERA         NUMBER                     NOT NULL,
+  DATA_CREAZIONE     DATE,
+  DATA_ANNULLAMENTO  DATE,
+  DATA_STAMPA        DATE,
+  DATA_NOTIFICA      DATE,
+  ID_OPERATORE       NUMBER,
+  ID_EVIDENZA        NUMBER,
+  ID_TIPO_EVIDENZA   NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+
+CREATE UNIQUE INDEX ELET_STORICO.ETICHETTE_TESSERA_ELETT_PK ON ELET_STORICO.ETICHETTE_TESSERA_ELETT
+(ID_STORICO)
+LOGGING
+TABLESPACE ANAG_USR
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+NOPARALLEL;
+
+
+ALTER TABLE ELET_STORICO.ETICHETTE_TESSERA_ELETT ADD (
+  CONSTRAINT ETICHETTE_TESSERA_ELETT_PK
+  PRIMARY KEY
+  (ID_STORICO)
+  USING INDEX ELET_STORICO.ETICHETTE_TESSERA_ELETT_PK
+  ENABLE VALIDATE);
+CREATE TABLE ELET_STORICO.ATTESTATO_SOSTITUTIVO
+(
+  ID_STORICO              NUMBER,
+  ID_ATTESTATO            NUMBER                NOT NULL,
+  ID_ELETTORE             NUMBER,
+  ID_TESSERA              NUMBER                NOT NULL,
+  DATA_CREAZIONE          DATE,
+  DATA_STAMPA             DATE,
+  DATA_ANNULLAMENTO       DATE,
+  ID_OPERATORE            NUMBER,
+  ID_STATO                NUMBER                NOT NULL,
+  ID_TIPO_AUTORIZZAZIONE  NUMBER                NOT NULL,
+  DATA_PROTOCOLLO         DATE,
+  NUM_PROTOCOLLO          VARCHAR2(20 BYTE),
+  FLG_NOTIFICATO_SEZIONE  CHAR(1 BYTE),
+  NUMERO_ATTESTATO        NUMBER                NOT NULL,
+  ID_ELETTORE_LA          NUMBER,
+  ID_ELETTORE_UE          NUMBER,
+  ID_AMBITO               NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ELET_STORICO.ATTESTATO_SOSTITUTIVO.FLG_NOTIFICATO_SEZIONE IS 'Valori ammessi L per inserito in liste da inviare  F per inviato fonogramma';
+
+COMMENT ON COLUMN ELET_STORICO.ATTESTATO_SOSTITUTIVO.NUMERO_ATTESTATO IS 'Numero progressivo dell''attestato';
+
+
+
+CREATE UNIQUE INDEX ELET_STORICO.ATTESTATO_SOSTITUTIVO_PK ON ELET_STORICO.ATTESTATO_SOSTITUTIVO
+(ID_STORICO)
+LOGGING
+TABLESPACE ANAG_USR
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+NOPARALLEL;
+
+
+ALTER TABLE ELET_STORICO.ATTESTATO_SOSTITUTIVO ADD (
+  CONSTRAINT ATTESTATO_SOSTITUTIVO_PK
+  PRIMARY KEY
+  (ID_STORICO)
+  USING INDEX ELET_STORICO.ATTESTATO_SOSTITUTIVO_PK
+  ENABLE VALIDATE);
+CREATE TABLE ELET_STORICO.EVIDENZE
+(
+  ID_EVIDENZA_STORICO           NUMBER,
+  ID_EVIDENZA                   NUMBER,
+  ID_TIPO_EVIDENZA              NUMBER,
+  ID_SOGGETTO                   NUMBER,
+  ID_LISTA_APPARTENENZA         NUMBER,
+  ID_PROGRAMMA                  NUMBER,
+  FLAG_ATTO_NASCITA_TRASCRITTO  CHAR(1 BYTE),
+  ID_STATO                      NUMBER,
+  ID_TIPO_ERRORE                NUMBER,
+  ID_TIPO_EVENTO_ANAGRAFE       NUMBER,
+  ID_EVENTO_ANAGRAFICO          NUMBER,
+  ID_UTENTE                     NUMBER,
+  DATA_OPERAZIONE               DATE,
+  DATA_CREAZIONE                DATE,
+  NOTE                          VARCHAR2(256 BYTE),
+  MAIL                          VARCHAR2(130 BYTE),
+  RECAPITO_TELEFONICO           VARCHAR2(12 BYTE),
+  RECAPITO_ESTERO               VARCHAR2(12 BYTE),
+  ID_LOCALITA_ORIGINE           NUMBER,
+  ID_STATO_ELETTORE             NUMBER,
+  ID_COMUNE_ISCRIZIONE          NUMBER,
+  ID_SUB_TIPO_LISTA             NUMBER,
+  TIPO_EVENTO_ELETTORALE        NUMBER,
+  DATA_RICHIESTA                DATE
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+CREATE TABLE ELET_STORICO.SEZIONI
+(
+  ID_SEZIONE                    NUMBER          NOT NULL,
+  ID_PLESSO                     NUMBER          NOT NULL,
+  NUMERO_SEZIONE                INTEGER         NOT NULL,
+  NOME                          VARCHAR2(80 CHAR) NOT NULL,
+  RISERVATA                     NUMBER          NOT NULL,
+  ID_CABINA                     NUMBER,
+  PRESIDENTI_COMPLETI           NUMBER,
+  SCRUTATORI_COMPLETI           NUMBER,
+  ID_TIPO_SEZIONE               NUMBER          NOT NULL,
+  ID_PLESSO_SECONDARIO          NUMBER,
+  SETTORE                       VARCHAR2(2 BYTE),
+  ID_ANAG_RAPPRESENTANTE_COM    NUMBER,
+  ID_SUDD_TERR                  NUMBER,
+  FLAG_RAMPA                    VARCHAR2(1 BYTE),
+  FLAG_ASCENSORE                VARCHAR2(1 BYTE),
+  ID_MUNICIPIO                  NUMBER,
+  ID_GRUPPO_APPARTENENZA        NUMBER,
+  ID_STATO_SEZIONE              NUMBER,
+  CIRCOSCRIZIONE                NUMBER,
+  ID_SUDD_TERR_SECONDARIO       NUMBER,
+  ISC_MAS                       NUMBER,
+  ISC_FEM                       NUMBER,
+  ULT_SEZ_MAS                   NUMBER,
+  ULT_SEZ_FEM                   NUMBER,
+  AULA                          VARCHAR2(20 BYTE),
+  ID_CIRCOSCRIZIONE_FUORI_SEDE  NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+CREATE TABLE ELET_STORICO.TESSERA_ELETTORALE
+(
+  ID_STORICO            NUMBER,
+  ID_TESSERA            NUMBER                  NOT NULL,
+  NUMERO_TESSERA        VARCHAR2(50 BYTE)       NOT NULL,
+  ID_ELETTORE           NUMBER,
+  DATA_CREAZIONE        DATE,
+  DATA_INIZIO_VALIDITA  DATE,
+  DATA_FINE_VALIDITA    DATE,
+  ID_OPERATORE          NUMBER,
+  ID_SEZIONE            NUMBER                  NOT NULL,
+  FLG_NOTIFICATA        CHAR(1 BYTE),
+  DATA_NOTIFICA         DATE,
+  FLG_STAMPATA          CHAR(1 BYTE),
+  DATA_STAMPA           DATE,
+  DATA_OPERAZIONE       DATE,
+  ID_STATO              NUMBER,
+  ID_MOTIVAZIONE        NUMBER,
+  ID_PACCO              NUMBER,
+  ID_TIPO_TESSERA       NUMBER,
+  ID_AMBITO             NUMBER,
+  ID_ELETTORE_LA        NUMBER,
+  ID_ELETTORE_UE        NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ELET_STORICO.TESSERA_ELETTORALE.FLG_NOTIFICATA IS 'VALORI AMMESSI 
+S  PER NOTIFICATA
+N O NULL PER NON NOTIFICATA';
+
+COMMENT ON COLUMN ELET_STORICO.TESSERA_ELETTORALE.FLG_STAMPATA IS 'VALORI AMMESSI 
+S PER STAMPATA
+N O NULL PER NON STAMPATA';
+
+
+
+CREATE UNIQUE INDEX ELET_STORICO.TESSERA_ELETTORALE_PK ON ELET_STORICO.TESSERA_ELETTORALE
+(ID_STORICO)
+LOGGING
+TABLESPACE ANAG_USR
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+NOPARALLEL;
+CREATE TABLE ELET_STORICO.PDFPREVI99S
+(
+  COD_IND               VARCHAR2(7 BYTE),
+  COD_EVI               VARCHAR2(3 BYTE),
+  DTA_EVI               VARCHAR2(8 BYTE),
+  SX                    VARCHAR2(1 BYTE),
+  UTENTE                VARCHAR2(20 BYTE),
+  PROGRAMMA             VARCHAR2(20 BYTE),
+  DATA                  VARCHAR2(8 BYTE),
+  ORA                   VARCHAR2(8 BYTE),
+  FLG_ELABORATA         CHAR(1 BYTE),
+  NOME_PROG_GIORNALE    VARCHAR2(200 CHAR),
+  DATA_STORICIZZAZIONE  DATE
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+CREATE TABLE ELET_STORICO.ELETT_ELECEE
+(
+  ID_ELETTORE                    NUMBER         NOT NULL,
+  ID_SOGGETTO                    NUMBER         NOT NULL,
+  TIP_LAG                        NUMBER,
+  COD_IND                        VARCHAR2(7 BYTE),
+  SESSO                          CHAR(1 BYTE),
+  LIS_GEN                        VARCHAR2(7 BYTE),
+  ANN_LIS_GEN                    VARCHAR2(4 BYTE),
+  ID_SEZIONE                     NUMBER,
+  LIS_SEZ                        VARCHAR2(4 BYTE),
+  COGNOME                        VARCHAR2(200 BYTE),
+  NOME                           VARCHAR2(200 BYTE),
+  COGNOME_ACQ                    VARCHAR2(200 BYTE),
+  ID_STATO_CIVILE                NUMBER,
+  MOTIVO_ISC                     VARCHAR2(2 BYTE),
+  VER_ISC                        VARCHAR2(5 BYTE),
+  DTA_VER_ISC                    DATE,
+  ID_COMUNE_NASCITA              NUMBER,
+  ID_LOCALITA_NASCITA            NUMBER,
+  DATA_NASCITA                   DATE,
+  ATTO_NASCITA                   VARCHAR2(9 BYTE),
+  COD_TIPO_CIVICO                CHAR(1 BYTE),
+  ID_DOMICILIO                   NUMBER,
+  NUM_CIV                        NUMBER,
+  LET_CIV                        VARCHAR2(1 BYTE),
+  NUM_LOT                        VARCHAR2(10 BYTE),
+  NUM_PAL                        VARCHAR2(10 BYTE),
+  NUM_SCA                        VARCHAR2(10 BYTE),
+  NUM_PIA                        VARCHAR2(10 BYTE),
+  NUM_INT                        VARCHAR2(10 BYTE),
+  NOM_PAD                        VARCHAR2(200 BYTE),
+  ID_COMUNE_EOM                  NUMBER,
+  ID_LOCALITA_EOM                NUMBER,
+  DATA_EOM                       DATE,
+  COM_PRO                        NUMBER,
+  VER_CAN                        VARCHAR2(10 BYTE),
+  DTA_VER_CAN                    DATE,
+  ID_COMUNE_RES                  NUMBER,
+  ID_LOCALITA_RES                NUMBER,
+  ID_NAZIONE                     NUMBER,
+  ID_COMUNE_ISCR                 NUMBER,
+  DATA_DOMICILIO                 DATE,
+  UTE_OPE                        VARCHAR2(11 BYTE),
+  PGM_OPE                        VARCHAR2(11 BYTE),
+  DTA_OPE                        VARCHAR2(8 BYTE),
+  ORA_OPE                        VARCHAR2(5 BYTE),
+  ID_PROGRAMMA                   NUMBER,
+  DATA_ULTIMA_MODIFICA           DATE,
+  DATA_INIZIO_VOTANTE_ASSISTITO  DATE,
+  FLG_VOTANTE_ASSISTITO          CHAR(1 BYTE),
+  ID_MOTIVO_CANCELLAZIONE        NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+CREATE TABLE ELET_STORICO.GIO_ELECEEEVI
+(
+  TIP_LAG                NUMBER,
+  ID_SOGGETTO            NUMBER,
+  COD_IND                VARCHAR2(7 BYTE),
+  SESSO                  CHAR(1 BYTE),
+  LIS_GEN                VARCHAR2(7 BYTE),
+  ANN_LIS_GEN            VARCHAR2(4 BYTE),
+  ID_SEZIONE             NUMBER,
+  LIS_SEZ                VARCHAR2(4 BYTE),
+  COGNOME                VARCHAR2(200 BYTE),
+  NOME                   VARCHAR2(200 BYTE),
+  COGNOME_ACQ            VARCHAR2(200 BYTE),
+  ID_STATO_CIVILE        NUMBER,
+  MOTIVO_ISC             VARCHAR2(2 BYTE),
+  VER_ISC                VARCHAR2(5 BYTE),
+  DTA_VER_ISC            DATE,
+  ID_COMUNE_NASCITA      NUMBER,
+  ID_LOCALITA_NASCITA    NUMBER,
+  DATA_NASCITA           DATE,
+  ATTO_NASCITA           VARCHAR2(9 BYTE),
+  COD_TIPO_CIVICO        CHAR(1 BYTE),
+  ID_TOPONIMO            NUMBER,
+  NUM_CIV                NUMBER,
+  LET_CIV                VARCHAR2(1 BYTE),
+  NUM_LOT                VARCHAR2(10 BYTE),
+  NUM_PAL                VARCHAR2(10 BYTE),
+  NUM_SCA                VARCHAR2(10 BYTE),
+  NUM_PIA                VARCHAR2(10 BYTE),
+  NUM_INT                VARCHAR2(10 BYTE),
+  NOM_PAD                VARCHAR2(200 BYTE),
+  ID_COMUNE_EOM          NUMBER,
+  ID_LOCALITA_EOM        NUMBER,
+  DATA_EOM               DATE,
+  MOT_CAN                VARCHAR2(10 BYTE),
+  VER_CAN                VARCHAR2(10 BYTE),
+  DTA_VER_CAN            DATE,
+  ID_COMUNE_RES          NUMBER,
+  ID_LOCALITA_RES        NUMBER,
+  ID_NAZIONE             NUMBER,
+  DATA_DOMICILIO         DATE,
+  COD_EVI                NUMBER,
+  DTA_EVI                DATE,
+  FLG_EVI                CHAR(1 BYTE),
+  FLG_REV                CHAR(1 BYTE),
+  DTA_REV                DATE,
+  FLG_CEC                CHAR(1 BYTE),
+  TIP_REV                VARCHAR2(3 BYTE),
+  UTE_OPE                VARCHAR2(11 BYTE),
+  PGM_OPE                VARCHAR2(11 BYTE),
+  DTA_OPE                VARCHAR2(12 BYTE),
+  ORA_OPE                VARCHAR2(5 BYTE),
+  ID_EVIDENZA            NUMBER,
+  ID_PROGRAMMA_GIORNALE  NUMBER,
+  ID_PROGRAMMA_DINAMICA  NUMBER,
+  EVIDENZA               NUMBER,
+  TIPO_CANCELLAZIONE     VARCHAR2(20 BYTE),
+  DTA_RICHIESTA          DATE,
+  KILOMETRO              NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+CREATE TABLE ELET_STORICO.GIO_EVIDEN
+(
+  ID_SOGGETTO            NUMBER,
+  COD_IND                VARCHAR2(7 BYTE),
+  SESSO                  CHAR(1 BYTE),
+  LIS_GEN                VARCHAR2(7 BYTE),
+  ANN_LIS_GEN            VARCHAR2(4 BYTE),
+  ID_SEZIONE             NUMBER,
+  LIS_SEZ                VARCHAR2(4 BYTE),
+  COGNOME                VARCHAR2(200 BYTE),
+  NOME                   VARCHAR2(200 BYTE),
+  COGNOME_ACQ            VARCHAR2(200 BYTE),
+  ID_STATO_CIVILE        NUMBER,
+  MOTIVO_ISC             VARCHAR2(2 BYTE),
+  VER_ISC                VARCHAR2(5 BYTE),
+  DTA_VER_ISC            DATE,
+  ID_COMUNE_NASCITA      NUMBER,
+  ID_LOCALITA_NASCITA    NUMBER,
+  DATA_NASCITA           DATE,
+  ATTO_NASCITA           VARCHAR2(9 BYTE),
+  COD_TIPO_CIVICO        CHAR(1 BYTE),
+  ID_TOPONIMO            NUMBER,
+  NUM_CIV                NUMBER,
+  LET_CIV                VARCHAR2(1 BYTE),
+  NUM_LOT                VARCHAR2(10 BYTE),
+  NUM_PAL                VARCHAR2(10 BYTE),
+  NUM_SCA                VARCHAR2(10 BYTE),
+  NUM_PIA                VARCHAR2(10 BYTE),
+  NUM_INT                VARCHAR2(10 BYTE),
+  NOM_PAD                VARCHAR2(200 BYTE),
+  ID_COMUNE_EOM          NUMBER,
+  ID_LOCALITA_EOM        NUMBER,
+  DATA_EOM               DATE,
+  ID_COMUNE_PRO          NUMBER,
+  MOT_CAN                VARCHAR2(10 BYTE),
+  VER_CAN                VARCHAR2(10 BYTE),
+  DTA_VER_CAN            DATE,
+  COD_EVI                NUMBER,
+  DTA_EVI                DATE,
+  FLG_EVI                CHAR(1 BYTE),
+  FLG_REV                CHAR(1 BYTE),
+  DTA_REV                DATE,
+  FLG_CEC                CHAR(1 BYTE),
+  TIP_REV                VARCHAR2(3 BYTE),
+  UTE_OPE                VARCHAR2(11 BYTE),
+  PGM_OPE                VARCHAR2(11 BYTE),
+  DTA_OPE                VARCHAR2(12 BYTE),
+  ORA_OPE                VARCHAR2(5 BYTE),
+  ID_EVIDENZA            NUMBER,
+  ID_PROGRAMMA_GIORNALE  NUMBER,
+  ID_PROGRAMMA_DINAMICA  NUMBER,
+  TIP_LAG                NUMBER,
+  EVIDENZA               NUMBER,
+  TIPO_CANCELLAZIONE     VARCHAR2(20 BYTE),
+  KILOMETRO              NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+CREATE TABLE ELET_STORICO.GIO_LAEVI
+(
+  ID_SOGGETTO            NUMBER,
+  COD_IND                VARCHAR2(7 BYTE),
+  SESSO                  CHAR(1 BYTE),
+  LIS_GEN                VARCHAR2(7 BYTE),
+  ANN_LIS_GEN            VARCHAR2(4 BYTE),
+  ID_SEZIONE             NUMBER,
+  LIS_SEZ                VARCHAR2(4 BYTE),
+  ID_COMUNE_RES_LA       NUMBER,
+  DTA_INI_LA             DATE,
+  DTA_FIN_LA             DATE,
+  TIP_LA                 NUMBER,
+  COGNOME                VARCHAR2(200 BYTE),
+  NOME                   VARCHAR2(200 BYTE),
+  COGNOME_ACQ            VARCHAR2(200 BYTE),
+  ID_STATO_CIVILE        NUMBER,
+  MOTIVO_ISC             VARCHAR2(2 BYTE),
+  VER_ISC                VARCHAR2(5 BYTE),
+  DTA_VER_ISC            DATE,
+  ID_COMUNE_NASCITA      NUMBER,
+  ID_LOCALITA_NASCITA    NUMBER,
+  DATA_NASCITA           DATE,
+  ATTO_NASCITA           VARCHAR2(9 BYTE),
+  COD_TIPO_CIVICO        CHAR(1 BYTE),
+  ID_TOPONIMO            NUMBER,
+  NUM_CIV                NUMBER,
+  LET_CIV                VARCHAR2(1 BYTE),
+  NUM_LOT                VARCHAR2(10 BYTE),
+  NUM_PAL                VARCHAR2(10 BYTE),
+  NUM_SCA                VARCHAR2(10 BYTE),
+  NUM_PIA                VARCHAR2(10 BYTE),
+  NUM_INT                VARCHAR2(10 BYTE),
+  NOM_PAD                VARCHAR2(200 BYTE),
+  MOT_CAN                VARCHAR2(10 BYTE),
+  VER_CAN                VARCHAR2(10 BYTE),
+  DTA_VER_CAN            DATE,
+  COD_EVI                NUMBER,
+  DTA_EVI                DATE,
+  FLG_EVI                CHAR(1 BYTE),
+  FLG_REV                CHAR(1 BYTE),
+  DTA_REV                DATE,
+  FLG_CEC                CHAR(1 BYTE),
+  TIP_REV                VARCHAR2(3 BYTE),
+  UTE_OPE                VARCHAR2(11 BYTE),
+  PGM_OPE                VARCHAR2(11 BYTE),
+  DTA_OPE                VARCHAR2(12 BYTE),
+  ORA_OPE                VARCHAR2(5 BYTE),
+  ID_EVIDENZA            NUMBER,
+  ID_PROGRAMMA_GIORNALE  NUMBER,
+  ID_PROGRAMMA_DINAMICA  NUMBER,
+  EVIDENZA               NUMBER,
+  TIPO_CANCELLAZIONE     VARCHAR2(20 BYTE),
+  KILOMETRO              NUMBER,
+  ID_COMUNE_EOM          NUMBER,
+  ID_LOCALITA_EOM        NUMBER,
+  DATA_EOM               DATE
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+CREATE TABLE ELET_STORICO.GIO_LEVAE
+(
+  ID_SOGGETTO            NUMBER,
+  COD_IND                VARCHAR2(7 BYTE),
+  SESSO                  CHAR(1 BYTE),
+  LIS_GEN                VARCHAR2(7 BYTE),
+  ANN_LIS_GEN            VARCHAR2(4 BYTE),
+  ID_SEZIONE             NUMBER,
+  LIS_SEZ                VARCHAR2(4 BYTE),
+  COGNOME                VARCHAR2(200 BYTE),
+  NOME                   VARCHAR2(200 BYTE),
+  COGNOME_ACQ            VARCHAR2(200 BYTE),
+  ID_STATO_CIVILE        NUMBER,
+  MOTIVO_ISC             VARCHAR2(2 BYTE),
+  VER_ISC                VARCHAR2(5 BYTE),
+  DTA_VER_ISC            DATE,
+  ID_COMUNE_NASCITA      NUMBER,
+  ID_LOCALITA_NASCITA    NUMBER,
+  DATA_NASCITA           DATE,
+  ATTO_NASCITA           VARCHAR2(9 BYTE),
+  COD_TIPO_CIVICO        CHAR(1 BYTE),
+  ID_TOPONIMO            NUMBER,
+  NUM_CIV                NUMBER,
+  LET_CIV                VARCHAR2(1 BYTE),
+  NUM_LOT                VARCHAR2(10 BYTE),
+  NUM_PAL                VARCHAR2(10 BYTE),
+  NUM_SCA                VARCHAR2(10 BYTE),
+  NUM_PIA                VARCHAR2(10 BYTE),
+  NUM_INT                VARCHAR2(10 BYTE),
+  NOM_PAD                VARCHAR2(200 BYTE),
+  ID_COMUNE_EOM          NUMBER,
+  ID_LOCALITA_EOM        NUMBER,
+  DATA_EOM               DATE,
+  ID_COMUNE_PRO          NUMBER,
+  MOT_CAN                VARCHAR2(10 BYTE),
+  VER_CAN                VARCHAR2(10 BYTE),
+  DTA_VER_CAN            DATE,
+  COD_EVI                NUMBER,
+  DTA_EVI                DATE,
+  FLG_EVI                CHAR(1 BYTE),
+  FLG_REV                CHAR(1 BYTE),
+  DTA_REV                DATE,
+  FLG_CEC                CHAR(1 BYTE),
+  TIP_REV                VARCHAR2(3 BYTE),
+  UTE_OPE                VARCHAR2(11 BYTE),
+  PGM_OPE                VARCHAR2(11 BYTE),
+  DTA_OPE                VARCHAR2(12 BYTE),
+  ORA_OPE                VARCHAR2(5 BYTE),
+  ID_EVIDENZA            NUMBER,
+  ID_PROGRAMMA_GIORNALE  NUMBER,
+  ID_PROGRAMMA_DINAMICA  NUMBER,
+  TIP_LAG                NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+CREATE TABLE ELET_STORICO.ELETT_LAEVI
+(
+  ID_ELETTORE                    NUMBER         NOT NULL,
+  ID_SOGGETTO                    NUMBER         NOT NULL,
+  TIP_LAG                        NUMBER,
+  COD_IND                        VARCHAR2(7 BYTE),
+  SESSO                          CHAR(1 BYTE),
+  LIS_GEN                        VARCHAR2(7 BYTE),
+  ANN_LIS_GEN                    VARCHAR2(4 BYTE),
+  ID_SEZIONE                     NUMBER,
+  LIS_SEZ                        VARCHAR2(4 BYTE),
+  ID_PROVINCIA_LA                NUMBER,
+  ID_COMUNE_LA                   NUMBER,
+  DATA_INIZIO_LA                 DATE,
+  DATA_FINE_LA                   DATE,
+  ID_TIPO_LA                     NUMBER,
+  COGNOME                        VARCHAR2(200 BYTE),
+  NOME                           VARCHAR2(200 BYTE),
+  COGNOME_ACQ                    VARCHAR2(200 BYTE),
+  ID_STATO_CIVILE                NUMBER,
+  MOTIVO_ISC                     VARCHAR2(2 BYTE),
+  VER_ISC                        VARCHAR2(5 BYTE),
+  DTA_VER_ISC                    DATE,
+  ID_COMUNE_NASCITA              NUMBER,
+  ID_LOCALITA_NASCITA            NUMBER,
+  DATA_NASCITA                   DATE,
+  ATTO_NASCITA                   VARCHAR2(9 BYTE),
+  COD_TIPO_CIVICO                CHAR(1 BYTE),
+  ID_DOMICILIO                   NUMBER,
+  NUM_CIV                        NUMBER,
+  LET_CIV                        VARCHAR2(1 BYTE),
+  NUM_LOT                        VARCHAR2(10 BYTE),
+  NUM_PAL                        VARCHAR2(10 BYTE),
+  NUM_SCA                        VARCHAR2(10 BYTE),
+  NUM_PIA                        VARCHAR2(10 BYTE),
+  NUM_INT                        VARCHAR2(10 BYTE),
+  NOM_PAD                        VARCHAR2(200 BYTE),
+  ID_COMUNE_EOM                  NUMBER,
+  ID_LOCALITA_EOM                NUMBER,
+  DATA_EOM                       DATE,
+  COM_PRO                        NUMBER,
+  VER_CAN                        VARCHAR2(10 BYTE),
+  DTA_VER_CAN                    DATE,
+  DATA_DOMICILIO                 DATE,
+  UTE_OPE                        VARCHAR2(11 BYTE),
+  PGM_OPE                        VARCHAR2(11 BYTE),
+  DTA_OPE                        VARCHAR2(8 BYTE),
+  ORA_OPE                        VARCHAR2(5 BYTE),
+  ID_PROGRAMMA                   NUMBER,
+  DATA_ULTIMA_MODIFICA           DATE,
+  DATA_INIZIO_VOTANTE_ASSISTITO  DATE,
+  FLG_VOTANTE_ASSISTITO          CHAR(1 BYTE),
+  ID_MOTIVO_CANCELLAZIONE        NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+CREATE TABLE ELET_STORICO.LEVAE
+(
+  ID_SOGGETTO          NUMBER,
+  COD_IND              VARCHAR2(7 BYTE),
+  SESSO                CHAR(1 BYTE),
+  LIS_GEN              VARCHAR2(7 BYTE),
+  ANN_LIS_GEN          VARCHAR2(4 BYTE),
+  SEZ_ELE              VARCHAR2(4 BYTE),
+  LIS_SEZ              VARCHAR2(4 BYTE),
+  COGNOME              VARCHAR2(200 BYTE),
+  NOME                 VARCHAR2(200 BYTE),
+  COGNOME_ACQ          VARCHAR2(200 BYTE),
+  ID_STATO_CIVILE      NUMBER,
+  MOT_ISC              VARCHAR2(2 BYTE),
+  VER_ISC              VARCHAR2(5 BYTE),
+  DTA_VER_ISC          DATE,
+  ID_COMUNE_NASCITA    NUMBER,
+  ID_LOCALITA_NASCITA  NUMBER,
+  DTA_NASCITA          DATE,
+  ATTO_NASCITA         VARCHAR2(9 BYTE),
+  COD_TIPO_CIVICO      CHAR(1 BYTE),
+  ID_TOPONIMO          NUMBER,
+  NUM_CIV              NUMBER,
+  LET_CIV              VARCHAR2(1 BYTE),
+  NUM_LOT              VARCHAR2(10 BYTE),
+  NUM_PAL              VARCHAR2(10 BYTE),
+  NUM_SCA              VARCHAR2(10 BYTE),
+  NUM_PIA              VARCHAR2(10 BYTE),
+  NUM_INT              VARCHAR2(10 BYTE),
+  NOM_PAD              VARCHAR2(200 BYTE),
+  ID_COMUNE_EOM        NUMBER,
+  ID_LOCALITA_EOM      NUMBER,
+  DTA_EOM              DATE,
+  ID_COMUNE_PRO        NUMBER,
+  MOT_CAN              VARCHAR2(10 BYTE),
+  VER_CAN              VARCHAR2(10 BYTE),
+  DTA_VER_CAN          DATE,
+  COD_EVI              VARCHAR2(3 BYTE),
+  DTA_EVI              DATE,
+  FLG_EVI              CHAR(1 BYTE),
+  FLG_REV              CHAR(1 BYTE),
+  DTA_REV              DATE,
+  FLG_CEC              CHAR(1 BYTE),
+  TIP_REV              VARCHAR2(3 BYTE),
+  UTE_OPE              VARCHAR2(11 BYTE),
+  PGM_OPE              VARCHAR2(11 BYTE),
+  DTA_OPE              VARCHAR2(12 CHAR),
+  ORA_OPE              VARCHAR2(5 BYTE),
+  ID_STATUS_SOGGETTO   NUMBER,
+  KILOMETRO            NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+CREATE TABLE ELET_STORICO.STORSCIVO99
+(
+  ID_TRATTO                INTEGER,
+  ID_TOPONIMO              INTEGER,
+  ID_SEZIONE               NUMBER,
+  FLAG_ELET_CON_INDIRIZZO  CHAR(1 CHAR),
+  FLAG_RANGE               CHAR(1 CHAR),
+  CIVICO_DA                VARCHAR2(10 CHAR),
+  CIVICO_A                 VARCHAR2(10 CHAR),
+  PALAZZINA_DA             VARCHAR2(10 CHAR),
+  PALAZZINA_A              VARCHAR2(10 CHAR),
+  LETTERA_DA               VARCHAR2(10 CHAR),
+  LETTERA_A                VARCHAR2(10 CHAR),
+  LOTTO_DA                 VARCHAR2(10 CHAR),
+  LOTTO_A                  VARCHAR2(10 CHAR),
+  COGNOME_DA               VARCHAR2(5 CHAR),
+  COGNOME_A                VARCHAR2(5 CHAR),
+  FLAG_SCI                 CHAR(1 CHAR),
+  ID_COD_NUM               INTEGER,
+  CHILOMETRI_DA            VARCHAR2(10 BYTE),
+  CHILOMETRI_A             VARCHAR2(10 BYTE),
+  SESSO                    VARCHAR2(1 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;

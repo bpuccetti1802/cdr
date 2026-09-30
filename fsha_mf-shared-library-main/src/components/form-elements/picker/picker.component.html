@@ -1,0 +1,21 @@
+<div class="p-0 m-0 position-relative">
+  <label *ngIf="!hideLabel" [class]="class + ' ' + 'pb-1'" [for]="id"
+    [ngClass]="{'text-danger': isTouchedErrored}">{{ label + (required ? ' *' : '') }}</label>
+  <div class="position-relative">
+    <input  [readonly]="disabled" [formControl]="formControl" [id]="id" [placeholder]="placeholder" #flatpickrInput
+      class="form-control border rounded" [ngClass]="{
+        'input-disabled': disabled,
+        'dtp-disabled': disabled,
+        'outline-danger': isTouchedErrored
+      }" />
+    <div class="it-calendar scale px-2">
+      <app-rc-icon name="fa-calendar" [color]="Colors.secondary" [size]="IconSize.xs"></app-rc-icon>
+    </div>
+    <div class="button-clear pe-2" *ngIf="!disabled && formControl && formControl.value">
+      <app-rc-button-icon name="it-close" (click)="flatpickrInstance?.clear()"></app-rc-button-icon>
+    </div>
+  </div>
+  <div *ngIf="isTouchedErrored" class="text-danger error-message">
+    {{ errorMessage }}
+  </div>
+</div>

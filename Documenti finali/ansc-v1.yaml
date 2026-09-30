@@ -1,0 +1,2623 @@
+openapi: 3.0.3
+
+info:
+  title: Integrazione SIPO - ANSC — concentratore operativo
+  version: 1.0.0
+  summary: Formazione presidiata degli atti di stato civile su ANSC e supervisione del back-office.
+  description: |
+    Interfacce esposte dal concentratore `all-ansc-sipo`, il componente che media il dialogo fra i
+    moduli SIPO e l'Archivio Nazionale dello Stato Civile per tutto ciò che riguarda **la formazione
+    dell'atto**.
+
+    Il servizio copre due superfici distinte:
+
+    - le **operazioni applicative**, invocate dalle maschere SIPO durante il percorso presidiato di
+      formazione dell'atto (verifica, allegati, deposito della bozza, firme, annullamento);
+    - le **operazioni di back-office**, che servono la supervisione delle eccezioni,
+      l'amministrazione della configurazione e l'esercizio del componente.
+
+    La formazione dell'atto è un'operazione **presidiata e sincrona**: non esiste alcun invio
+    differito verso ANSC, né coda, né ritentativo automatico. Ogni chiamata verso ANSC avviene entro
+    la sessione OTP dell'Ufficiale di Stato Civile che sta lavorando l'atto.
+
+    La replica locale delle decodifiche ANSC è servita da un componente distinto, con contratto
+    proprio (`ansc-dizionari-v1.yaml`); i percorsi restano nello stesso contesto di dominio.
+
+    Documentazione di analisi: `ANALISI_Integrazione-ANSC_v2.6.docx`. Il rimando è in aggiunta e mai
+    in sostituzione: quanto serve a integrare le interfacce è scritto qui.
+  contact:
+    name: Dipartimento Trasformazione Digitale — Roma Capitale
+  x-componente: all-ansc-sipo
+  x-standard-nomenclatura: Naming_convention_X_API_v1.00.docx
+  x-lingua: it
+
+servers:
+  - url: https://sipo-svil.comune.roma.it
+    description: Ambiente di sviluppo SIPO (verso preproduzione ANSC o mock locale)
+  - url: https://sipo-test.comune.roma.it
+    description: Ambiente di test SIPO (verso preproduzione ANSC)
+  - url: https://sipo.comune.roma.it
+    description: Ambiente di esercizio SIPO (verso produzione ANSC)
+
+tags:
+  - name: atti
+    description: |
+      Il percorso presidiato di formazione dell'atto, nell'ordine in cui le operazioni si susseguono:
+      verifica preliminare, allegati, deposito della bozza, firme, annullamento.
+  - name: sessione
+    description: |
+      La sessione OTP dell'operatore. È la risorsa che abilita ogni chiamata verso ANSC: senza una
+      sessione valida le operazioni sugli atti che contattano ANSC rispondono `409`.
+  - name: eccezioni
+    description: Gli atti che non si sono conclusi nel percorso ordinario e richiedono un intervento.
+  - name: operazioni
+    description: La configurazione per evento, operazione e casistica che guida mappatura e verifica.
+  - name: versioni
+    description: Le versioni della configurazione e la loro attivazione.
+  - name: registrazioni-audit
+    description: Le registrazioni delle chiamate verso ANSC, con richiesta e risposta integrali.
+  - name: postazioni
+    description: Il registro delle postazioni autorizzate, obbligo dell'Allegato 4 del D.M. 18/10/2022.
+  - name: sistema
+    description: Stato del componente, connettività verso ANSC, versione di configurazione attiva.
+
+security:
+  - bearerJwt: []
+
+paths:
+
+  # ------------------------------------------------------------------ sessione
+  /ansc/v1/sessione:
+    get:
+      operationId: leggiSessione
+      summary: Legge lo stato della sessione OTP corrente
+      description: |
+        Restituisce lo stato della sessione OTP dell'operatore autenticato sulla postazione corrente:
+        se è valida, quando scade, quanti minuti mancano.
+
+        Si usa all'ingresso nella maschera di formazione dell'atto, per decidere se il pulsante
+        «Finalizza» possa procedere direttamente o se occorra prima acquisire un OTP.
+
+        Non modifica alcuno stato e non contatta ANSC: legge lo store di sessione del concentratore.
+
+        La segue `sostituisciSessione` quando la sessione risulta assente o scaduta.
+      tags: [sessione]
+      responses:
+        '200':
+          description: Stato della sessione, valida o meno.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Sessione' }
+              examples:
+                esempioSessioneValida:
+                  summary: Sessione valida
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      flagValida: true
+                      idPostazione: PDL-SC-014
+                      operatore: VRDGPP75B02H501Z
+                      dataScadenza: '2026-07-23T14:02:00+02:00'
+                      numMinutiResidui: 118
+                esempioSessioneAssente:
+                  summary: Nessuna sessione aperta
+                  value:
+                    esito: OK
+                    messaggi:
+                      - tipo: INFO
+                        codice: SESSIONE_ASSENTE
+                        descrizione: Nessuna sessione OTP aperta per questa postazione
+                    dati:
+                      flagValida: false
+                      idPostazione: PDL-SC-014
+                      operatore: VRDGPP75B02H501Z
+                      dataScadenza: null
+                      numMinutiResidui: 0
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC, SUPPORTO, AMMINISTRATORE]
+      x-effetti: Operazione di sola lettura, sicura e ripetibile.
+
+    put:
+      operationId: sostituisciSessione
+      summary: Apre o rinnova la sessione OTP consegnando il codice al concentratore
+      description: |
+        Consegna al concentratore il codice OTP che l'operatore ha generato sulla web app OTP di
+        ANSC, aprendo una nuova sessione presidiata per la coppia operatore-postazione. Se una
+        sessione era già aperta, viene sostituita integralmente.
+
+        Si usa quando `leggiSessione` riporta `flagValida: false`, tipicamente all'inizio del turno
+        di lavoro o dopo la scadenza delle quattro ore.
+
+        **Effetti**: il codice OTP è custodito dal concentratore per la durata della sessione e usato
+        per costruire e firmare i token JWT verso ANSC. Il codice **non transita mai** verso altri
+        componenti e non è restituito da alcuna operazione di lettura.
+
+        **Prerequisiti**: la postazione deve essere presente nel registro delle postazioni
+        autorizzate; l'operatore deve avere ruolo USC.
+
+        **Il front-end non dialoga con ANSC e non costruisce token**: si limita a consegnare il
+        codice con questa operazione.
+      tags: [sessione]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SessioneRichiesta' }
+            examples:
+              esempioAperturaSessione:
+                summary: Apertura di sessione a inizio turno
+                value:
+                  codOtp: '482913'
+                  idPostazione: PDL-SC-014
+      responses:
+        '200':
+          description: Sessione aperta o rinnovata.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Sessione' }
+              examples:
+                esempioSessioneAperta:
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      flagValida: true
+                      idPostazione: PDL-SC-014
+                      operatore: VRDGPP75B02H501Z
+                      dataScadenza: '2026-07-23T14:02:00+02:00'
+                      numMinutiResidui: 240
+        '400':
+          description: Codice OTP non accettato da ANSC o postazione non riconosciuta.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+              examples:
+                esempioOtpRifiutato:
+                  summary: OTP non valido
+                  value:
+                    esito: KO
+                    messaggi:
+                      - tipo: ERROR
+                        campo: codOtp
+                        codice: SESSIONE_OTP_NON_VALIDO
+                        descrizione: Il codice OTP non è stato accettato da ANSC. Rigenerarlo dalla web app.
+                    dati: null
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC]
+      x-effetti: |
+        Modifica lo stato: apre o sostituisce la sessione. Ripetibile — una seconda consegna dello
+        stesso codice rinnova la sessione senza effetti ulteriori. Non transazionale con la pratica.
+      x-vincoli: |
+        Il codice OTP ha validità di quattro ore, fissata da ANSC e non prorogabile lato SIPO.
+
+    delete:
+      operationId: eliminaSessione
+      summary: Chiude la sessione OTP corrente
+      description: |
+        Chiude anticipatamente la sessione OTP dell'operatore sulla postazione corrente, cancellando
+        il codice custodito.
+
+        Si usa a fine turno o quando la postazione viene lasciata a un altro operatore.
+
+        **Effetti**: le successive operazioni che contattano ANSC rispondono `409` finché non viene
+        aperta una nuova sessione. Non ha alcun effetto sugli atti già formati.
+      tags: [sessione]
+      responses:
+        '204':
+          description: Sessione chiusa. Nessun contenuto restituito.
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC]
+      x-effetti: 'Modifica lo stato. Ripetibile: chiudere una sessione già chiusa restituisce `204`.'
+
+  # ---------------------------------------------------------------- preverifica
+  /ansc/v1/atti/{idAtto}/preverifiche:
+    parameters:
+      - $ref: '#/components/parameters/IdAtto'
+    post:
+      operationId: verificaAtto
+      summary: Verifica localmente i dati dell'atto prima del deposito
+      description: |
+        Esegue il **pre-filtro locale** sui dati dell'atto: struttura, obbligatorietà per caso d'uso,
+        formati e appartenenza dei codici ai dizionari ANSC replicati in locale. Restituisce gli
+        errori campo per campo e l'indicazione se l'atto sia finalizzabile.
+
+        Si usa quando l'operatore preme «Verifica» nella maschera SIPO, prima di poter premere
+        «Finalizza».
+
+        **Effetti**: nessuno. L'operazione **non contatta ANSC**, non deposita nulla e non consuma
+        alcun identificativo nazionale. È per costruzione ripetibile.
+
+        **Prerequisiti**: l'atto deve essere salvato in SIPO; deve esistere una configurazione attiva
+        per la terna evento-operazione-casistica.
+
+        **Che cosa non intercetta**: le regole che dipendono dallo stato centrale — esistenza e stato
+        di un atto collegato formato altrove, adesione ad ANSC del comune destinatario,
+        riconciliazione del soggetto, posizione anagrafica ANPR, unicità della numerazione. Quelle
+        restano di competenza esclusiva del deposito. Un esito `OK` qui **non garantisce** che il
+        deposito sarà accettato.
+
+        La segue `depositaBozza`.
+      tags: [atti]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PreverificaRichiesta' }
+            examples:
+              esempioPreverificaMorte:
+                summary: Atto di morte, dichiarazione in abitazione
+                value:
+                  idAttoSipo: 88012
+                  codTipoEvento: MORTE
+                  codTipoOperazione: CREAZIONE
+                  codCasistica: DICH_ABITAZIONE
+                  codVersioneConfig: v.12
+      responses:
+        '200':
+          description: |
+            Esito della verifica. La busta riporta `OK` se l'atto è finalizzabile, `KO` se restano
+            errori bloccanti: in entrambi i casi il codice di stato HTTP è `200`, perché
+            l'operazione è stata eseguita correttamente.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/EsitoPreverifica' }
+              examples:
+                esempioPreverificaSuperata:
+                  summary: Verifica superata
+                  value:
+                    esito: OK
+                    messaggi:
+                      - tipo: INFO
+                        codice: PREVERIFICA_SUPERATA
+                        descrizione: Preverifica superata
+                    dati:
+                      flagFinalizzabile: true
+                      codEventoAnsc: Morte_001
+                      numCampiVerificati: 34
+                      codVersioneConfig: v.12
+                esempioPreverificaRespinta:
+                  summary: Campi obbligatori mancanti
+                  value:
+                    esito: KO
+                    messaggi:
+                      - tipo: ERROR
+                        campo: evento.intestatari[0].idNazionalita
+                        codice: OBBL_MANCANTE
+                        descrizione: Cittadinanza del defunto obbligatoria
+                      - tipo: ERROR
+                        campo: evento.intestatari[0].idstatocivile
+                        codice: OBBL_MANCANTE
+                        descrizione: Stato civile del defunto obbligatorio
+                      - tipo: WARNING
+                        campo: evento.intestatari[0].codiceFiscale
+                        codice: FORMATO_NON_VALIDO
+                        descrizione: Codice fiscale formalmente non valido
+                    dati:
+                      flagFinalizzabile: false
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC, SUPPORTO]
+      x-effetti: |
+        Nessuna modifica di stato, né locale né in ANSC. Ripetibile senza limiti.
+      x-codici-errore:
+        - codice: OBBL_MANCANTE
+          condizione: 'Campo dichiarato obbligatorio dalla configurazione e non valorizzato.'
+        - codice: FORMATO_NON_VALIDO
+          condizione: 'Valore presente ma non conforme al formato atteso.'
+        - codice: DECODIFICA_NON_AMMESSA
+          condizione: 'Codice non presente fra i valori validi del dizionario ANSC associato al campo.'
+        - codice: CONFIG_ASSENTE
+          condizione: 'Nessuna configurazione attiva per la terna evento-operazione-casistica.'
+
+  # -------------------------------------------------------------------- allegati
+  /ansc/v1/atti/{idAtto}/allegati:
+    parameters:
+      - $ref: '#/components/parameters/IdAtto'
+    post:
+      operationId: creaAllegato
+      summary: Trasmette un allegato dell'atto ad ANSC
+      description: |
+        Trasmette ad ANSC un documento da allegare all'atto e ne registra l'identificativo restituito.
+        ANSC sottopone il documento a **scansione antivirus asincrona**: l'allegato non è utilizzabile
+        finché la scansione non risulta superata.
+
+        Si usa nel passo degli allegati del percorso di formazione, prima del deposito della bozza,
+        e per il verbale di morte firmato dal dichiarante, che per questo evento è cartaceo.
+
+        **Effetti**: crea una risorsa allegato lato ANSC. **L'operazione non è idempotente**: ANSC non
+        espone alcuna chiave di deduplica, quindi una seconda trasmissione dello stesso documento
+        produce un secondo allegato. In caso di esito indeterminato non ripetere: elencare gli
+        allegati con `elencaAllegati` e verificare che cosa sia stato effettivamente acquisito.
+
+        **Prerequisiti**: sessione OTP valida.
+
+        La segue `leggiAllegato`, da interrogare finché la scansione non risulta conclusa.
+      tags: [atti]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AllegatoRichiesta' }
+            examples:
+              esempioVerbaleMorte:
+                summary: Verbale di morte firmato dal dichiarante
+                value:
+                  codTipoAllegato: VERBALE_DICHIARAZIONE
+                  nomeFile: verbale-88012.pdf
+                  codTipoContenuto: application/pdf
+                  contenutoBase64: JVBERi0xLjQKJcfsj6IKNSAwIG9iago8PC9MZW5ndGgg...
+      responses:
+        '201':
+          description: Allegato trasmesso e in corso di verifica.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Allegato' }
+              examples:
+                esempioAllegatoAcquisito:
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      idAllegato: 771204
+                      idAllegatoAnsc: '2026-058091-A-000045'
+                      codTipoAllegato: VERBALE_DICHIARAZIONE
+                      nomeFile: verbale-88012.pdf
+                      codStatoVerifica: IN_CORSO
+                      dataTrasmissione: '2026-07-23T10:02:20+02:00'
+        '400':
+          description: Documento rifiutato da ANSC (tipo non ammesso, dimensione eccedente, formato illeggibile).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+              examples:
+                esempioTipoNonAmmesso:
+                  value:
+                    esito: KO
+                    messaggi:
+                      - tipo: ERROR
+                        campo: codTipoAllegato
+                        codice: ALLEGATO_TIPO_NON_AMMESSO
+                        descrizione: Tipo di allegato non previsto per il caso d'uso Morte_001
+                    dati: null
+        '409': { $ref: '#/components/responses/SessioneNonValida' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '502': { $ref: '#/components/responses/AnscNonRaggiungibile' }
+        '504': { $ref: '#/components/responses/EsitoIndeterminato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC]
+      x-effetti: |
+        Modifica lo stato in ANSC creando l'allegato. **Non ripetibile senza effetti ulteriori.**
+      x-vincoli: |
+        Dimensione massima del documento e tipi ammessi sono fissati dal contratto ANSC per caso
+        d'uso. Il limite puntuale è da confermare con il fornitore.
+      x-codici-errore:
+        - codice: ALLEGATO_TIPO_NON_AMMESSO
+          condizione: 'Tipo di allegato non previsto per il caso d''uso.'
+        - codice: ALLEGATO_TROPPO_GRANDE
+          condizione: 'Dimensione oltre il limite ammesso da ANSC.'
+        - codice: SESSIONE_OTP_ASSENTE
+          condizione: 'Nessuna sessione OTP valida per la postazione.'
+
+    get:
+      operationId: elencaAllegati
+      summary: Elenca gli allegati dell'atto e il loro stato di verifica
+      description: |
+        Restituisce gli allegati trasmessi per l'atto, con lo stato della scansione antivirus di
+        ciascuno.
+
+        Si usa per sapere se si possa procedere al deposito e, dopo un esito indeterminato su
+        `creaAllegato`, per accertare che cosa sia stato effettivamente acquisito da ANSC prima di
+        decidere se ritrasmettere.
+
+        **Effetti**: nessuno. Interroga ANSC in sola lettura.
+      tags: [atti]
+      responses:
+        '200':
+          description: Elenco degli allegati dell'atto.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati:
+                        type: object
+                        properties:
+                          allegati:
+                            type: array
+                            description: Gli allegati dell'atto, dal più recente.
+                            items: { $ref: '#/components/schemas/Allegato' }
+        '409': { $ref: '#/components/responses/SessioneNonValida' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '502': { $ref: '#/components/responses/AnscNonRaggiungibile' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC, SUPPORTO]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+  /ansc/v1/atti/{idAtto}/allegati/{idAllegato}:
+    parameters:
+      - $ref: '#/components/parameters/IdAtto'
+      - $ref: '#/components/parameters/IdAllegato'
+    get:
+      operationId: leggiAllegato
+      summary: Legge lo stato di verifica di un allegato
+      description: |
+        Restituisce il singolo allegato con l'esito della scansione antivirus: in corso, superata o
+        respinta.
+
+        Si usa in attesa dell'esito della scansione, che ANSC esegue in modo asincrono. Il front-end
+        interroga a intervalli finché lo stato non è definitivo; solo con la scansione superata il
+        percorso può proseguire verso il deposito.
+
+        **Effetti**: nessuno.
+      tags: [atti]
+      responses:
+        '200':
+          description: Stato dell'allegato.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Allegato' }
+              examples:
+                esempioScansioneSuperata:
+                  summary: Scansione conclusa positivamente
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      idAllegato: 771204
+                      idAllegatoAnsc: '2026-058091-A-000045'
+                      codTipoAllegato: VERBALE_DICHIARAZIONE
+                      nomeFile: verbale-88012.pdf
+                      codStatoVerifica: SUPERATA
+                      dataTrasmissione: '2026-07-23T10:02:20+02:00'
+                esempioScansioneRespinta:
+                  summary: Documento respinto dalla scansione
+                  value:
+                    esito: KO
+                    messaggi:
+                      - tipo: ERROR
+                        codice: ALLEGATO_SCANSIONE_RESPINTA
+                        descrizione: Il documento non ha superato la scansione antivirus. Ritrasmettere un file diverso.
+                    dati:
+                      idAllegato: 771204
+                      codStatoVerifica: RESPINTA
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '409': { $ref: '#/components/responses/SessioneNonValida' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '502': { $ref: '#/components/responses/AnscNonRaggiungibile' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC, SUPPORTO]
+      x-effetti: Sola lettura, sicura e ripetibile.
+      x-vincoli: |
+        L'interrogazione ripetuta va temporizzata. In assenza di un limite dichiarato da ANSC si
+        raccomanda un intervallo non inferiore a due secondi.
+
+  # -------------------------------------------------------------------- deposito
+  /ansc/v1/atti/{idAtto}/deposito:
+    parameters:
+      - $ref: '#/components/parameters/IdAtto'
+    post:
+      operationId: depositaBozza
+      summary: Deposita la bozza dell'atto in ANSC e ne ottiene l'identificativo nazionale
+      description: |
+        Sottopone l'atto alla validazione di ANSC. Se la validazione è superata, **la bozza è
+        depositata** sul sistema nazionale e ANSC restituisce l'**identificativo nazionale
+        dell'atto**; lo stato locale passa a `CONFERMATO`.
+
+        Si usa alla pressione di «Finalizza», dopo che la verifica preliminare è stata superata e gli
+        allegati hanno passato la scansione.
+
+        **La validazione non è una prova a vuoto**: se va a buon fine deposita e consuma un
+        identificativo nazionale. È la ragione per cui la precede sempre `verificaAtto`.
+
+        **Effetti**: modifica lo stato in ANSC e, nella stessa transazione locale, lo store di stato
+        dell'atto. **Non ripetibile**: ANSC non espone alcuna chiave di deduplica, quindi un secondo
+        deposito produrrebbe un secondo atto nazionale. In caso di esito indeterminato **non
+        ritentare**: usare `riconciliaAtto` per accertare lo stato reale.
+
+        Se la validazione è respinta ANSC risponde con errore e **non crea nulla**: nessun
+        identificativo è consumato, l'atto resta `IN_PREPARAZIONE` e va corretto nella maschera SIPO.
+
+        **Prerequisiti**: sessione OTP valida; verifica preliminare superata; allegati con scansione
+        superata.
+
+        Lo segue `firmaAtto`.
+      tags: [atti]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DepositoRichiesta' }
+            examples:
+              esempioDepositoMorte:
+                value:
+                  idAttoSipo: 88012
+                  codTipoEvento: MORTE
+                  codTipoOperazione: CREAZIONE
+                  codCasistica: DICH_ABITAZIONE
+                  codVersioneConfig: v.12
+                  idOperazioneComune: MORTE-88012-CREAZIONE
+                  operatore: VRDGPP75B02H501Z
+                  idPostazione: PDL-SC-014
+      responses:
+        '200':
+          description: |
+            Esito della validazione. `OK` se la bozza è stata depositata, `KO` se ANSC ha respinto i
+            dati.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/EsitoDeposito' }
+              examples:
+                esempioDepositoRiuscito:
+                  summary: Bozza depositata
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      idStatoAtto: 550123
+                      stato: CONFERMATO
+                      idAnsc: '2026-058091-000123'
+                      codEventoAnsc: Morte_001
+                      dataDeposito: '2026-07-23T10:03:00+02:00'
+                esempioDepositoRifiutato:
+                  summary: Validazione respinta, nessun deposito
+                  value:
+                    esito: KO
+                    messaggi:
+                      - tipo: ERROR
+                        campo: evento.intestatari[0].idstatocivile
+                        codice: ANSC_400001
+                        descrizione: 'Campo obbligatorio non compilato: stato civile del defunto'
+                    dati:
+                      idStatoAtto: 550123
+                      stato: IN_PREPARAZIONE
+                      codTipoEsito: SCARTATO
+                      idAnsc: null
+        '409':
+          description: |
+            Sessione OTP assente o scaduta, oppure l'atto non è in uno stato che ammette il deposito
+            (per esempio è già stato depositato).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+              examples:
+                esempioGiaDepositato:
+                  value:
+                    esito: KO
+                    messaggi:
+                      - tipo: ERROR
+                        codice: ATTO_GIA_DEPOSITATO
+                        descrizione: L'atto risulta già depositato in ANSC con identificativo 2026-058091-000123
+                    dati:
+                      stato: CONFERMATO
+                      idAnsc: '2026-058091-000123'
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '502': { $ref: '#/components/responses/AnscNonRaggiungibile' }
+        '504': { $ref: '#/components/responses/EsitoIndeterminato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC]
+      x-effetti: |
+        Modifica lo stato in ANSC e nello store locale, nella stessa transazione della pratica.
+        **Non ripetibile.** In caso di timeout l'esito è indeterminato e va accertato con
+        `riconciliaAtto`, mai ritentato.
+      x-codici-errore:
+        - codice: ANSC_400001
+          condizione: 'Campo obbligatorio non compilato, rilevato dalla validazione ANSC.'
+        - codice: ATTO_GIA_DEPOSITATO
+          condizione: 'Lo store di stato riporta un identificativo nazionale già assegnato.'
+        - codice: PREVERIFICA_NON_SUPERATA
+          condizione: 'L''atto non ha superato la verifica preliminare.'
+        - codice: ALLEGATO_NON_VERIFICATO
+          condizione: 'Uno o più allegati non hanno concluso la scansione.'
+        - codice: SESSIONE_OTP_ASSENTE
+          condizione: 'Nessuna sessione OTP valida per la postazione.'
+
+  # ----------------------------------------------------------------------- firme
+  /ansc/v1/atti/{idAtto}/firme:
+    parameters:
+      - $ref: '#/components/parameters/IdAtto'
+    post:
+      operationId: firmaAtto
+      summary: Appone una firma sull'atto depositato
+      description: |
+        Appone sull'atto la firma del dichiarante o quella dell'Ufficiale di Stato Civile, portandolo
+        allo stato successivo del ciclo di vita. Con la firma dell'Ufficiale **l'atto è formato** e
+        diventa immodificabile.
+
+        Si usa dopo il deposito della bozza. Per l'atto di morte la firma del dichiarante è cartacea:
+        si trasmette il verbale firmato come allegato e si registra la firma con
+        `codTipoFirma: DICHIARANTE`; la firma dell'Ufficiale è digitale remota e richiede le
+        credenziali del provider di firma qualificata, raccolte dalla maschera al momento
+        dell'operazione.
+
+        **Le credenziali di firma sono cosa diversa dall'OTP di sessione.** L'OTP di sessione
+        autentica le chiamate cooperative e dura quattro ore; le credenziali di firma valgono per il
+        singolo atto e comprendono un OTP proprio, emesso dal provider di firma.
+
+        **Effetti**: modifica lo stato in ANSC e nello store locale. **Non ripetibile**: una seconda
+        firma sullo stesso atto è respinta. In caso di esito indeterminato accertare lo stato con
+        `riconciliaAtto`.
+
+        **Prerequisiti**: sessione OTP valida; atto in stato `CONFERMATO` per la firma del
+        dichiarante, `FIRMATO_DICHIARANTE` per quella dell'Ufficiale.
+
+        **La firma non è automatizzabile**: è un atto personale dell'Ufficiale, che ne risponde. Il
+        concentratore non firma mai in autonomia.
+      tags: [atti]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FirmaRichiesta' }
+            examples:
+              esempioFirmaDichiarante:
+                summary: Firma del dichiarante, cartacea
+                value:
+                  codTipoFirma: DICHIARANTE
+                  idAllegatoVerbale: 771204
+              esempioFirmaUsc:
+                summary: Firma digitale remota dell'Ufficiale
+                value:
+                  codTipoFirma: USC
+                  credenzialiFirma:
+                    utenza: usc.roma.014
+                    pin: '••••••'
+                    codOtpProvider: '739205'
+      responses:
+        '200':
+          description: Esito della firma.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/EsitoFirma' }
+              examples:
+                esempioAttoFormato:
+                  summary: Atto formato
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      idStatoAtto: 550123
+                      stato: FIRMATO_USC
+                      idAnsc: '2026-058091-000123'
+                      dataFirma: '2026-07-23T10:05:10+02:00'
+                esempioFirmaRespinta:
+                  summary: Credenziali di firma non valide
+                  value:
+                    esito: KO
+                    messaggi:
+                      - tipo: ERROR
+                        campo: credenzialiFirma.codOtpProvider
+                        codice: FIRMA_CREDENZIALI_NON_VALIDE
+                        descrizione: Le credenziali di firma non sono state accettate dal provider
+                    dati:
+                      idStatoAtto: 550123
+                      stato: CONFERMATO
+        '409':
+          description: Sessione OTP non valida, oppure stato dell'atto incompatibile con la firma richiesta.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '502': { $ref: '#/components/responses/AnscNonRaggiungibile' }
+        '504': { $ref: '#/components/responses/EsitoIndeterminato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC]
+      x-effetti: |
+        Modifica lo stato in ANSC e nello store locale. **Non ripetibile.** La firma dell'Ufficiale
+        rende l'atto immodificabile.
+      x-vincoli: |
+        Le credenziali di firma non sono mai persistite, né in chiaro né cifrate, e non compaiono
+        nelle registrazioni di audit.
+      x-codici-errore:
+        - codice: FIRMA_CREDENZIALI_NON_VALIDE
+          condizione: 'Utenza, PIN o OTP del provider di firma non accettati.'
+        - codice: FIRMA_STATO_INCOMPATIBILE
+          condizione: 'L''atto non è nello stato che ammette la firma richiesta.'
+        - codice: FIRMA_GIA_APPOSTA
+          condizione: 'Una firma dello stesso tipo risulta già apposta.'
+        - codice: SESSIONE_OTP_ASSENTE
+          condizione: 'Nessuna sessione OTP valida per la postazione.'
+
+    get:
+      operationId: elencaFirme
+      summary: Elenca le firme apposte sull'atto
+      description: |
+        Restituisce le firme registrate sull'atto, con tipo, firmatario e istante.
+
+        Si usa per ricostruire a che punto del percorso di formazione si trovi l'atto e, dopo un
+        esito indeterminato sulla firma, per accertare se la firma sia stata effettivamente apposta.
+
+        **Effetti**: nessuno.
+      tags: [atti]
+      responses:
+        '200':
+          description: Elenco delle firme.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati:
+                        type: object
+                        properties:
+                          firme:
+                            type: array
+                            description: Le firme apposte, in ordine cronologico.
+                            items: { $ref: '#/components/schemas/Firma' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC, SUPPORTO, AUDITOR]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+  # ------------------------------------------------------------------ annullamento
+  /ansc/v1/atti/{idAtto}/annullamento:
+    parameters:
+      - $ref: '#/components/parameters/IdAtto'
+    post:
+      operationId: annullaAtto
+      summary: Annulla logicamente in ANSC una bozza depositata
+      description: |
+        Cancella logicamente in ANSC un evento già depositato ma non ancora formato, portandolo allo
+        stato `ANNULLATO`.
+
+        Si usa in un solo caso legittimo: quando una riconciliazione ha accertato che un esito
+        indeterminato ha prodotto in ANSC un deposito **duplicato**, e occorre eliminare quello di
+        troppo.
+
+        **Non è l'annullamento dell'atto di stato civile**, che è un provvedimento con una propria
+        disciplina: è la cancellazione logica di una bozza tecnica.
+
+        **Effetti**: modifica lo stato in ANSC. Ripetibile: annullare un evento già annullato
+        restituisce l'esito corrente senza effetti ulteriori.
+
+        **Prerequisiti**: sessione OTP valida; l'atto non deve essere già formato. Un atto firmato
+        dall'Ufficiale non è annullabile per questa via.
+
+        La precede sempre `riconciliaAtto`: non si annulla nulla senza aver prima accertato lo stato
+        reale.
+      tags: [atti]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AnnullamentoRichiesta' }
+            examples:
+              esempioAnnullamentoDuplicato:
+                value:
+                  idAnsc: '2026-058091-000124'
+                  codMotivo: DUPLICATO_DA_RICONCILIAZIONE
+                  note: Deposito duplicato accertato con riconciliazione del 23/07/2026
+      responses:
+        '200':
+          description: Esito dell'annullamento.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/EsitoAnnullamento' }
+              examples:
+                esempioAnnullato:
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      idAnsc: '2026-058091-000124'
+                      stato: ANNULLATO
+                      dataAnnullamento: '2026-07-23T11:20:00+02:00'
+        '409':
+          description: L'atto è già formato e non è annullabile per questa via.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+              examples:
+                esempioAttoFormato:
+                  value:
+                    esito: KO
+                    messaggi:
+                      - tipo: ERROR
+                        codice: ANNULLAMENTO_ATTO_FORMATO
+                        descrizione: L'atto è firmato dall'Ufficiale e non è annullabile con questa operazione
+                    dati:
+                      stato: FIRMATO_USC
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '502': { $ref: '#/components/responses/AnscNonRaggiungibile' }
+        '504': { $ref: '#/components/responses/EsitoIndeterminato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC]
+      x-effetti: Modifica lo stato in ANSC. Ripetibile senza effetti ulteriori.
+      x-codici-errore:
+        - codice: ANNULLAMENTO_ATTO_FORMATO
+          condizione: 'L''atto è firmato dall''Ufficiale.'
+        - codice: SESSIONE_OTP_ASSENTE
+          condizione: 'Nessuna sessione OTP valida per la postazione.'
+
+  # ---------------------------------------------------------------------- stato
+  /ansc/v1/atti/{idAtto}/stato:
+    parameters:
+      - $ref: '#/components/parameters/IdAtto'
+    get:
+      operationId: leggiStatoAtto
+      summary: Legge lo stato ANSC dell'atto registrato in SIPO
+      description: |
+        Restituisce lo stato dell'atto in ANSC come registrato nello store locale, con
+        l'identificativo nazionale se assegnato.
+
+        Si usa per mostrare nella maschera SIPO l'indicatore di stato dell'atto e per decidere quali
+        azioni proporre all'operatore.
+
+        **Legge lo store locale, non ANSC.** Per accertare lo stato reale sul sistema nazionale si usa
+        `riconciliaAtto`.
+
+        **Effetti**: nessuno.
+      tags: [atti]
+      responses:
+        '200':
+          description: Stato dell'atto.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/StatoAtto' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC, SUPPORTO, AUDITOR]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+  # ================================================================ BACK-OFFICE
+
+  /ansc/v1/back-office/eccezioni:
+    get:
+      operationId: elencaEccezioni
+      summary: Elenca gli atti non conclusi nel percorso ordinario
+      description: |
+        Restituisce la worklist delle eccezioni: gli atti che non si sono conclusi nel percorso
+        presidiato e richiedono un intervento, raggruppati per categoria di anomalia.
+
+        Si usa come schermata di ingresso della supervisione. **Non è la superficie di lavoro
+        ordinaria**: la formazione degli atti avviene nelle maschere SIPO, non qui.
+
+        Le categorie ricalcano la tassonomia degli errori per fase: da riprendere, indeterminati,
+        scartati in validazione, bloccati su allegato, firma non riuscita.
+
+        **Effetti**: nessuno. Legge lo store di stato locale.
+      tags: [eccezioni]
+      parameters:
+        - { name: codCategoria, in: query, required: false, description: 'Categoria di eccezione: DA_RIPRENDERE, INDETERMINATI, SCARTATI, BLOCCATI_ALLEGATO, FIRMA_NON_RIUSCITA.', schema: { type: string } }
+        - { name: idMunicipio, in: query, required: false, description: 'Municipio di competenza.', schema: { type: string } }
+        - { name: operatore, in: query, required: false, description: 'Ufficiale cui l''atto è instradato.', schema: { type: string } }
+        - { name: stato, in: query, required: false, description: 'Stato reale dell''atto in ANSC.', schema: { $ref: '#/components/schemas/StatoAnsc' } }
+        - $ref: '#/components/parameters/NumPagina'
+        - $ref: '#/components/parameters/NumElementi'
+        - $ref: '#/components/parameters/Ordinamento'
+      responses:
+        '200':
+          description: Elenco paginato delle eccezioni, con i contatori per categoria.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati:
+                        type: object
+                        properties:
+                          eccezioni:
+                            type: array
+                            description: Le eccezioni della pagina richiesta.
+                            items: { $ref: '#/components/schemas/Eccezione' }
+                          contatori:
+                            type: array
+                            description: Numero di atti per categoria, sull'intero insieme filtrato.
+                            items:
+                              type: object
+                              properties:
+                                codCategoria: { type: string, description: 'Categoria di eccezione.' }
+                                numAtti: { type: integer, description: 'Atti nella categoria.' }
+                          navigazione: { $ref: '#/components/schemas/Navigazione' }
+              examples:
+                esempioWorklist:
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      eccezioni:
+                        - idAttoSipo: 88431
+                          codTipoEvento: MORTE
+                          stato: CONFERMATO
+                          codCategoria: DA_RIPRENDERE
+                          descProblema: Sessione OTP scaduta durante la firma
+                          operatore: VRDGPP75B02H501Z
+                          idMunicipio: '01'
+                          ultimoErrore: '406002 — token scaduto'
+                          dataUltimoTentativo: '2026-07-23T09:41:00+02:00'
+                      contatori:
+                        - { codCategoria: DA_RIPRENDERE, numAtti: 4 }
+                        - { codCategoria: INDETERMINATI, numAtti: 1 }
+                      navigazione: { numPagina: 1, numElementi: 25, numTotale: 5 }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC, SUPPORTO]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+  /ansc/v1/back-office/atti:
+    get:
+      operationId: elencaAtti
+      summary: Elenca gli atti in lavorazione con i filtri di ricerca
+      description: |
+        Restituisce gli atti con stato ANSC registrato, filtrabili per stato reale, ufficiale,
+        municipio, identificativo nazionale o codice fiscale del soggetto.
+
+        Assorbe la funzione di ricerca e tracciabilità: non esiste una collezione separata per la
+        tracciabilità, che è un'attività e non un insieme di risorse.
+
+        **Effetti**: nessuno.
+      tags: [atti]
+      parameters:
+        - { name: stato, in: query, required: false, description: 'Stato reale dell''atto in ANSC.', schema: { $ref: '#/components/schemas/StatoAnsc' } }
+        - { name: idAnsc, in: query, required: false, description: 'Identificativo nazionale dell''atto.', schema: { type: string } }
+        - { name: codiceFiscale, in: query, required: false, description: 'Codice fiscale del soggetto intestatario.', schema: { type: string } }
+        - { name: operatore, in: query, required: false, description: 'Ufficiale competente.', schema: { type: string } }
+        - { name: idMunicipio, in: query, required: false, description: 'Municipio di competenza.', schema: { type: string } }
+        - { name: dataDepositoDa, in: query, required: false, description: 'Limite inferiore della data di deposito.', schema: { type: string, format: date } }
+        - { name: dataDepositoA, in: query, required: false, description: 'Limite superiore della data di deposito.', schema: { type: string, format: date } }
+        - $ref: '#/components/parameters/NumPagina'
+        - $ref: '#/components/parameters/NumElementi'
+        - $ref: '#/components/parameters/Ordinamento'
+        - $ref: '#/components/parameters/Campi'
+      responses:
+        '200':
+          description: Elenco paginato degli atti.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati:
+                        type: object
+                        properties:
+                          atti:
+                            type: array
+                            items: { $ref: '#/components/schemas/StatoAtto' }
+                            description: Gli atti della pagina richiesta.
+                          navigazione: { $ref: '#/components/schemas/Navigazione' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC, SUPPORTO, AUDITOR, AMMINISTRATORE]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+  /ansc/v1/back-office/atti/{idAtto}:
+    parameters:
+      - $ref: '#/components/parameters/IdAtto'
+    get:
+      operationId: leggiAtto
+      summary: Legge il dettaglio dell'atto con la cronologia delle chiamate
+      description: |
+        Restituisce lo stato dell'atto, l'identificativo nazionale e la cronologia delle chiamate
+        verso ANSC che lo riguardano, nell'ordine in cui sono avvenute.
+
+        Si usa per diagnosticare un'anomalia prima di decidere l'azione di recupero.
+
+        **Effetti**: nessuno.
+      tags: [atti]
+      responses:
+        '200':
+          description: Dettaglio dell'atto.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/DettaglioAtto' }
+              examples:
+                esempioDettaglio:
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      idAttoSipo: 88012
+                      codTipoEvento: MORTE
+                      codTipoOperazione: CREAZIONE
+                      soggetto: Rossi Mario (RSSMRA80A01H501U)
+                      idAnsc: '2026-058091-000123'
+                      statoAnsc: FIRMATO_USC
+                      statoLocale: FIRMATO_USC
+                      cronologia:
+                        - { codFase: ALLEGATI, codServizio: R001, esito: OK, dataChiamata: '2026-07-23T10:02:20+02:00' }
+                        - { codFase: SOGGETTO, codServizio: R005, esito: OK, dataChiamata: '2026-07-23T10:02:25+02:00' }
+                        - { codFase: DEPOSITO, codServizio: R009, esito: OK, dataChiamata: '2026-07-23T10:03:00+02:00' }
+                        - { codFase: FIRMA_DICH, codServizio: R006, esito: OK, dataChiamata: '2026-07-23T10:04:10+02:00' }
+                        - { codFase: FIRMA_USC, codServizio: R007, esito: OK, dataChiamata: '2026-07-23T10:05:10+02:00' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC, SUPPORTO, AUDITOR]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+  /ansc/v1/back-office/atti/{idAtto}/azioni:
+    parameters:
+      - $ref: '#/components/parameters/IdAtto'
+    post:
+      operationId: creaAzione
+      summary: Registra un'azione di back-office sull'atto
+      description: |
+        Registra sull'atto un'azione non dispositiva del back-office: instradarlo a un altro
+        ufficiale, annotarlo, marcarlo come preso in carico.
+
+        Si usa dalla vista di supervisione, sul dettaglio dell'atto.
+
+        **Le scritture verso ANSC non passano di qui.** Deposito, firme e annullamento sono operazioni
+        presidiate del percorso di formazione e vivono sotto `/ansc/v1/atti`. Questa collezione
+        raccoglie soltanto ciò che resta locale.
+
+        La sottorisorsa generica `azioni` è una deroga consapevole al modello per sostantivi
+        deverbali, ammessa dallo standard per operazioni rare ed eterogenee fra loro.
+
+        **Effetti**: modifica lo stato locale dell'atto e registra una voce di audit. Ripetibile.
+      tags: [atti]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AzioneRichiesta' }
+            examples:
+              esempioInstradamento:
+                summary: Instradamento a un altro ufficiale
+                value:
+                  codTipoAzione: INSTRADA
+                  operatoreDestinatario: BNCLRA82C41H501K
+                  note: Competenza del Municipio I
+      responses:
+        '201':
+          description: Azione registrata.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Azione' }
+        '400':
+          description: Tipo di azione non ammesso per lo stato corrente dell'atto.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [SUPPORTO]
+      x-effetti: Modifica lo stato locale. Nessun effetto su ANSC.
+      x-codici-errore:
+        - codice: AZIONE_NON_AMMESSA
+          condizione: 'Il tipo di azione non è previsto per lo stato corrente dell''atto.'
+
+  /ansc/v1/back-office/atti/{idAtto}/riconciliazioni:
+    parameters:
+      - $ref: '#/components/parameters/IdAtto'
+    post:
+      operationId: riconciliaAtto
+      summary: Accerta in ANSC lo stato reale dell'atto e allinea quello locale
+      description: |
+        Interroga ANSC per accertare lo stato reale dell'atto e allinea di conseguenza lo store
+        locale, registrando l'esito come una riconciliazione consultabile.
+
+        Si usa dopo un **esito indeterminato** — un timeout su deposito o firma, dove non si sa se
+        l'operazione sia andata a buon fine — e ogni volta che lo stato locale è sospetto.
+
+        **È l'alternativa al ritentativo, non un suo complemento.** Poiché ANSC non espone alcuna
+        chiave di deduplica, ripetere un'operazione dall'esito ignoto rischia di creare un duplicato:
+        prima si accerta, poi si decide.
+
+        **Effetti**: modifica lo stato locale se diverge da quello reale; non modifica nulla in ANSC.
+        Ripetibile senza effetti ulteriori.
+
+        La può seguire `annullaAtto`, se la riconciliazione ha rivelato un duplicato.
+      tags: [atti]
+      responses:
+        '200':
+          description: Esito della riconciliazione, con l'indicazione se lo stato locale sia stato modificato.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Riconciliazione' }
+              examples:
+                esempioDivergenza:
+                  summary: Lo stato locale era disallineato
+                  value:
+                    esito: OK
+                    messaggi:
+                      - tipo: INFO
+                        codice: RICONCILIAZIONE_DIVERGENZA
+                        descrizione: Lo stato locale è stato allineato a quello reale in ANSC
+                    dati:
+                      idRiconciliazione: 4471
+                      statoPrecedente: IN_PREPARAZIONE
+                      statoReale: CONFERMATO
+                      idAnsc: '2026-058091-000123'
+                      flagAllineato: true
+                      dataRiconciliazione: '2026-07-23T11:05:00+02:00'
+        '409': { $ref: '#/components/responses/SessioneNonValida' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '502': { $ref: '#/components/responses/AnscNonRaggiungibile' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [SUPPORTO, USC]
+      x-effetti: |
+        Modifica lo stato locale se divergente. Nessun effetto su ANSC. Ripetibile.
+      x-codici-errore:
+        - codice: RICONCILIAZIONE_DIVERGENZA
+          condizione: 'Lo stato reale differiva da quello locale ed è stato allineato.'
+        - codice: RICONCILIAZIONE_DUPLICATO
+          condizione: 'In ANSC risultano più eventi riconducibili allo stesso atto SIPO.'
+    get:
+      operationId: elencaRiconciliazioni
+      summary: Elenca le riconciliazioni eseguite sull'atto
+      description: |
+        Restituisce lo storico delle riconciliazioni eseguite sull'atto, con lo stato accertato di
+        volta in volta.
+
+        Si usa per ricostruire la diagnosi di un'anomalia e per documentare le decisioni prese.
+
+        **Effetti**: nessuno.
+      tags: [atti]
+      parameters:
+        - $ref: '#/components/parameters/NumPagina'
+        - $ref: '#/components/parameters/NumElementi'
+      responses:
+        '200':
+          description: Storico delle riconciliazioni.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati:
+                        type: object
+                        properties:
+                          riconciliazioni:
+                            type: array
+                            items: { $ref: '#/components/schemas/Riconciliazione' }
+                            description: Le riconciliazioni, dalla più recente.
+                          navigazione: { $ref: '#/components/schemas/Navigazione' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [SUPPORTO, AUDITOR]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+  # ------------------------------------------------------------- configurazione
+  /ansc/v1/back-office/configurazione/operazioni:
+    get:
+      operationId: elencaOperazioni
+      summary: Elenca le operazioni configurate
+      description: |
+        Restituisce le operazioni configurate — la terna evento, operazione e casistica con l'evento
+        ANSC corrispondente — filtrabili per versione di configurazione.
+
+        Si usa dalla schermata di amministrazione della configurazione.
+
+        **Effetti**: nessuno.
+      tags: [operazioni]
+      parameters:
+        - { name: codVersione, in: query, required: false, description: 'Versione di configurazione; se omessa vale quella attiva.', schema: { type: string } }
+        - { name: codTipoEvento, in: query, required: false, description: 'Tipo di evento di stato civile.', schema: { type: string } }
+        - $ref: '#/components/parameters/NumPagina'
+        - $ref: '#/components/parameters/NumElementi'
+      responses:
+        '200':
+          description: Elenco delle operazioni configurate.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati:
+                        type: object
+                        properties:
+                          operazioni:
+                            type: array
+                            items: { $ref: '#/components/schemas/OperazioneConfigurata' }
+                            description: Le operazioni della pagina richiesta.
+                          navigazione: { $ref: '#/components/schemas/Navigazione' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+  /ansc/v1/back-office/configurazione/operazioni/{idOperazione}:
+    parameters:
+      - $ref: '#/components/parameters/IdOperazione'
+    get:
+      operationId: leggiOperazione
+      summary: Legge un'operazione configurata
+      description: |
+        Restituisce la configurazione di una singola operazione: evento ANSC, mappatore, indicatori di
+        firma e trascrizione, versione e validità.
+
+        **Effetti**: nessuno.
+      tags: [operazioni]
+      responses:
+        '200':
+          description: L'operazione configurata.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/OperazioneConfigurata' }
+              examples:
+                esempioOperazioneMorte:
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      idOperazione: 1
+                      codTipoEvento: MORTE
+                      codTipoOperazione: CREAZIONE
+                      codCasistica: DICH_ABITAZIONE
+                      codEventoAnsc: Morte_001
+                      codServizioAnsc: R009
+                      idMapper: MorteDichiarazione
+                      flagTrascrizione: false
+                      flagFirma: true
+                      codVersione: v.12
+                      dataValiditaDa: '2026-07-20'
+                      dataValiditaA: '9999-12-31'
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE]
+      x-effetti: Sola lettura, sicura e ripetibile.
+    put:
+      operationId: sostituisciOperazione
+      summary: Sostituisce la configurazione di un'operazione
+      description: |
+        Sostituisce integralmente la configurazione dell'operazione indicata.
+
+        Si usa in fase di manutenzione della configurazione, su una versione **in stato di bozza**.
+
+        **Effetti**: modifica la configurazione. **La versione attiva non è modificabile**: per
+        cambiare una configurazione in esercizio si crea una nuova versione con `creaVersione`, la si
+        modifica e la si rende corrente con `attivaVersione`. Ripetibile.
+      tags: [operazioni]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OperazioneConfigurata' }
+      responses:
+        '200':
+          description: Configurazione sostituita.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/OperazioneConfigurata' }
+        '409':
+          description: La versione di configurazione è attiva e non modificabile.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+              examples:
+                esempioVersioneAttiva:
+                  value:
+                    esito: KO
+                    messaggi:
+                      - tipo: ERROR
+                        codice: CONFIG_VERSIONE_ATTIVA
+                        descrizione: La versione v.12 è attiva. Creare una nuova versione per modificarla.
+                    dati: null
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE]
+      x-effetti: Modifica la configurazione. Ripetibile.
+      x-codici-errore:
+        - codice: CONFIG_VERSIONE_ATTIVA
+          condizione: 'Tentativo di modificare la versione di configurazione in esercizio.'
+
+  /ansc/v1/back-office/configurazione/operazioni/{idOperazione}/campi:
+    parameters:
+      - $ref: '#/components/parameters/IdOperazione'
+    get:
+      operationId: elencaCampi
+      summary: Elenca i campi configurati per un'operazione
+      description: |
+        Restituisce la mappatura campo per campo fra il modello ANSC e le colonne SIPO, con
+        obbligatorietà, condizioni, dizionario di validazione e messaggio da mostrare all'operatore.
+
+        È la configurazione che il pre-filtro applica in `verificaAtto`.
+
+        **Effetti**: nessuno.
+      tags: [operazioni]
+      responses:
+        '200':
+          description: I campi configurati.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati:
+                        type: object
+                        properties:
+                          campi:
+                            type: array
+                            items: { $ref: '#/components/schemas/CampoConfigurato' }
+                            description: I campi dell'operazione.
+              examples:
+                esempioCampi:
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      campi:
+                        - campoAnsc: evento.datiDiMorte.idComuneMorte
+                          campoSipo: ATTO_DECESSO.ID_COMUNE_DECESSO
+                          flagObbligatorio: false
+                          condizione: se decesso in Italia
+                          codDecodificaAnsc: null
+                          messaggio: Comune del decesso
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE]
+      x-effetti: Sola lettura, sicura e ripetibile.
+    put:
+      operationId: sostituisciCampi
+      summary: Sostituisce i campi configurati per un'operazione
+      description: |
+        Sostituisce integralmente l'elenco dei campi configurati per l'operazione.
+
+        Si usa dopo una revisione della mappatura. Vale il medesimo vincolo di
+        `sostituisciOperazione`: la versione attiva non è modificabile.
+
+        **Effetti**: modifica la configurazione. Ripetibile.
+      tags: [operazioni]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                campi:
+                  type: array
+                  items: { $ref: '#/components/schemas/CampoConfigurato' }
+                  description: L'elenco completo dei campi che sostituisce quello esistente.
+      responses:
+        '200':
+          description: Campi sostituiti.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+        '409':
+          description: La versione di configurazione è attiva e non modificabile.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE]
+      x-effetti: Modifica la configurazione. Ripetibile.
+
+  /ansc/v1/back-office/configurazione/operazioni/{idOperazione}/campi/importazioni:
+    parameters:
+      - $ref: '#/components/parameters/IdOperazione'
+    post:
+      operationId: importaCampi
+      summary: Importa i campi dal mapping ufficiale dei casi d'uso ANSC
+      description: |
+        Popola i campi configurati a partire dal mapping ufficiale dei casi d'uso pubblicato da ANSC e
+        dai dizionari replicati in locale, riducendo il lavoro manuale di prima configurazione.
+
+        Si usa quando si abilita un nuovo evento o quando il fornitore pubblica una revisione del
+        mapping.
+
+        **Effetti**: crea o aggiorna i campi dell'operazione. Ripetibile: una seconda importazione
+        dello stesso mapping non produce duplicati.
+
+        **Che cosa non fa**: non decide le corrispondenze con le colonne SIPO, che restano da
+        indicare a mano. L'importazione porta il lato ANSC — percorso del campo, obbligatorietà,
+        condizione, dizionario — e lascia vuoto il lato SIPO.
+      tags: [operazioni]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ImportazioneRichiesta' }
+            examples:
+              esempioImportazioneMorte:
+                value:
+                  codEventoAnsc: Morte_001
+                  flagSovrascriviEsistenti: false
+      responses:
+        '200':
+          description: Esito dell'importazione, con i conteggi.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/EsitoImportazione' }
+              examples:
+                esempioImportata:
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      numEsaminati: 219
+                      numImportati: 38
+                      numInvariati: 181
+                      numDaCompletare: 38
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '409': { $ref: '#/components/responses/VersioneAttiva' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE]
+      x-effetti: Modifica la configurazione. Ripetibile senza duplicati.
+
+  /ansc/v1/back-office/configurazione/versioni:
+    post:
+      operationId: creaVersione
+      summary: Crea una nuova versione di configurazione in stato di bozza
+      description: |
+        Crea una nuova versione di configurazione, clonando quella indicata come punto di partenza. La
+        versione nasce **in stato di bozza** ed è l'unica forma in cui la configurazione sia
+        modificabile.
+
+        Si usa prima di ogni intervento sulla configurazione in esercizio.
+
+        **Effetti**: crea una versione. Non modifica la configurazione attiva, che resta in vigore
+        finché non si esegue `attivaVersione`.
+      tags: [versioni]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VersioneRichiesta' }
+            examples:
+              esempioNuovaVersione:
+                value:
+                  codVersione: v.13
+                  codVersioneOrigine: v.12
+                  note: Aggiunta casistica trascrizione da estero
+      responses:
+        '201':
+          description: Versione creata in stato di bozza.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Versione' }
+        '409':
+          description: Esiste già una versione con lo stesso codice.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE]
+      x-effetti: Crea una risorsa. Non ripetibile con lo stesso codice di versione.
+      x-codici-errore:
+        - codice: CONFIG_VERSIONE_DUPLICATA
+          condizione: 'Il codice di versione richiesto esiste già.'
+
+  /ansc/v1/back-office/configurazione/versioni/{codVersione}/attivazione:
+    parameters:
+      - $ref: '#/components/parameters/CodVersione'
+    post:
+      operationId: attivaVersione
+      summary: Rende corrente una versione di configurazione
+      description: |
+        Rende corrente la versione indicata: da quel momento il pre-filtro e la mappatura usano la sua
+        configurazione, e la versione diventa immodificabile.
+
+        Si usa a valle della revisione di una bozza, tipicamente dopo averne valutato l'effetto in
+        ambiente di test.
+
+        **Effetti**: cambia la versione attiva. La versione prima attiva torna modificabile solo
+        creandone una nuova a partire da essa. **L'attivazione non ha effetto sugli atti già
+        depositati**, che conservano la versione con cui sono stati costruiti.
+
+        Ripetibile: attivare una versione già attiva non produce effetti ulteriori.
+      tags: [versioni]
+      responses:
+        '200':
+          description: Versione resa corrente.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Versione' }
+              examples:
+                esempioAttivata:
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      codVersione: v.13
+                      codStato: ATTIVA
+                      dataAttivazione: '2026-07-25T09:00:00+02:00'
+                      codVersionePrecedente: v.12
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '409':
+          description: La versione contiene operazioni incomplete e non può essere attivata.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE]
+      x-effetti: Cambia la versione attiva. Ripetibile.
+      x-codici-errore:
+        - codice: CONFIG_VERSIONE_INCOMPLETA
+          condizione: 'Una o più operazioni della versione hanno campi senza corrispondenza SIPO.'
+
+  # --------------------------------------------------------------------- audit
+  /ansc/v1/back-office/registrazioni-audit:
+    get:
+      operationId: elencaRegistrazioniAudit
+      summary: Elenca le registrazioni delle chiamate verso ANSC
+      description: |
+        Restituisce le registrazioni delle chiamate verso ANSC, filtrabili per data, atto, esito e
+        fase.
+
+        Si usa per la diagnosi e per rispondere alle richieste del canale di supporto del fornitore,
+        che richiede intestazioni, indirizzo pubblico di uscita e corpo della chiamata.
+
+        **Effetti**: nessuno.
+
+        **Le registrazioni contengono dati di stato civile**, quindi dati personali e in parte
+        particolari: l'accesso è limitato ai ruoli Auditor e Supporto e ogni consultazione è a sua
+        volta tracciata.
+      tags: [registrazioni-audit]
+      parameters:
+        - { name: idAtto, in: query, required: false, description: 'Atto SIPO cui le chiamate si riferiscono.', schema: { type: integer } }
+        - { name: codFase, in: query, required: false, description: 'Fase del percorso: ALLEGATI, SOGGETTO, DEPOSITO, FIRMA_DICH, FIRMA_USC, RICONCILIAZIONE.', schema: { type: string } }
+        - { name: esito, in: query, required: false, description: 'Esito della chiamata: OK o KO.', schema: { type: string, enum: [OK, KO] } }
+        - { name: dataDa, in: query, required: false, description: 'Limite inferiore dell''intervallo.', schema: { type: string, format: date } }
+        - { name: dataA, in: query, required: false, description: 'Limite superiore dell''intervallo.', schema: { type: string, format: date } }
+        - $ref: '#/components/parameters/NumPagina'
+        - $ref: '#/components/parameters/NumElementi'
+        - $ref: '#/components/parameters/Ordinamento'
+      responses:
+        '200':
+          description: Elenco paginato delle registrazioni, senza i corpi integrali.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati:
+                        type: object
+                        properties:
+                          registrazioni:
+                            type: array
+                            items: { $ref: '#/components/schemas/RegistrazioneAuditSintesi' }
+                            description: Le registrazioni della pagina richiesta.
+                          navigazione: { $ref: '#/components/schemas/Navigazione' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AUDITOR, SUPPORTO]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+  /ansc/v1/back-office/registrazioni-audit/{idRegistrazione}:
+    parameters:
+      - $ref: '#/components/parameters/IdRegistrazione'
+    get:
+      operationId: leggiRegistrazioneAudit
+      summary: Legge una registrazione con richiesta e risposta integrali
+      description: |
+        Restituisce la singola registrazione con il corpo integrale della richiesta e della risposta
+        scambiate con ANSC.
+
+        Si usa quando la sintesi non basta a capire un rifiuto.
+
+        **Effetti**: nessuno. La consultazione è a sua volta registrata.
+      tags: [registrazioni-audit]
+      responses:
+        '200':
+          description: La registrazione con i corpi integrali.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/RegistrazioneAudit' }
+              examples:
+                esempioRifiuto:
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      idRegistrazione: 900321
+                      idStatoAtto: 550044
+                      codFase: DEPOSITO
+                      codServizio: R009
+                      esitoChiamata: KO
+                      numMillisecondi: 320
+                      dataRegistrazione: '2026-07-23T10:07:03+02:00'
+                      richiesta:
+                        evento:
+                          idUsecase: Morte_001
+                          datiDiMorte: { dataMorte: '2026-07-20' }
+                          intestatari: [ { idstatocivile: null } ]
+                      risposta:
+                        esito: KO
+                        errors: [ 'stato civile del defunto assente' ]
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AUDITOR, SUPPORTO]
+      x-effetti: Sola lettura, sicura e ripetibile.
+      x-vincoli: |
+        I corpi integrali sono soggetti alla politica di conservazione definita per lo schema di
+        audit: oltre il termine stabilito la registrazione conserva i soli metadati.
+
+  # -------------------------------------------------------------------- sistema
+  /ansc/v1/back-office/sistema/stato:
+    get:
+      operationId: leggiStatoSistema
+      summary: Legge lo stato del componente e la connettività verso ANSC
+      description: |
+        Restituisce l'ambiente in cui il componente è in esecuzione, l'indirizzo ANSC configurato, la
+        versione di configurazione attiva e le metriche di dominio.
+
+        Si usa dalla schermata di esercizio e come base per gli indicatori di monitoraggio.
+
+        **Effetti**: nessuno. Non contatta ANSC: per verificare la raggiungibilità si usa
+        `provaConnessione`.
+      tags: [sistema]
+      responses:
+        '200':
+          description: Stato del componente.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/StatoSistema' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+  /ansc/v1/back-office/sistema/prove-connessione:
+    post:
+      operationId: provaConnessione
+      summary: Verifica la raggiungibilità di ANSC
+      description: |
+        Esegue una chiamata di prova verso ANSC e ne registra l'esito, con il tempo di risposta.
+
+        Si usa in diagnosi, quando si sospetta un problema di rete o di certificati, e dopo ogni
+        modifica alla configurazione degli indirizzi.
+
+        **Effetti**: crea una registrazione di prova. Non modifica alcun atto.
+
+        **Prerequisiti**: se la verifica riguarda un servizio che richiede l'OTP, occorre una
+        sessione valida. La prova sul solo canale di rete non la richiede.
+      tags: [sistema]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProvaConnessioneRichiesta' }
+            examples:
+              esempioProvaRete:
+                value:
+                  codTipoProva: RETE
+      responses:
+        '200':
+          description: Esito della prova.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/EsitoProvaConnessione' }
+              examples:
+                esempioProvaRiuscita:
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      codTipoProva: RETE
+                      flagRaggiungibile: true
+                      numMillisecondi: 148
+                      indirizzoAnsc: https://anscservicepre.anpr.interno.it
+                      dataProva: '2026-07-23T08:15:00+02:00'
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '502': { $ref: '#/components/responses/AnscNonRaggiungibile' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE]
+      x-effetti: Crea una registrazione di prova. Ripetibile.
+
+  /ansc/v1/back-office/sessioni:
+    get:
+      operationId: elencaSessioni
+      summary: Elenca le sessioni OTP aperte
+      description: |
+        Restituisce le sessioni OTP attualmente aperte, con operatore, postazione e scadenza.
+
+        Si usa per la supervisione dell'esercizio: capire quanti ufficiali stiano lavorando e
+        individuare sessioni prossime alla scadenza.
+
+        **Effetti**: nessuno. **Il codice OTP non è mai restituito**, in nessuna forma.
+      tags: [sessione]
+      parameters:
+        - { name: idMunicipio, in: query, required: false, description: 'Municipio della postazione.', schema: { type: string } }
+        - $ref: '#/components/parameters/NumPagina'
+        - $ref: '#/components/parameters/NumElementi'
+      responses:
+        '200':
+          description: Elenco delle sessioni aperte.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati:
+                        type: object
+                        properties:
+                          sessioni:
+                            type: array
+                            items: { $ref: '#/components/schemas/Sessione' }
+                            description: Le sessioni aperte.
+                          navigazione: { $ref: '#/components/schemas/Navigazione' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+  # ----------------------------------------------------------------- postazioni
+  /ansc/v1/back-office/postazioni:
+    get:
+      operationId: elencaPostazioni
+      summary: Elenca le postazioni autorizzate
+      description: |
+        Restituisce il registro delle postazioni autorizzate, con l'associazione fra postazione fisica
+        e identificativo attribuito.
+
+        Il registro è un **obbligo normativo** nel modello a certificato server unico: è ciò che
+        consente di ricondurre ogni operazione alla postazione da cui è stata compiuta.
+
+        **Effetti**: nessuno.
+      tags: [postazioni]
+      parameters:
+        - { name: idMunicipio, in: query, required: false, description: 'Municipio di appartenenza.', schema: { type: string } }
+        - { name: flagAttiva, in: query, required: false, description: 'Limita alle postazioni attive o a quelle dismesse.', schema: { type: boolean } }
+        - $ref: '#/components/parameters/NumPagina'
+        - $ref: '#/components/parameters/NumElementi'
+      responses:
+        '200':
+          description: Il registro delle postazioni.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati:
+                        type: object
+                        properties:
+                          postazioni:
+                            type: array
+                            items: { $ref: '#/components/schemas/Postazione' }
+                            description: Le postazioni della pagina richiesta.
+                          navigazione: { $ref: '#/components/schemas/Navigazione' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE, AUDITOR]
+      x-effetti: Sola lettura, sicura e ripetibile.
+    post:
+      operationId: creaPostazione
+      summary: Registra una nuova postazione autorizzata
+      description: |
+        Aggiunge una postazione al registro, associandole l'identificativo con cui comparirà nei token
+        verso ANSC.
+
+        Si usa all'attivazione di una nuova postazione di lavoro.
+
+        **Effetti**: crea una risorsa e registra una voce di audit. Non ripetibile con lo stesso
+        identificativo.
+      tags: [postazioni]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Postazione' }
+            examples:
+              esempioNuovaPostazione:
+                value:
+                  idPostazione: PDL-SC-027
+                  descPostazione: Sportello 3 — Municipio I
+                  idMunicipio: '01'
+                  idPostazioneAnpr: RM-0127
+                  flagAttiva: true
+      responses:
+        '201':
+          description: Postazione registrata.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Postazione' }
+        '409':
+          description: Esiste già una postazione con lo stesso identificativo.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE]
+      x-effetti: Crea una risorsa. Non ripetibile con lo stesso identificativo.
+      x-codici-errore:
+        - codice: POSTAZIONE_DUPLICATA
+          condizione: 'L''identificativo di postazione è già presente nel registro.'
+
+  /ansc/v1/back-office/postazioni/{idPostazione}:
+    parameters:
+      - $ref: '#/components/parameters/IdPostazione'
+    put:
+      operationId: sostituisciPostazione
+      summary: Sostituisce i dati di una postazione del registro
+      description: |
+        Sostituisce integralmente i dati della postazione indicata: descrizione, municipio,
+        identificativo attribuito, stato di attività.
+
+        Si usa per dismettere una postazione o correggerne i dati.
+
+        **Effetti**: modifica il registro e registra una voce di audit. Dismettere una postazione
+        **non chiude** le sessioni OTP già aperte su di essa: per quelle si usa la chiusura di
+        sessione. Ripetibile.
+      tags: [postazioni]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Postazione' }
+      responses:
+        '200':
+          description: Postazione aggiornata.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Postazione' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE]
+      x-effetti: Modifica il registro. Ripetibile.
+
+components:
+
+  securitySchemes:
+    bearerJwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Token di sessione **interno a SIPO**, emesso dal meccanismo di autenticazione già in uso fra i
+        moduli. Non è il token verso ANSC: quello è costruito e firmato dal concentratore con il
+        certificato server e non transita mai per il front-end.
+
+  parameters:
+    IdAtto:
+      name: idAtto
+      in: path
+      required: true
+      description: Identificativo dell'atto in SIPO.
+      schema: { type: integer, format: int64 }
+      example: 88012
+    IdAllegato:
+      name: idAllegato
+      in: path
+      required: true
+      description: Identificativo locale dell'allegato, assegnato alla trasmissione.
+      schema: { type: integer, format: int64 }
+      example: 771204
+    IdOperazione:
+      name: idOperazione
+      in: path
+      required: true
+      description: Identificativo dell'operazione configurata.
+      schema: { type: integer, format: int64 }
+      example: 1
+    CodVersione:
+      name: codVersione
+      in: path
+      required: true
+      description: Codice della versione di configurazione.
+      schema: { type: string }
+      example: v.13
+    IdRegistrazione:
+      name: idRegistrazione
+      in: path
+      required: true
+      description: Identificativo della registrazione di audit.
+      schema: { type: integer, format: int64 }
+      example: 900321
+    IdPostazione:
+      name: idPostazione
+      in: path
+      required: true
+      description: Identificativo della postazione nel registro.
+      schema: { type: string }
+      example: PDL-SC-014
+    NumPagina:
+      name: numPagina
+      in: query
+      required: false
+      description: Numero della pagina richiesta, a partire da 1.
+      schema: { type: integer, minimum: 1, default: 1 }
+    NumElementi:
+      name: numElementi
+      in: query
+      required: false
+      description: Numero massimo di elementi per pagina.
+      schema: { type: integer, minimum: 1, maximum: 200, default: 25 }
+    Ordinamento:
+      name: ordinamento
+      in: query
+      required: false
+      description: |
+        Campi di ordinamento separati da virgola; il segno meno indica il verso discendente.
+      schema: { type: string }
+      example: -dataDeposito,idAtto
+    Campi:
+      name: campi
+      in: query
+      required: false
+      description: Sottoinsieme dei campi da restituire, separati da virgola.
+      schema: { type: string }
+      example: idAttoSipo,stato,idAnsc
+
+  responses:
+    NonAutenticato:
+      description: Chiamante non autenticato o token scaduto.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+    NonAutorizzato:
+      description: Il ruolo del chiamante non consente l'operazione.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+    NonTrovato:
+      description: La risorsa indicata nel percorso non esiste.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+    ErroreInterno:
+      description: Errore non previsto del componente.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+    SessioneNonValida:
+      description: |
+        Nessuna sessione OTP valida per la coppia operatore-postazione. L'operatore deve generare un
+        nuovo codice sulla web app OTP di ANSC e consegnarlo con `sostituisciSessione`.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+          examples:
+            esempioSessioneScaduta:
+              value:
+                esito: KO
+                messaggi:
+                  - tipo: ERROR
+                    codice: SESSIONE_OTP_ASSENTE
+                    descrizione: Sessione OTP assente o scaduta. Generare un nuovo codice e riprovare.
+                dati: null
+    VersioneAttiva:
+      description: La versione di configurazione è attiva e non modificabile.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+    AnscNonRaggiungibile:
+      description: |
+        ANSC non ha risposto o ha risposto con un errore di trasporto. **L'operazione non è stata
+        eseguita**: nulla è cambiato sul sistema nazionale.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+    EsitoIndeterminato:
+      description: |
+        La chiamata verso ANSC è scaduta senza risposta: **non è noto se l'operazione sia stata
+        eseguita**. Non ripetere l'operazione: accertare lo stato reale con `riconciliaAtto` e
+        decidere di conseguenza.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+          examples:
+            esempioTimeout:
+              value:
+                esito: KO
+                messaggi:
+                  - tipo: ERROR
+                    codice: ESITO_INDETERMINATO
+                    descrizione: Timeout verso ANSC. Eseguire la riconciliazione per accertare lo stato.
+                dati: { codTipoEsito: INDETERMINATO }
+
+  schemas:
+
+    Busta:
+      type: object
+      description: |
+        Busta applicativa comune a tutte le risposte. La scelta della busta al posto del formato
+        normalizzato per gli errori è dichiarata e vale per l'intero componente.
+      required: [esito]
+      properties:
+        esito:
+          type: string
+          enum: [OK, KO]
+          description: |
+            Esito applicativo dell'operazione. È indipendente dal codice di stato HTTP: una
+            validazione respinta è un `200` con esito `KO`, perché l'operazione è stata eseguita
+            correttamente e ha prodotto un rifiuto.
+        messaggi:
+          type: array
+          description: Messaggi diagnostici, di errore o informativi, prodotti dall'operazione.
+          items: { $ref: '#/components/schemas/Messaggio' }
+        dati:
+          nullable: true
+          description: Il contenuto proprio della risposta, la cui forma dipende dall'operazione.
+
+    Messaggio:
+      type: object
+      description: Singolo messaggio della busta.
+      required: [tipo, codice, descrizione]
+      properties:
+        tipo:
+          type: string
+          enum: [ERROR, WARNING, INFO]
+          description: Gravità del messaggio. Solo `ERROR` impedisce la prosecuzione.
+        campo:
+          type: string
+          nullable: true
+          description: |
+            Percorso del campo cui il messaggio si riferisce, nella stessa notazione con cui il campo
+            compare nell'entità. Omesso quando il messaggio non riguarda un campo specifico.
+        codice:
+          type: string
+          description: |
+            Codice applicativo stabile, in maiuscolo, nella forma «ambito_condizione». È la parte su
+            cui il consumatore scrive logica: la descrizione può cambiare senza preavviso.
+        descrizione:
+          type: string
+          description: Testo destinato alle persone, mostrabile all'operatore.
+
+    Navigazione:
+      type: object
+      description: Dati di navigazione di una collezione paginata.
+      properties:
+        numPagina: { type: integer, description: 'Pagina restituita.' }
+        numElementi: { type: integer, description: 'Elementi per pagina.' }
+        numTotale: { type: integer, description: 'Elementi totali che soddisfano il filtro.' }
+
+    StatoAnsc:
+      type: string
+      description: |
+        Stato dell'atto nel ciclo di vita reale di ANSC, con l'aggiunta dello stato locale
+        `IN_PREPARAZIONE`, che vale finché in ANSC non è stato creato nulla.
+      enum: [IN_PREPARAZIONE, CONFERMATO, FIRMATO_DICHIARANTE, FIRMATO_USC, RIFIUTATA, ANNULLATO]
+
+    Sessione:
+      type: object
+      description: Stato di una sessione OTP. Il codice OTP non è mai esposto.
+      properties:
+        flagValida: { type: boolean, description: 'Indica se la sessione sia utilizzabile per chiamare ANSC.' }
+        idPostazione: { type: string, description: 'Postazione cui la sessione è legata.' }
+        operatore: { type: string, description: 'Identificativo dell''ufficiale titolare della sessione.' }
+        dataScadenza:
+          type: string
+          format: date-time
+          nullable: true
+          description: Istante di scadenza della sessione, con fuso esplicito. Nullo se non esiste sessione.
+        numMinutiResidui: { type: integer, description: 'Minuti mancanti alla scadenza; zero se la sessione non è valida.' }
+
+    SessioneRichiesta:
+      type: object
+      required: [codOtp, idPostazione]
+      properties:
+        codOtp:
+          type: string
+          description: |
+            Codice generato dall'operatore sulla web app OTP di ANSC. Ha validità di quattro ore. Non
+            è persistito oltre la durata della sessione e non compare in alcuna registrazione.
+        idPostazione:
+          type: string
+          description: Postazione da cui l'operatore sta lavorando; deve essere nel registro.
+
+    PreverificaRichiesta:
+      type: object
+      required: [idAttoSipo, codTipoEvento, codTipoOperazione, codCasistica]
+      properties:
+        idAttoSipo: { type: integer, format: int64, description: 'Identificativo dell''atto in SIPO, da cui si rileggono i dati.' }
+        codTipoEvento: { type: string, description: 'Tipo di evento di stato civile, per esempio MORTE.' }
+        codTipoOperazione: { type: string, description: 'Operazione richiesta, per esempio CREAZIONE.' }
+        codCasistica: { type: string, description: 'Casistica che distingue le varianti dell''evento, per esempio DICH_ABITAZIONE.' }
+        codVersioneConfig:
+          type: string
+          nullable: true
+          description: Versione di configurazione da applicare. Se omesso vale quella attiva.
+
+    EsitoPreverifica:
+      type: object
+      properties:
+        flagFinalizzabile: { type: boolean, description: 'Indica se l''atto possa procedere al deposito.' }
+        codEventoAnsc: { type: string, description: 'Evento ANSC individuato dalla configurazione.' }
+        numCampiVerificati: { type: integer, description: 'Numero di campi sottoposti a controllo.' }
+        codVersioneConfig: { type: string, description: 'Versione di configurazione effettivamente applicata.' }
+
+    AllegatoRichiesta:
+      type: object
+      required: [codTipoAllegato, nomeFile, codTipoContenuto, contenutoBase64]
+      properties:
+        codTipoAllegato: { type: string, description: 'Tipo di allegato previsto dal caso d''uso ANSC.' }
+        nomeFile: { type: string, description: 'Nome del file, usato nella diagnosi e nelle registrazioni.' }
+        codTipoContenuto: { type: string, description: 'Tipo di contenuto del documento.' }
+        contenutoBase64: { type: string, format: byte, description: 'Contenuto del documento codificato in base64.' }
+
+    Allegato:
+      type: object
+      properties:
+        idAllegato: { type: integer, format: int64, description: 'Identificativo locale dell''allegato.' }
+        idAllegatoAnsc: { type: string, nullable: true, description: 'Identificativo attribuito da ANSC.' }
+        codTipoAllegato: { type: string, description: 'Tipo di allegato.' }
+        nomeFile: { type: string, description: 'Nome del file trasmesso.' }
+        codStatoVerifica:
+          type: string
+          enum: [IN_CORSO, SUPERATA, RESPINTA]
+          description: Esito della scansione antivirus eseguita da ANSC.
+        dataTrasmissione: { type: string, format: date-time, description: 'Istante della trasmissione, con fuso esplicito.' }
+
+    DepositoRichiesta:
+      type: object
+      required: [idAttoSipo, codTipoEvento, codTipoOperazione, codCasistica, operatore, idPostazione]
+      properties:
+        idAttoSipo: { type: integer, format: int64, description: 'Atto SIPO da depositare; i dati sono riletti alla chiamata.' }
+        codTipoEvento: { type: string, description: 'Tipo di evento di stato civile.' }
+        codTipoOperazione: { type: string, description: 'Operazione richiesta.' }
+        codCasistica: { type: string, description: 'Casistica dell''evento.' }
+        codVersioneConfig: { type: string, nullable: true, description: 'Versione di configurazione; se omesso vale quella attiva.' }
+        idOperazioneComune:
+          type: string
+          description: |
+            Identificativo scelto dal Comune, trasmesso ad ANSC a fini di tracciamento. **Non è una
+            chiave di deduplica**: ANSC non ne offre alcuna, e trasmettere due volte lo stesso valore
+            non impedisce la creazione di due atti.
+        operatore: { type: string, description: 'Ufficiale che sta formando l''atto.' }
+        idPostazione: { type: string, description: 'Postazione da cui l''operazione è compiuta.' }
+
+    EsitoDeposito:
+      type: object
+      properties:
+        idStatoAtto: { type: integer, format: int64, description: 'Identificativo della riga di stato locale.' }
+        stato: { $ref: '#/components/schemas/StatoAnsc' }
+        idAnsc:
+          type: string
+          nullable: true
+          description: |
+            Identificativo nazionale assegnato da ANSC. Valorizzato solo a deposito riuscito; nullo
+            quando la validazione è respinta, perché in quel caso nessun identificativo è consumato.
+        codEventoAnsc: { type: string, description: 'Evento ANSC con cui l''atto è stato depositato.' }
+        codTipoEsito:
+          type: string
+          nullable: true
+          enum: [DEPOSITATO, SCARTATO, INDETERMINATO]
+          description: |
+            Distingue lo scarto in validazione dall'esito indeterminato. Sono situazioni opposte:
+            dallo scarto si esce correggendo i dati, dall'indeterminato accertando lo stato reale.
+        dataDeposito: { type: string, format: date-time, nullable: true, description: 'Istante del deposito, con fuso esplicito.' }
+
+    CredenzialiFirma:
+      type: object
+      description: |
+        Credenziali del provider di firma qualificata, valide per il singolo atto. **Sono cosa diversa
+        dall'OTP di sessione.** Non sono persistite né registrate in audit.
+      required: [utenza, pin, codOtpProvider]
+      properties:
+        utenza: { type: string, description: 'Utenza dell''ufficiale presso il provider di firma.' }
+        pin: { type: string, format: password, description: 'PIN di firma.' }
+        codOtpProvider: { type: string, description: 'Codice temporaneo emesso dal provider di firma per questa firma.' }
+
+    FirmaRichiesta:
+      type: object
+      required: [codTipoFirma]
+      properties:
+        codTipoFirma:
+          type: string
+          enum: [DICHIARANTE, USC]
+          description: Firma da apporre.
+        idAllegatoVerbale:
+          type: integer
+          format: int64
+          nullable: true
+          description: |
+            Allegato che contiene il verbale firmato dal dichiarante. Obbligatorio quando
+            `codTipoFirma` vale `DICHIARANTE` e la firma è cartacea, come per l'atto di morte.
+        credenzialiFirma:
+          allOf: [ { $ref: '#/components/schemas/CredenzialiFirma' } ]
+          nullable: true
+          description: Obbligatorie quando `codTipoFirma` vale `USC`.
+
+    EsitoFirma:
+      type: object
+      properties:
+        idStatoAtto: { type: integer, format: int64, description: 'Identificativo della riga di stato locale.' }
+        stato: { $ref: '#/components/schemas/StatoAnsc' }
+        idAnsc: { type: string, description: 'Identificativo nazionale dell''atto.' }
+        dataFirma: { type: string, format: date-time, nullable: true, description: 'Istante della firma, con fuso esplicito.' }
+
+    Firma:
+      type: object
+      properties:
+        codTipoFirma: { type: string, enum: [DICHIARANTE, USC], description: 'Tipo di firma apposta.' }
+        firmatario: { type: string, description: 'Identificativo di chi ha firmato.' }
+        dataFirma: { type: string, format: date-time, description: 'Istante della firma, con fuso esplicito.' }
+
+    AnnullamentoRichiesta:
+      type: object
+      required: [idAnsc, codMotivo]
+      properties:
+        idAnsc: { type: string, description: 'Identificativo nazionale dell''evento da annullare logicamente.' }
+        codMotivo:
+          type: string
+          description: Motivo dell'annullamento; il valore atteso nel pilota è `DUPLICATO_DA_RICONCILIAZIONE`.
+        note: { type: string, nullable: true, description: 'Annotazione libera a corredo della decisione.' }
+
+    EsitoAnnullamento:
+      type: object
+      properties:
+        idAnsc: { type: string, description: 'Identificativo nazionale dell''evento annullato.' }
+        stato: { $ref: '#/components/schemas/StatoAnsc' }
+        dataAnnullamento: { type: string, format: date-time, description: 'Istante dell''annullamento, con fuso esplicito.' }
+
+    StatoAtto:
+      type: object
+      description: Stato ANSC di un atto, come registrato nello store locale.
+      properties:
+        idAttoSipo: { type: integer, format: int64, description: 'Atto SIPO cui lo stato si riferisce.' }
+        codTipoEvento: { type: string, description: 'Tipo di evento di stato civile.' }
+        codTipoOperazione: { type: string, description: 'Operazione.' }
+        stato: { $ref: '#/components/schemas/StatoAnsc' }
+        idAnsc: { type: string, nullable: true, description: 'Identificativo nazionale, se assegnato.' }
+        operatore: { type: string, nullable: true, description: 'Ufficiale competente.' }
+        idMunicipio: { type: string, nullable: true, description: 'Municipio di competenza.' }
+        dataAggiornamento: { type: string, format: date-time, description: 'Ultimo aggiornamento dello stato locale.' }
+
+    VoceCronologia:
+      type: object
+      description: Una chiamata verso ANSC nella storia dell'atto.
+      properties:
+        codFase: { type: string, description: 'Fase del percorso: ALLEGATI, SOGGETTO, DEPOSITO, FIRMA_DICH, FIRMA_USC, RICONCILIAZIONE.' }
+        codServizio: { type: string, description: 'Servizio cooperativo ANSC invocato.' }
+        esito: { type: string, enum: [OK, KO], description: 'Esito della chiamata.' }
+        dataChiamata: { type: string, format: date-time, description: 'Istante della chiamata, con fuso esplicito.' }
+
+    DettaglioAtto:
+      type: object
+      properties:
+        idAttoSipo: { type: integer, format: int64, description: 'Atto SIPO.' }
+        codTipoEvento: { type: string, description: 'Tipo di evento.' }
+        codTipoOperazione: { type: string, description: 'Operazione.' }
+        soggetto: { type: string, description: 'Descrizione sintetica del soggetto intestatario.' }
+        idAnsc: { type: string, nullable: true, description: 'Identificativo nazionale.' }
+        statoAnsc: { $ref: '#/components/schemas/StatoAnsc' }
+        statoLocale: { $ref: '#/components/schemas/StatoAnsc' }
+        cronologia:
+          type: array
+          description: Le chiamate verso ANSC che riguardano l'atto, in ordine cronologico.
+          items: { $ref: '#/components/schemas/VoceCronologia' }
+
+    Eccezione:
+      type: object
+      description: Un atto non concluso nel percorso ordinario.
+      properties:
+        idAttoSipo: { type: integer, format: int64, description: 'Atto SIPO.' }
+        codTipoEvento: { type: string, description: 'Tipo di evento.' }
+        stato: { $ref: '#/components/schemas/StatoAnsc' }
+        codCategoria:
+          type: string
+          description: |
+            Categoria di eccezione, che determina l'azione di recupero proponibile: DA_RIPRENDERE,
+            INDETERMINATI, SCARTATI, BLOCCATI_ALLEGATO, FIRMA_NON_RIUSCITA.
+        descProblema: { type: string, description: 'Descrizione del problema, mostrabile in lista.' }
+        operatore: { type: string, nullable: true, description: 'Ufficiale competente.' }
+        idMunicipio: { type: string, nullable: true, description: 'Municipio di competenza.' }
+        ultimoErrore: { type: string, nullable: true, description: 'Codice e testo dell''ultimo errore restituito da ANSC.' }
+        dataUltimoTentativo: { type: string, format: date-time, nullable: true, description: 'Istante dell''ultimo tentativo, con fuso esplicito.' }
+
+    AzioneRichiesta:
+      type: object
+      required: [codTipoAzione]
+      properties:
+        codTipoAzione:
+          type: string
+          enum: [INSTRADA, ANNOTA, PRENDI_IN_CARICO]
+          description: Tipo di azione locale da registrare.
+        operatoreDestinatario: { type: string, nullable: true, description: 'Ufficiale cui instradare l''atto; obbligatorio per `INSTRADA`.' }
+        note: { type: string, nullable: true, description: 'Annotazione libera.' }
+
+    Azione:
+      type: object
+      properties:
+        idAzione: { type: integer, format: int64, description: 'Identificativo dell''azione registrata.' }
+        codTipoAzione: { type: string, description: 'Tipo di azione.' }
+        operatore: { type: string, description: 'Chi ha compiuto l''azione.' }
+        dataAzione: { type: string, format: date-time, description: 'Istante dell''azione, con fuso esplicito.' }
+
+    Riconciliazione:
+      type: object
+      properties:
+        idRiconciliazione: { type: integer, format: int64, description: 'Identificativo della riconciliazione.' }
+        statoPrecedente: { $ref: '#/components/schemas/StatoAnsc' }
+        statoReale: { $ref: '#/components/schemas/StatoAnsc' }
+        idAnsc: { type: string, nullable: true, description: 'Identificativo nazionale accertato.' }
+        flagAllineato: { type: boolean, description: 'Indica se lo stato locale sia stato modificato per effetto della riconciliazione.' }
+        dataRiconciliazione: { type: string, format: date-time, description: 'Istante della riconciliazione, con fuso esplicito.' }
+
+    OperazioneConfigurata:
+      type: object
+      properties:
+        idOperazione: { type: integer, format: int64, description: 'Identificativo dell''operazione configurata.' }
+        codTipoEvento: { type: string, description: 'Tipo di evento di stato civile.' }
+        codTipoOperazione: { type: string, description: 'Operazione.' }
+        codCasistica: { type: string, description: 'Casistica che distingue le varianti dell''evento.' }
+        codEventoAnsc: { type: string, description: 'Evento ANSC corrispondente alla terna.' }
+        codServizioAnsc: { type: string, description: 'Servizio cooperativo con cui l''operazione è eseguita.' }
+        idMapper: { type: string, description: 'Adattatore di mappatura che costruisce il payload.' }
+        flagTrascrizione: { type: boolean, description: 'Indica se si tratti di trascrizione di atto formato altrove.' }
+        flagFirma: { type: boolean, description: 'Indica se l''operazione richieda la firma.' }
+        codVersione: { type: string, description: 'Versione di configurazione cui la riga appartiene.' }
+        dataValiditaDa: { type: string, format: date, description: 'Inizio di validità.' }
+        dataValiditaA: { type: string, format: date, description: 'Fine di validità.' }
+
+    CampoConfigurato:
+      type: object
+      properties:
+        campoAnsc: { type: string, description: 'Percorso del campo nel modello dell''evento ANSC.' }
+        campoSipo: { type: string, nullable: true, description: 'Colonna SIPO che alimenta il campo, nella forma TABELLA.COLONNA. Nulla se ancora da definire.' }
+        flagObbligatorio: { type: boolean, description: 'Indica se il campo sia obbligatorio per il caso d''uso.' }
+        condizione: { type: string, nullable: true, description: 'Condizione alla quale l''obbligatorietà si applica.' }
+        codDecodificaAnsc: { type: string, nullable: true, description: 'Dizionario ANSC con cui validare il valore; nullo se il campo non è codificato.' }
+        messaggio: { type: string, description: 'Testo mostrato all''operatore quando il controllo non è superato.' }
+
+    ImportazioneRichiesta:
+      type: object
+      required: [codEventoAnsc]
+      properties:
+        codEventoAnsc: { type: string, description: 'Evento ANSC di cui importare il mapping ufficiale.' }
+        flagSovrascriviEsistenti: { type: boolean, default: false, description: 'Indica se sovrascrivere i campi già configurati o lasciarli invariati.' }
+
+    EsitoImportazione:
+      type: object
+      properties:
+        numEsaminati: { type: integer, description: 'Righe esaminate nel mapping di origine.' }
+        numImportati: { type: integer, description: 'Campi creati o aggiornati.' }
+        numInvariati: { type: integer, description: 'Campi lasciati invariati.' }
+        numDaCompletare: { type: integer, description: 'Campi importati che restano senza corrispondenza SIPO.' }
+
+    VersioneRichiesta:
+      type: object
+      required: [codVersione]
+      properties:
+        codVersione: { type: string, description: 'Codice della nuova versione.' }
+        codVersioneOrigine: { type: string, nullable: true, description: 'Versione da clonare; se omessa si parte da quella attiva.' }
+        note: { type: string, nullable: true, description: 'Motivo della nuova versione.' }
+
+    Versione:
+      type: object
+      properties:
+        codVersione: { type: string, description: 'Codice della versione.' }
+        codStato: { type: string, enum: [BOZZA, ATTIVA, SUPERATA], description: 'Stato della versione.' }
+        dataAttivazione: { type: string, format: date-time, nullable: true, description: 'Istante in cui è diventata corrente.' }
+        codVersionePrecedente: { type: string, nullable: true, description: 'Versione che era attiva prima di questa.' }
+
+    RegistrazioneAuditSintesi:
+      type: object
+      description: Registrazione di audit senza i corpi integrali.
+      properties:
+        idRegistrazione: { type: integer, format: int64, description: 'Identificativo della registrazione.' }
+        idStatoAtto: { type: integer, format: int64, nullable: true, description: 'Riga di stato cui la chiamata si riferisce.' }
+        codFase: { type: string, description: 'Fase del percorso.' }
+        codServizio: { type: string, description: 'Servizio cooperativo invocato.' }
+        esitoChiamata: { type: string, enum: [OK, KO], description: 'Esito della chiamata.' }
+        numMillisecondi: { type: integer, description: 'Durata della chiamata.' }
+        dataRegistrazione: { type: string, format: date-time, description: 'Istante della chiamata, con fuso esplicito.' }
+
+    RegistrazioneAudit:
+      allOf:
+        - $ref: '#/components/schemas/RegistrazioneAuditSintesi'
+        - type: object
+          properties:
+            richiesta:
+              type: object
+              description: |
+                Corpo integrale della richiesta inviata ad ANSC. **Contiene dati di stato civile.**
+                I campi ereditati dal contratto ANSC conservano la grafia originale, che non segue la
+                notazione di questo documento.
+              additionalProperties: true
+            risposta:
+              type: object
+              description: Corpo integrale della risposta di ANSC, con la stessa avvertenza sulla grafia.
+              additionalProperties: true
+
+    StatoSistema:
+      type: object
+      properties:
+        codAmbiente: { type: string, enum: [SVILUPPO, TEST, ESERCIZIO], description: 'Ambiente SIPO in cui il componente è in esecuzione.' }
+        indirizzoAnsc: { type: string, description: 'Indirizzo ANSC configurato per l''ambiente.' }
+        codVersioneConfigAttiva: { type: string, description: 'Versione di configurazione corrente.' }
+        numAttiNonConclusi: { type: integer, description: 'Atti in stato non chiuso, per il monitoraggio.' }
+        numEsitiIndeterminatiAperti: { type: integer, description: 'Esiti indeterminati non ancora riconciliati.' }
+        numSessioniAperte: { type: integer, description: 'Sessioni OTP attualmente valide.' }
+
+    ProvaConnessioneRichiesta:
+      type: object
+      properties:
+        codTipoProva:
+          type: string
+          enum: [RETE, SERVIZIO]
+          default: RETE
+          description: |
+            `RETE` verifica la sola raggiungibilità dell'indirizzo e non richiede sessione OTP;
+            `SERVIZIO` esegue una chiamata cooperativa di prova e la richiede.
+
+    EsitoProvaConnessione:
+      type: object
+      properties:
+        codTipoProva: { type: string, description: 'Tipo di prova eseguita.' }
+        flagRaggiungibile: { type: boolean, description: 'Esito della prova.' }
+        numMillisecondi: { type: integer, description: 'Tempo di risposta misurato.' }
+        indirizzoAnsc: { type: string, description: 'Indirizzo verificato.' }
+        dataProva: { type: string, format: date-time, description: 'Istante della prova, con fuso esplicito.' }
+
+    Postazione:
+      type: object
+      required: [idPostazione, descPostazione, idMunicipio]
+      properties:
+        idPostazione: { type: string, description: 'Identificativo della postazione fisica.' }
+        descPostazione: { type: string, description: 'Descrizione leggibile della collocazione.' }
+        idMunicipio: { type: string, description: 'Municipio di appartenenza.' }
+        idPostazioneAnpr: { type: string, nullable: true, description: 'Identificativo attribuito alla postazione, usato nel token verso ANSC.' }
+        flagAttiva: { type: boolean, description: 'Indica se la postazione sia in esercizio o dismessa.' }

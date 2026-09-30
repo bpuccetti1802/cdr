@@ -1,0 +1,20 @@
+.sidebar-wrapper {
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease-in-out;
+
+  .sidebar {
+    overflow: hidden;
+    transition: opacity 0.3s ease-in-out;
+    height: 100%;
+  }
+
+  &.closed {
+    width: auto; // collapsed width
+
+    .sidebar {
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+}

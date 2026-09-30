@@ -1,0 +1,56 @@
+-- atti.allegati_usecase definition
+ 
+-- Drop table
+ 
+-- DROP TABLE atti.allegati_usecase;
+ 
+CREATE TABLE atti.allegati_usecase (
+	cd_usecase varchar(10) NOT NULL,
+	ty_allegato varchar(10) NOT NULL,
+	ty_presenza varchar(10) NOT NULL,
+	ty_configurazione varchar(10) NOT NULL,
+	nr_ordinamento int2 NOT NULL,
+	fg_operante bpchar(1) NOT NULL,
+	tx_note text NULL,
+	cd_ope_ins_dt bpchar(6) NOT NULL,
+	ts_ins_dt timestamp NULL,
+	cd_ope_ult_agg_dt bpchar(6) NULL,
+	ts_ult_agg_dt timestamp NULL,
+	ds_note_dt varchar(50) NULL,
+	CONSTRAINT allegati_usecase_fg_operante_check CHECK ((fg_operante = ANY (ARRAY['0'::bpchar, '1'::bpchar]))),
+	CONSTRAINT allegati_usecase_pk PRIMARY KEY (cd_usecase, ty_allegato)
+);
+ - ansc.dominio_decodifica definition
+
+-- Drop table
+
+-- DROP TABLE ansc.dominio_decodifica;
+
+CREATE TABLE ansc.dominio_decodifica (
+	id_dominio int4 NOT NULL,
+	nm_dominio varchar(50) NOT NULL,
+	CONSTRAINT dominio_decodifica_pk PRIMARY KEY (id_dominio)
+);
+
+
+-- ansc.valore_dominio definition
+
+-- Drop table
+
+-- DROP TABLE ansc.valore_dominio;
+
+CREATE TABLE ansc.valore_dominio (
+	id_dominio int4 NOT NULL,
+	id_valore varchar(10) NOT NULL,
+	ds_valore text NULL,
+	dt_inizio_validita date NULL,
+	dt_fine_validita date NULL,
+	nr_ordinamento int4 NULL,
+	cd_valore varchar(10) NULL,
+	CONSTRAINT valore_dominio_pk PRIMARY KEY (id_dominio, id_valore)
+);
+
+
+-- ansc.valore_dominio foreign keys
+
+ALTER TABLE ansc.valore_dominio ADD CONSTRAINT valore_dominio_tipo_dominio_fk FOREIGN KEY (id_dominio) REFERENCES ansc.dominio_decodifica(id_dominio);

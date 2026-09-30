@@ -1,0 +1,46 @@
+@import 'palette';
+
+$border-widths: (0, 1, 2, 3);
+
+@each $border-width in $border-widths {
+  .mf-border-width-#{$border-width} {
+    border-style: solid;
+    border-width: $border-width + unquote('px');
+  }
+
+  .mf-border-left-width-#{$border-width} {
+    border-left-style: solid;
+    border-left-width: $border-width + unquote('px');
+  }
+
+  .mf-border-right-width-#{$border-width} {
+    border-right-style: solid;
+    border-right-width: $border-width + unquote('px');
+  }
+
+  .mf-border-top-width-#{$border-width} {
+    border-top-style: solid;
+    border-top-width: $border-width + unquote('px');
+  }
+
+  .mf-border-bottom-width-#{$border-width} {
+    border-bottom-style: solid;
+    border-bottom-width: $border-width + unquote('px');
+  }
+}
+
+@each $color, $shades in $colors {
+  @each $shade, $value in $shades {
+    .mf-border-color-#{$color}-#{$shade} {
+      color: $value;
+    }
+  }
+}
+
+$border-radius: (20, 10);
+
+@each $radius in $border-radius {
+  .mf-border-radius-#{$radius} {
+    border-radius: $radius + unquote('px');
+  }
+}

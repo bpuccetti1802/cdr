@@ -1,0 +1,596 @@
+================================================================================
+DOCUMENTAZIONE MODULO: BE-FIRMA-CERTIFICATI-POSTAZIONE
+Versione: 1.0.0-SNAPSHOT
+Data: 2026-09-22
+================================================================================
+
+1. OVERVIEW DEL SERVIZIO
+================================================================================
+
+Il modulo "be-firma-certificati-postazione" è un microservizio Java che gestisce
+il ciclo di vita dei certificati digitali X.509 (PKCS12) associati alle
+postazioni ANPR di Roma Capitale.
+
+Scopo principale:
+  - Archiviazione sicura dei certificati di firma digitale
+  - Generazione di firme CMS/PKCS7 per documenti e identificativi
+  - Verifica dell'integrità delle firme digitali
+  - Erogazione delle credenziali criptografiche ai servizi interni
+
+Ambito: Firma digitale di postazioni ANPR nel contesto del Sistema Informativo
+di Roma Capitale.
+
+
+2. STAKEHOLDER E UTENTI
+================================================================================
+
+CONSUMER PRINCIPALI:
+  • mediation-ansc: mediatore principale che richiede certificati e firma dei
+    dati di postazione (MOCK)
+  • openapi-ansc-server: espone gli endpoint del servizio verso applicazioni
+    client esterne (MOCK)
+
+RESPONSABILI TECNICI:
+  • Team Backend Roma Capitale
+  • DevOps (deployment su Kubernetes)
+
+STAKEHOLDER BUSINESS:
+  • ANPR (Anagrafe Nazionale della Popolazione Residente)
+  • Uffici amministrativi di Roma Capitale
+
+
+3. FLUSSI DI BUSINESS PRINCIPALI
+================================================================================
+
+3.1 FLUSSO: Onboarding Certificato di Postazione
+----------------------------------------------------
+
+Trigger: Nuova postazione ANPR attivata in una sede di Roma Capitale
+
+Attori: Amministratore di sistema, Postazione ANPR
+
+Passi:
+  1. Amministratore prepara il file PKCS12 del certificato e la password
+  2. Richiama endpoint: POST /api/v1/certificati/upload
+  3. Parametri inviati:
+     - file: certificato in formato .p12 o .pfx
+     - password: password di protezione del keystore
+     - alias: identificativo univoco (es. 058091-PC-2611)
+     - idPostazione: ID della postazione (es. 058091-PC-2611)
+  4. Il servizio valida il file e la password
+  5. Importa il certificato nel database Oracle
+  6. Password criptata con algoritmo Triple DES (chiave configurata)
+  7. Ritorna: id, alias, serialNumber, dati di conferma
+  8. Certificato pronto per la firma
+
+Output: Certificato archiviato e disponibile per la firma
+
+
+3.2 FLUSSO: Firma Digitale di ID Postazione
+---------------------------------------------
+
+Trigger: Richiesta di firma proveniente da mediation-ansc
+
+Attori: mediation-ansc, Servizio firma, Database
+
+Passi:
+  1. mediation-ansc richiama: POST /api/v1/certificati/{alias}/firma
+  2. Servizio reperisce il certificato dal DB usando l'alias
+  3. Decifra la password del keystore
+  4. Carica il keystore PKCS12 in memoria
+  5. Estrae la chiave privata e il certificato X.509
+  6. Genera firma CMS/PKCS7 attached dell'ID postazione
+  7. Persiste la firma generata in tabella REG_USER_ANPR_SIGN
+  8. Ritorna: alias, idPostazione, serialNumber, firmaBase64 (in Base64)
+
+Output: Firma CMS disponibile per la trasmissione ad ANPR
+
+Frequenza: Ad ogni attivazione/rivalidazione di postazione
+
+
+3.3 FLUSSO: Recupero Dati PKCS12 (Esportazione)
+-------------------------------------------------
+
+Trigger: mediation-ansc necessita della chiave privata per firma esterna
+
+Attori: mediation-ansc, Servizio certificati
+
+Passi:
+  1. mediation-ansc richiama: GET /api/v1/certificati/{alias}/pkcs12
+  2. Servizio reperisce il certificato dal DB
+  3. Decifra la password
+  4. Estrae i byte del PKCS12
+  5. Encoda in Base64
+  6. Ritorna:
+     - pkcs12Base64: file PKCS12 encoded
+     - password: password decifrata
+     - aliasKeystore: alias della chiave nel keystore
+
+Output: Credenziali criptografiche esportabili
+
+
+3.4 FLUSSO: Verifica Firma Digitale
+------------------------------------
+
+Trigger: Validazione di una firma esistente (audit, compliance)
+
+Attori: Applicazione client, Servizio verifica
+
+Passi:
+  1. Client invia: POST /api/v1/certificati/verifica
+  2. Request contiene:
+     - contenuto: documento originale (Base64)
+     - firmaBase64: firma CMS da verificare (Base64)
+     - certificatoBase64: certificato X.509 pubblico (Base64)
+  3. Servizio verifica l'integrità della firma
+  4. Verifica la corrispondenza tra documento e firma
+  5. Valida il certificato X.509
+  6. Ritorna: esito (true/false) + messaggio
+
+Output: Esito della verifica firma
+
+
+3.5 FLUSSO: Ricerca e Consultazione
+------------------------------------
+
+Trigger: Consultazione dello stato dei certificati
+
+Attori: Amministratore, Sistema monitoring
+
+Passi:
+  1. Endpoint GET /api/v1/certificati
+     → Lista tutti i certificati della sede corrente
+     → Ritorna: id, alias, idPostazione, serialNumber, firmaIdPost, idSede
+
+  2. Endpoint GET /api/v1/certificati/{alias}
+     → Dettaglio di un singolo certificato
+     → Ritorna: metadati completi
+
+Output: Visibilità dello stato dei certificati
+
+
+3.6 FLUSSO: Dismissione Certificato
+------------------------------------
+
+Trigger: Disattivazione postazione ANPR o revoca certificato
+
+Attori: Amministratore di sistema
+
+Passi:
+  1. Amministratore richiama: DELETE /api/v1/certificati/{alias}
+  2. Servizio cancella:
+     - Record da REG_USER_ANPR (certificato)
+     - Record da REG_USER_ANPR_SIGN (firma)
+  3. Ritorna: conferma dell'eliminazione
+
+Output: Certificato e firma rimossi dal sistema
+
+
+4. ARCHITETTURA TECNICA
+================================================================================
+
+4.1 Stack Tecnologico
+---------------------
+  Framework:     Spring Boot 4.1.0
+  Linguaggio:    Java 25
+  JPA/ORM:       Hibernate con Spring Data JPA
+  Database:      Oracle 12c+ (ANAG_USR schema)
+  Crittografia:  Bouncy Castle 1.85 (PKCS7, PKCS12, X.509)
+  API:           Spring Web MVC + OpenAPI 3.0 (Swagger)
+  Build:         Maven 3.x
+  Container:     Docker + Kubernetes
+
+4.2 Connessioni e Dipendenze
+-----------------------------
+  Database Oracle:
+    - Indirizzo: 10.173.9.85:1522
+    - SID: DBSIPODV
+    - Schema: ANAG_USR
+    - Tabelle:
+      • REG_USER_ANPR: archivio certificati PKCS12
+      • REG_USER_ANPR_SIGN: archivio firme generate
+
+  Microservizi interni:
+    • mediation-ansc: client principale del servizio
+
+  Configurazione centralizzata:
+    • CORS_ALLOWED_ORIGINS: http://localhost:4202 (sviluppo)
+    • TRIPLE_DES_KEY: chiave di cifratura password (env var)
+    • DB_USERNAME, DB_PASSWORD: credenziali Oracle (env var)
+
+
+4.3 Struttura del Codice
+------------------------
+  /config:          Configurazione Spring, OpenAPI, CryptoConfig
+  /controller:      REST endpoints (CertificatoController)
+  /service:         Logica di business (CertificatoService, FirmaService)
+  /entity:          Mapping JPA verso Oracle
+  /dto/request:     Modelli input (VerificaFirmaRequest)
+  /dto/response:    Modelli output (ApiResponse, CertificatoResponse, etc.)
+  /repository:      Query JPA verso DB
+  /exception:       Eccezioni custom (CertificatoNotFoundException, FirmaException)
+  /util:            Utility crittografiche (CryptoUtil, KeyStoreUtil)
+
+
+5. DATI E TABELLE DATABASE
+================================================================================
+
+5.1 Tabella REG_USER_ANPR
+------------------------
+Schema: ANAG_USR
+Uso: Archivio certificati PKCS12
+
+Colonne principali:
+  ID                  NUMBER - Chiave primaria (sequence)
+  ALIAS_KEYSTORE      VARCHAR2(200) - Identificativo univoco del certificato
+  ID_POSTAZIONE       VARCHAR2(200) - ID della postazione ANPR
+  KEYSTORE_POSTAZIONE BLOB - File PKCS12 in binario
+  PWD_KEYSTORE        VARCHAR2(200) - Password criptata (Triple DES)
+  HOSTNAME            VARCHAR2(200) - Host della postazione
+  ID_SEDE             VARCHAR2(20) - Codice sede Roma Capitale
+
+Indici: ALIAS_KEYSTORE (UNIQUE)
+Record tipici: 50-200 (una per postazione attiva)
+
+
+5.2 Tabella REG_USER_ANPR_SIGN
+------------------------------
+Schema: ANAG_USR
+Uso: Archivio firme digitali generate
+
+Colonne principali:
+  ID                  NUMBER - Chiave primaria
+  ALIAS_KEYSTORE      VARCHAR2(200) - Riferimento al certificato
+  ID_POSTAZIONE       VARCHAR2(200) - ID della postazione
+  SN_KEYSTORE         VARCHAR2(200) - Serial number del certificato
+  FIRMA_ID_POSTAZIONE VARCHAR2(4000) - Firma CMS/PKCS7 in Base64
+  HOSTNAME            VARCHAR2(200) - Host della postazione
+  ID_SEDE             VARCHAR2(20) - Codice sede
+
+Indici: ALIAS_KEYSTORE (UNIQUE)
+Record tipici: 1:1 con REG_USER_ANPR (una firma per certificato)
+
+
+6. INTEGRAZIONI E API
+================================================================================
+
+6.1 Contract HTTP - Upload Certificato
+---------------------------------------
+POST /api/v1/certificati/upload
+Content-Type: multipart/form-data
+
+Request Parameters:
+  file (MultipartFile)     - Certificato PKCS12 (.p12, .pfx)
+  password (String)        - Password del keystore
+  alias (String)           - Alias univoco (es. 058091-PC-2611)
+  idPostazione (String)    - ID postazione (es. 058091-PC-2611)
+
+Response:
+  {
+    "success": true,
+    "messaggio": "Certificato caricato con successo",
+    "data": {
+      "id": 123,
+      "alias": "058091-PC-2611",
+      "idPostazione": "058091-PC-2611",
+      "serialNumber": "1A2B3C4D",
+      "firmaIdPost": null,
+      "idSede": "058091"
+    }
+  }
+
+HTTP Status: 201 Created
+
+
+6.2 Contract HTTP - Firma ID Postazione
+----------------------------------------
+POST /api/v1/certificati/{alias}/firma
+Accept: application/json
+
+Path Parameter:
+  alias - Alias univoco del certificato
+
+Response:
+  {
+    "success": true,
+    "messaggio": "Firma completata con successo",
+    "data": {
+      "alias": "058091-PC-2611",
+      "idPostazione": "058091-PC-2611",
+      "serialNumber": "1A2B3C4D",
+      "firmaBase64": "MIIB3gYJKoZIhvz...[firma CMS in Base64]"
+    }
+  }
+
+HTTP Status: 200 OK
+
+
+6.3 Contract HTTP - Recupera PKCS12
+------------------------------------
+GET /api/v1/certificati/{alias}/pkcs12
+Accept: application/json
+
+Path Parameter:
+  alias - Alias univoco del certificato
+
+Response:
+  {
+    "success": true,
+    "messaggio": "Dati PKCS12 recuperati",
+    "data": {
+      "pkcs12Base64": "MIIFDTCCAvWgAwIBAgIJA...[PKCS12 in Base64]",
+      "password": "password_decifrata",
+      "aliasKeystore": "058091-PC-2611"
+    }
+  }
+
+HTTP Status: 200 OK
+
+
+6.4 Contract HTTP - Verifica Firma
+-----------------------------------
+POST /api/v1/certificati/verifica
+Content-Type: application/json
+
+Request Body:
+  {
+    "contenuto": "TG9yZW0gaXBzdW0gZG9sb3I...[Base64]",
+    "firmaBase64": "MIIBXgYJKoZIhvz...[firma in Base64]",
+    "certificatoBase64": "MIIC5jCCAc4CAg...[X.509 in Base64]"
+  }
+
+Response:
+  {
+    "success": true,
+    "messaggio": "Firma valida",
+    "data": {
+      "valida": true,
+      "messaggio": "Firma valida"
+    }
+  }
+
+HTTP Status: 200 OK
+
+
+6.5 Contract HTTP - Lista Certificati
+--------------------------------------
+GET /api/v1/certificati
+Accept: application/json
+
+Response:
+  {
+    "success": true,
+    "messaggio": null,
+    "data": [
+      {
+        "id": 123,
+        "alias": "058091-PC-2611",
+        "idPostazione": "058091-PC-2611",
+        "serialNumber": "1A2B3C4D",
+        "firmaIdPost": "MIIB3gYJKoZIhvz...",
+        "idSede": "058091"
+      },
+      ...
+    ]
+  }
+
+HTTP Status: 200 OK
+
+
+6.6 Contract HTTP - Dettaglio Certificato
+------------------------------------------
+GET /api/v1/certificati/{alias}
+Accept: application/json
+
+Path Parameter:
+  alias - Alias univoco del certificato
+
+Response:
+  {
+    "success": true,
+    "messaggio": null,
+    "data": {
+      "id": 123,
+      "alias": "058091-PC-2611",
+      "idPostazione": "058091-PC-2611",
+      "serialNumber": "1A2B3C4D",
+      "firmaIdPost": "MIIB3gYJKoZIhvz...",
+      "idSede": "058091"
+    }
+  }
+
+HTTP Status: 200 OK
+
+
+6.7 Contract HTTP - Elimina Certificato
+----------------------------------------
+DELETE /api/v1/certificati/{alias}
+
+Path Parameter:
+  alias - Alias univoco del certificato
+
+Response:
+  {
+    "success": true,
+    "messaggio": "Certificato eliminato con successo",
+    "data": null
+  }
+
+HTTP Status: 200 OK
+
+
+7. CONFIGURAZIONE E AMBIENTI
+================================================================================
+
+7.1 Variabili di Ambiente
+------------------------
+Nome                       Descrizione                          Default/Produzione
+--------                   -----------                          ------------------
+SPRING_PROFILES_ACTIVE     Profilo Spring (dev/collaudo/prod)   dev
+SERVER_PORT                Porta ascolto API                    8080
+DB_USERNAME                Utente Oracle                        ANAG_USR
+DB_PASSWORD                Password Oracle                      [secret in vault]
+TRIPLE_DES_KEY             Chiave Triple DES (64 byte hex)      [secret in vault]
+CORS_ALLOWED_ORIGINS       Host CORS allowed                    http://localhost:4202
+BE_FIRMA_CERTIFICATI_URL   URL servizio (per client interno)    http://localhost:8080/be-firma-certificati-postazione
+
+7.2 Ambienti Deployed
+---------------------
+  Sviluppo (DEV):
+    - URL: http://localhost:8080 (locale)
+    - Database: Oracle 10.173.9.85 (test)
+    - CORS: http://localhost:4202
+    - Pod: Kubernetes namespace dev
+
+  Collaudo:
+    - Database: Oracle DBSIPODV (ambiente collaudo)
+    - Pod: Kubernetes namespace collaudo
+    - Kustomize overlay: k8s/overlays/collaudo
+
+  Pre-Produzione:
+    - Database: Oracle DBSIPODV (dati reali)
+    - Pod: Kubernetes namespace preprod
+    - Kustomize overlay: k8s/overlays/preprod
+
+  Produzione:
+    - Database: Oracle DBSIPODV (dati reali)
+    - Pod: Kubernetes namespace prod
+    - HPA: Auto-scaling configurato (k8s/overlays/prod/hpa-patch.yaml)
+    - Kustomize overlay: k8s/overlays/prod
+
+
+8. PERFORMANCE E LIMITI
+================================================================================
+
+8.1 Limiti di Sistema
+---------------------
+  Max Upload Certificato: 10 MB (spring.servlet.multipart.max-file-size)
+  Max Request Size: 10 MB (spring.servlet.multipart.max-request-size)
+  Timeout Connessioni: Standard Spring Boot (30s default)
+  Thread Pool: Virtual threads abilitati (Java 21+)
+  Fetch size DB: 50 record (Hibernate JDBC)
+
+8.2 Throughput Atteso
+---------------------
+  Upload certificato: < 100 ms (I/O file + DB insert)
+  Firma ID postazione: 50-200 ms (operazioni crittografiche)
+  Verifica firma: 20-50 ms (validazione CMS)
+  Query lista certificati: 10-30 ms (tipicamente < 100 record)
+
+8.3 Fattori di Criticità
+------------------------
+  • Operazioni crittografiche CPU-bound (firma/verifica)
+  • Timeout Oracle in caso di DB lento
+  • Memory leak potenziale in gestione PKCS12 (attente release risorse)
+  • Password in transito nel request body (sempre HTTPS in produzione)
+
+
+9. SICUREZZA E COMPLIANCE
+================================================================================
+
+9.1 Misure di Sicurezza Implementate
+-------------------------------------
+  ✓ Cifratura password keystore con Triple DES
+  ✓ HTTPS obbligatorio in produzione
+  ✓ Validazione input (NotBlank, constraints)
+  ✓ CORS configurato per domain specifici
+  ✓ Keypair management con Bouncy Castle (crypto provider affidabile)
+  ✓ No hardcoded secrets (tutti in env var / vault)
+  ✓ SQL injection prevention (JPA parametrized queries)
+  ✓ XSS prevention (REST API, no HTML templates)
+
+9.2 Compliance
+---------------
+  • Firma digitale conforme a PKCS7/CMS (RFC 5652)
+  • X.509 v3 certificates
+  • Algoritmi: SHA256withRSA (standard per firma ANPR)
+  • Archiviazione firme per audit trail
+  • Tracciatura: database logs + Spring Boot actuator
+
+
+10. MONITORAGGIO E DIAGNOSTICA
+================================================================================
+
+10.1 Health Check
+------------------
+  Endpoint: GET /actuator/health
+  Response:
+    {
+      "status": "UP",
+      "components": {
+        "db": { "status": "UP" },
+        "livenessState": { "status": "UP" },
+        "readinessState": { "status": "UP" }
+      }
+    }
+
+10.2 Metrics
+-----------
+  Endpoint: GET /actuator/metrics
+  Metadati disponibili:
+    - jvm.memory.used
+    - process.cpu.usage
+    - http.server.requests (latency per endpoint)
+    - hikaricp.connections.active
+
+10.3 Logging
+-----------
+  Livello: INFO (it.romacapitale namespace)
+  Formato: JSON (Spring Boot default)
+  Destinazione: stdout (Docker) → ELK stack (produzione)
+  Campi tracciati: timestamp, level, logger, message, trace (su ERROR)
+
+10.4 Error Handling
+-------------------
+  Eccezioni custom:
+    • CertificatoNotFoundException: alias non trovato (HTTP 404)
+    • FirmaException: errore operazione crittografica (HTTP 500)
+    • ValidationException: parametri invalidi (HTTP 400)
+
+  GlobalExceptionHandler: centralizza traduzione eccezioni → HTTP
+
+
+11. OPERAZIONI COMUNI
+================================================================================
+
+11.1 Startup del Servizio
+-------------------------
+  Docker:
+    docker build -t be-firma:1.0 .
+    docker run -e DB_USERNAME=ANAG_USR -e DB_PASSWORD=... \
+               -e TRIPLE_DES_KEY=... -p 8080:8080 be-firma:1.0
+
+  Kubernetes:
+    kubectl apply -k k8s/overlays/dev/
+    kubectl port-forward svc/be-firma-certificati-postazione 8080:8080
+
+11.2 Backup Certificati
+-----------------------
+  Backup database Oracle: standard backup DBSIPODV
+  Backup PKCS12: inclusi in BLOB di REG_USER_ANPR
+  Nota: La chiave Triple DES è richiesta per recuperare le password
+
+11.3 Rotazione Certificati
+---------------------------
+  Processo:
+    1. Preparare nuovo PKCS12 con certificato scaduto replacement
+    2. Upload con nuovo alias (es. 058091-PC-2611-v2)
+    3. Testare firma con nuovo certificato
+    4. Aggiornare config mediation-ansc se necessario
+    5. Disattivare vecchio alias con DELETE /api/v1/certificati/{old_alias}
+
+11.4 Troubleshooting
+--------------------
+  Certificato non trovato:
+    → Verificare alias con GET /api/v1/certificati
+    → Verificare che certificato sia stato uploadato
+
+  Firma fallisce:
+    → Verificare TRIPLE_DES_KEY corretta (password non decifrata)
+    → Verificare certificato valido (non scaduto)
+    → Controllare disponibilità memoria JVM
+
+  Connessione DB:
+    → Verificare DB_USERNAME, DB_PASSWORD
+    → Verificare raggiungibilità 10.173.9.85:1522
+    → Verificare tablespace ANAG_USR disponibile

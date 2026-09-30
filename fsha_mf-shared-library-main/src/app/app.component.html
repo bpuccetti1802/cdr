@@ -1,0 +1,16 @@
+<!-- <app-mf-header></app-mf-header> -->
+<!-- <app-mf-navbar></app-mf-navbar> -->
+<!-- <app-rc-card-wrapper [width]="'full'">
+  <ng-container>
+    <ng-content>
+      <app-rc-document-single-upload></app-rc-document-single-upload>
+    </ng-content>
+  </ng-container>
+</app-rc-card-wrapper> -->
+<div class="d-flex justify-content-center">
+<div>
+  <app-rc-otp [handleChange]="salvaCodiceOtp.bind(this)"></app-rc-otp>
+<button class='btn btn-primary' (click)='stampaOtp()' type='button'>Stampa OTP</button>
+</div>
+</div>
+    

@@ -1,0 +1,35 @@
+.input-disabled {
+  background-color: #e9ecef;
+  color: #6c757d;
+  pointer-events: none;
+}
+
+.dtp-disabled {
+  background-color: #e9ecef;
+  color: #6c757d;
+  pointer-events: none;
+}
+
+.button-clear {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+}
+
+ .error-message {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.flatpickr-input {
+  padding-inline-start: 35px;
+}
+
+.it-calendar {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 10;
+}

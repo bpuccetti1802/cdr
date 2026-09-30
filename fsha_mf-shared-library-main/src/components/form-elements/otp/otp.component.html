@@ -1,0 +1,13 @@
+    <div [id]="id"class="text-center">
+      <div class="inputs d-flex flex-row justify-content-center mt-4 mb-3">
+        <ng-container *ngFor="let index of getBoxArray(); trackBy: trackByIndex">
+          <input
+            #otpInput
+            class="m-2 text-center form-control rounded"
+            maxlength="1"
+            [type]="type"
+            (input)="updateOtpValue()"
+          />
+        </ng-container>
+      </div>
+    </div>

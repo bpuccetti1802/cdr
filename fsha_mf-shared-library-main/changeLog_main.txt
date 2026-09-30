@@ -1,0 +1,103 @@
+
+# Change Log - Branch: main
+
+Push del: 2025-10-14 15:59:42Z
+Autore: francescomurador
+Descrizione: Rilascio nuova versione
+
+---
+
+Push del: 2025-10-14 16:00:39Z
+Autore: francescomurador
+Descrizione: Rilascio nuova versione
+
+---
+
+Push del: 2025-11-04 18:00:31Z
+Autore: francescomurador
+Descrizione: Rilascio nuova versione
+
+---
+
+Push del: 2025-11-04 18:02:56Z
+Autore: francescomurador
+Descrizione: Rilascio nuova versione
+
+---
+
+Push del: 2026-02-09 18:55:41Z
+Autore: francescomurador
+Descrizione: allineamento
+
+---
+
+
+Push del: 2026-02-09 19:09:43Z
+Autore: francescomurador
+Descrizione: allineamento produzione
+
+---
+
+
+Push del: 2026-03-03 18:37:58Z
+Autore: francescomurador
+Descrizione: rilascio produzione sportelli
+
+---
+
+
+Push del: 2026-03-03 18:46:18Z
+Autore: francescomurador
+Descrizione: rilascio produzione sportelli
+
+---
+
+
+Push del: 2026-03-03 18:48:23Z
+Autore: francescomurador
+Descrizione: rilascio produzione sportelli
+
+---
+
+
+Push del: 2026-03-07 16:18:44Z
+Autore: francescomurador
+Descrizione: aggiornamento link footer
+
+---
+
+
+Push del: 2026-03-07 16:23:38Z
+Autore: francescomurador
+Descrizione: fixato link
+
+---
+
+
+Push del: 2026-03-13 18:50:44Z
+Autore: francescomurador
+Descrizione: rilascio fix per sportelli
+
+---
+
+
+Push del: 2026-03-20 20:48:18Z
+Autore: francescomurador
+Descrizione: rilascio
+
+---
+
+
+Push del: 2026-03-27 17:07:00Z
+Autore: francescomurador
+Descrizione: nuovo rilascio prosa prod con config.json corretto
+
+---
+
+
+Push del: 2026-04-02 18:33:39Z
+Autore: francescomurador
+Descrizione: manca ordinamento sulle mie attività e una volta effettuata un attività in carico non scompare - link branch https://Sistemi-Informativi-Srl@dev.azure.com/Sistemi-Informativi-Srl/ROMA%20CAPITALE-0326-roma-capitale-mse/_git/fsha_mf-shared-library
+
+---
+

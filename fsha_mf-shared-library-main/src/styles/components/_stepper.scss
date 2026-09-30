@@ -1,0 +1,23 @@
+@import '../theme/palette';
+
+.steppers .steppers-nav .steppers-progress {
+  display: block !important;
+}
+
+.steppers .steppers-nav .steppers-dots {
+  display: flex !important;
+}
+
+.steppers .steppers-content {
+    background-color: map-get($colors, 'secondary', 'lighter' ) !important;
+}
+
+.s-content{background: '#F7F7F7'}
+
+@for $width from 0 through 100 {
+  .progress-width-#{$width} {
+    width: #{$width} + '%';
+  }
+}
+
+

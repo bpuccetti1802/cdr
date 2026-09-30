@@ -1,0 +1,67 @@
+<div #autocompleteWrapper class="autocomplete-container">
+  <label
+    [ngClass]="{ 'text-danger': !valid && !!touched }"
+    *ngIf="label"
+    [attr.for]="id"
+    class="pb-1"
+  >
+    {{ label + (required ? ' *' : '') }}
+  </label>
+  <div class="autocomplete-field">
+    <input
+    (keydown)="onKeyDown($event)"
+    (mouseenter)="onMouseDown($event)"
+    [readonly]="disabled"
+    #inputRef
+    (blur)="onBlur($event)"
+    [id]="id"
+    type="text"
+    [value]="term"
+    (input)="onInputChange($event)"
+    (focus)="!disabled && openDropdown()"
+    [placeholder]="placeholder"
+    class="form-control border rounded cursor-pointer"
+    [class.disabled-input]="disabled"
+    [ngClass]="{ 'outline-danger': !valid && touched }"
+    autocomplete="off"
+  />
+
+  <!-- Il dropdown viene spostato fuori dinamicamente -->
+  <div
+    #dropdownRef
+    *ngIf="showDropdown"
+    class="autocomplete-dropdown"
+    [ngClass]="'position' + '-' + position"
+  >
+    <div
+      *ngFor="let option of filteredOptions; trackBy: trackByFn"
+      class="autocomplete-item"
+      (click)="selectOption(option)"
+      (keydown.enter)="selectOption(option)"
+      tabindex="0"
+    >
+      {{ option.label }}
+    </div>
+  </div>
+  <button
+    *ngIf="term"
+    type="button"
+    class="clear-icon"
+    (click)="clearValue()"
+    aria-label="Svuota campo"
+    [disabled]="disabled"
+  >
+    <app-rc-icon name="fa-times" [fontSize]="IconSize.xs"> </app-rc-icon>
+  </button>
+  <div
+    class="chevron-icon pe-2"
+    [ngClass]="{ 'scale-up': showDropdown, 'chevron-icon-fixed': position === 'fixed' }"
+  >
+    <app-rc-icon name="fa-chevron-down" [size]="IconSize.xs"></app-rc-icon>
+  </div>
+  </div>
+
+  <div *ngIf="!valid && !!touched" class="text-danger error-message">
+    {{ errorMessage || errorMessageComputed }}
+  </div>
+</div>

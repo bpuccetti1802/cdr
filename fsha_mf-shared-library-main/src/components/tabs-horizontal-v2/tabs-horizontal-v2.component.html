@@ -1,0 +1,59 @@
+<div class="bd-rc-tabs">
+  <nav class="tabs-wrapper">
+
+    <!-- Freccia sinistra (appare solo se il primo tab è nascosto) -->
+    <div *ngIf="showLeftArrow" class="mf-cursor-pointer left-arrow" (click)="scrollTabs('left')"
+      (keydown)="onArrowKeyDown($event)" tabindex="0">
+      <app-rc-icon [name]="'it-chevron-left'" color="secondary"></app-rc-icon>
+    </div>
+
+
+    <ul class="tabs-wrapper nav nav-tabs ms-2 me-2 bg-transparent flex-nowrap" #tabsWrapper>
+      <li *ngFor="let tab of tabs; trackBy: trackByTab; let index = index" class="nav-item">
+        <button type="button" class="tab-horizontal nav-link w-auto" [class.active]="selectedTab === tab"
+          (click)="onSelectTab(tab, index)" [disabled]="tab.disabled" role="tab" tabindex="0"
+          [attr.aria-controls]="tab.link" [attr.aria-selected]="selectedTab === tab">
+          {{ tab.label }}
+          <!-- Icone -->
+          <ng-container *ngIf="useIcons; else singleIconTemplate">
+            <div *ngFor="let icon of tab.icons; trackBy: trackByIcon" class="px-2" [attr.title]="icon.iconTitle">
+              <app-rc-icon [name]="icon.iconName" [color]="icon.iconColor" [size]="IconSize.sm"></app-rc-icon>
+            </div>
+          </ng-container>
+          <ng-template #singleIconTemplate>
+            <div *ngIf="tab.iconName && tab.iconColor" [attr.title]="tab.iconTitle" class="px-2">
+              <app-rc-icon [name]="tab.iconName" [color]="tab.iconColor" [size]="IconSize.sm"></app-rc-icon>
+            </div>
+          </ng-template>
+        </button>
+      </li>
+    </ul>
+
+    <!-- Freccia destra (appare solo se l'ultimo tab è nascosto) -->
+    <div *ngIf="showRightArrow" class="mf-cursor-pointer right-arrow" (click)="scrollTabs('right')"
+      (keydown)="onArrowKeyDown($event)" tabindex="0">
+      <app-rc-icon [name]="'it-chevron-right'" color="secondary"></app-rc-icon>
+    </div>
+
+  </nav>
+
+  <div class="tab-content">
+    <div class="tab-panel mt-4 fade show active">
+      <ng-container *ngIf="remoteApplicationType === RemoteApplicationType.REACT">
+        <ng-content></ng-content>
+      </ng-container>
+      <ng-container *ngIf="selectedTab && !useComponent">
+        <ng-container *ngIf="remoteApplicationType === RemoteApplicationType.ANGULAR">
+          <ng-container *ngComponentOutlet="selectedTab.component"></ng-container>
+        </ng-container>
+      </ng-container>
+      <ng-container *ngIf="useComponent">
+        <ng-container *ngIf="selectedTab && useComponent && selectedTab.component">
+          <ng-container *ngComponentOutlet="selectedTab.component"></ng-container>
+        </ng-container>
+      </ng-container>
+      <ng-template #contentContainer>
+      </ng-template>
+    </div>
+  </div>
+</div>

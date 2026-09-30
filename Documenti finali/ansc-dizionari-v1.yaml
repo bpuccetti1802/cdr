@@ -1,0 +1,884 @@
+openapi: 3.0.3
+
+info:
+  title: Integrazione SIPO - ANSC — concentratore dei dizionari
+  version: 1.0.0
+  summary: Replica locale delle tabelle di decodifica pubblicate da ANSC e loro aggiornamento su comando.
+  description: |
+    Interfacce esposte dal componente `dec-ansc-sipo`, che replica in locale le **tabelle di
+    decodifica** pubblicate da ANSC e le rende disponibili a tutto SIPO.
+
+    Il componente è distinto dal concentratore operativo per tre ragioni: ha un ciclo di vita
+    diverso (un'operazione lunga ed eseguita raramente, contro una sessione sincrona presidiata),
+    consumatori diversi (i dizionari servono a tutto SIPO, non al solo componente ANSC) e un dominio
+    di guasto diverso (un aggiornamento fallito non deve impedire la formazione degli atti).
+
+    **Non detiene il certificato server e non costruisce token**: raggiunge il servizio di
+    configurazione ANSC per il tramite del concentratore operativo, che è l'unico luogo dove
+    risiedono la chiave privata e la logica di firma.
+
+    ## Come SIPO consuma i dizionari
+
+    **Non da queste interfacce.** La fruizione ordinaria dei valori da parte delle maschere avviene
+    **in base dati**, sulla vista di sola lettura `V_ANSC_DIZ_VALIDO`, raggiunta per sinonimo. È la
+    scelta coerente con il modo in cui SIPO già lavora e non introduce una dipendenza applicativa a
+    runtime fra le maschere e questo componente.
+
+    Le operazioni descritte qui servono **al back-office e alla diagnosi**: comandare
+    l'aggiornamento, consultarne lo storico, ispezionare il catalogo.
+
+    ## Che cosa i dizionari non contengono
+
+    Comuni, province, stati e nazionalità **non arrivano da qui**: la titolarità di quei cataloghi è
+    di ANPR e in SIPO risiedono nello schema anagrafico. I dizionari ANSC non sostituiscono le
+    tabelle di decodifica preesistenti di SIPO: sono un catalogo aggiuntivo che convive con quello.
+
+    Documentazione di analisi: `ANALISI_Integrazione-ANSC_v2.6.docx`, capitolo «Gestione dei
+    dizionari ANSC».
+  contact:
+    name: Dipartimento Trasformazione Digitale — Roma Capitale
+  x-componente: dec-ansc-sipo
+  x-standard-nomenclatura: Naming_convention_X_API_v1.00.docx
+  x-lingua: it
+
+servers:
+  - url: https://sipo-svil.comune.roma.it
+    description: Ambiente di sviluppo SIPO
+  - url: https://sipo-test.comune.roma.it
+    description: Ambiente di test SIPO
+  - url: https://sipo.comune.roma.it
+    description: Ambiente di esercizio SIPO
+
+tags:
+  - name: aggiornamenti
+    description: |
+      I comandi di allineamento dei dizionari dalla fonte remota e il loro storico. L'aggiornamento è
+      modellato come risorsa: si comanda con POST sulla collezione e se ne legge la storia con GET
+      sulla stessa.
+  - name: dizionari
+    description: Il catalogo locale delle decodifiche replicate e i loro valori.
+
+security:
+  - bearerJwt: []
+
+paths:
+
+  /ansc/v1/dizionari/aggiornamenti:
+    post:
+      operationId: allineaDizionari
+      summary: Allinea i dizionari locali a quelli pubblicati da ANSC
+      description: |
+        Confronta la versione di ciascuna decodifica dichiarata da ANSC con quella già caricata in
+        locale e scarica soltanto le decodifiche nuove o di versione diversa, sostituendone
+        integralmente i valori.
+
+        Si usa **su comando**, dalla schermata dei dizionari del back-office. Non esiste alcuna
+        schedulazione: la periodicità è una decisione organizzativa, tipicamente legata alle
+        comunicazioni di rilascio del fornitore, e non un intervallo cablato nel sistema.
+
+        Sono previste tre modalità:
+
+        - `COMPLETO` esamina tutte le decodifiche pubblicate;
+        - `SELETTIVO` limita l'esame alle decodifiche indicate, utile quando il fornitore comunica la
+          modifica di una tabella specifica;
+        - `SIMULAZIONE` esegue il confronto e restituisce il differenziale **senza scrivere nulla**: è
+          la modalità con cui valutare l'impatto prima di aggiornare in esercizio.
+
+        **Effetti**: nelle modalità `COMPLETO` e `SELETTIVO` sostituisce i valori delle decodifiche
+        disallineate, una transazione per decodifica, così che l'errore su una tabella non lasci
+        l'intero catalogo incoerente. In `SIMULAZIONE` nessun effetto.
+
+        **Ripetibile senza effetti collaterali**: alla seconda esecuzione le decodifiche già allineate
+        risultano invariate e non vengono riscaricate. Un aggiornamento interrotto si riprende
+        semplicemente rieseguendolo.
+
+        **L'aggiornamento non interferisce con la formazione degli atti in corso**: la sostituzione
+        avviene per singola decodifica e i lettori continuano a vedere i valori precedenti fino al
+        completamento della transazione.
+
+        **Prerequisiti**: ruolo Amministratore. La chiamata verso ANSC è instradata sul concentratore
+        operativo, che costruisce e firma il token.
+      tags: [aggiornamenti]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AggiornamentoRichiesta' }
+            examples:
+              esempioCompleto:
+                summary: Aggiornamento completo
+                value:
+                  codModalita: COMPLETO
+              esempioSelettivo:
+                summary: Aggiornamento di due sole decodifiche
+                value:
+                  codModalita: SELETTIVO
+                  codDecodifiche: [ANSC_11, ANSC_03]
+              esempioSimulazione:
+                summary: Simulazione, per valutare l'impatto
+                value:
+                  codModalita: SIMULAZIONE
+      responses:
+        '200':
+          description: |
+            Esito dell'aggiornamento, con i conteggi e il dettaglio delle decodifiche cambiate. In
+            modalità `SIMULAZIONE` la forma è la stessa ma i conteggi indicano che cosa cambierebbe:
+            «aggiornate» va letto come «da aggiornare».
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Aggiornamento' }
+              examples:
+                esempioAggiornamentoRiuscito:
+                  summary: Due decodifiche aggiornate su 143
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      idAggiornamento: 412
+                      codModalita: COMPLETO
+                      operatore: RSSMRA70A01H501U
+                      numEsaminate: 143
+                      numAggiornate: 2
+                      numInvariate: 141
+                      numInErrore: 0
+                      numMillisecondi: 18400
+                      dataInizio: '2026-07-23T08:10:00+02:00'
+                      dataFine: '2026-07-23T08:10:18+02:00'
+                      dettaglio:
+                        - codDecodifica: ANSC_11
+                          nome: dec_stato_evento
+                          codVersioneDa: 1.4.0
+                          codVersioneA: 1.5.0
+                          numValori: 11
+                        - codDecodifica: ANSC_03
+                          nome: dec_use_case
+                          codVersioneDa: 1.52.0
+                          codVersioneA: 1.53.0
+                          numValori: 377
+                esempioAggiornamentoParziale:
+                  summary: Una decodifica non caricata
+                  value:
+                    esito: KO
+                    messaggi:
+                      - tipo: ERROR
+                        codice: DIZIONARIO_TRACCIATO_NON_RICONOSCIUTO
+                        descrizione: 'La decodifica ANSC_120 ha un tracciato non previsto: colonne non attese'
+                    dati:
+                      idAggiornamento: 413
+                      codModalita: COMPLETO
+                      numEsaminate: 143
+                      numAggiornate: 1
+                      numInvariate: 141
+                      numInErrore: 1
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '409':
+          description: Un altro aggiornamento è già in corso.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+              examples:
+                esempioGiaInCorso:
+                  value:
+                    esito: KO
+                    messaggi:
+                      - tipo: ERROR
+                        codice: AGGIORNAMENTO_GIA_IN_CORSO
+                        descrizione: Un aggiornamento avviato alle 08:10 da RSSMRA70A01H501U è ancora in esecuzione
+                    dati: null
+        '502': { $ref: '#/components/responses/AnscNonRaggiungibile' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE]
+      x-effetti: |
+        Sostituisce i valori delle decodifiche disallineate, una transazione per decodifica.
+        Ripetibile senza effetti ulteriori. In modalità `SIMULAZIONE` non scrive nulla.
+      x-vincoli: |
+        L'esecuzione concorrente è impedita: un solo aggiornamento per volta. L'operazione può durare
+        alcune decine di secondi e non va invocata da un contesto con tempo di risposta stretto.
+      x-codici-errore:
+        - codice: AGGIORNAMENTO_GIA_IN_CORSO
+          condizione: Un altro aggiornamento è in esecuzione.
+        - codice: DIZIONARIO_TRACCIATO_NON_RICONOSCIUTO
+          condizione: Il CSV scaricato ha colonne diverse da quelle previste per il tracciato.
+        - codice: DIZIONARIO_SCARICO_FALLITO
+          condizione: Il servizio di configurazione ANSC non ha restituito il contenuto della decodifica.
+        - codice: DECODIFICA_NON_ESISTENTE
+          condizione: Un identificativo indicato in modalità selettiva non compare nell'elenco remoto.
+
+    get:
+      operationId: elencaAggiornamenti
+      summary: Elenca gli aggiornamenti eseguiti
+      description: |
+        Restituisce lo storico dei comandi di aggiornamento, con operatore, modalità, durata e
+        conteggi.
+
+        Si usa per sapere quando i dizionari sono stati allineati l'ultima volta e da chi, e per
+        risalire alla causa di un disallineamento.
+
+        **Effetti**: nessuno.
+      tags: [aggiornamenti]
+      parameters:
+        - name: codModalita
+          in: query
+          required: false
+          description: Limita a una modalità di esecuzione.
+          schema: { type: string, enum: [COMPLETO, SELETTIVO, SIMULAZIONE] }
+        - name: esito
+          in: query
+          required: false
+          description: Limita a un esito complessivo.
+          schema: { type: string, enum: [OK, PARZIALE, KO] }
+        - $ref: '#/components/parameters/NumPagina'
+        - $ref: '#/components/parameters/NumElementi'
+        - $ref: '#/components/parameters/Ordinamento'
+      responses:
+        '200':
+          description: Elenco paginato degli aggiornamenti, senza il dettaglio per decodifica.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati:
+                        type: object
+                        properties:
+                          aggiornamenti:
+                            type: array
+                            description: Gli aggiornamenti della pagina richiesta, dal più recente.
+                            items: { $ref: '#/components/schemas/AggiornamentoSintesi' }
+                          navigazione: { $ref: '#/components/schemas/Navigazione' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE, AUDITOR]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+  /ansc/v1/dizionari/aggiornamenti/{idAggiornamento}:
+    parameters:
+      - $ref: '#/components/parameters/IdAggiornamento'
+    get:
+      operationId: leggiAggiornamento
+      summary: Legge il dettaglio di un aggiornamento
+      description: |
+        Restituisce un singolo aggiornamento con il dettaglio per decodifica: quali sono state
+        aggiornate e da quale versione a quale, e quali sono andate in errore con il motivo.
+
+        Si usa in diagnosi, quando un aggiornamento si è concluso con esito parziale.
+
+        **Effetti**: nessuno.
+      tags: [aggiornamenti]
+      responses:
+        '200':
+          description: Il dettaglio dell'aggiornamento.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Aggiornamento' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE, AUDITOR]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+  /ansc/v1/dizionari:
+    get:
+      operationId: elencaDizionari
+      summary: Elenca il catalogo locale delle decodifiche
+      description: |
+        Restituisce il catalogo delle decodifiche replicate: identificativo, nome, codice, versione,
+        numero di valori, esito e data dell'ultimo caricamento.
+
+        Si usa dalla schermata dei dizionari del back-office, per vedere a colpo d'occhio lo stato
+        della replica.
+
+        **Effetti**: nessuno.
+      tags: [dizionari]
+      parameters:
+        - name: esitoUltimoCarico
+          in: query
+          required: false
+          description: Limita alle decodifiche con un dato esito dell'ultimo caricamento.
+          schema: { type: string, enum: [AGGIORNATA, INVARIATA, ERRORE] }
+        - $ref: '#/components/parameters/NumPagina'
+        - $ref: '#/components/parameters/NumElementi'
+        - $ref: '#/components/parameters/Ordinamento'
+      responses:
+        '200':
+          description: Il catalogo locale.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati:
+                        type: object
+                        properties:
+                          dizionari:
+                            type: array
+                            description: Le decodifiche della pagina richiesta.
+                            items: { $ref: '#/components/schemas/Dizionario' }
+                          navigazione: { $ref: '#/components/schemas/Navigazione' }
+              examples:
+                esempioCatalogo:
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      dizionari:
+                        - codDecodificaAnsc: ANSC_11
+                          idDecodifica: '11'
+                          nome: dec_stato_evento
+                          codVersioneAnsc: 1.5.0
+                          numValori: 11
+                          esitoUltimoCarico: AGGIORNATA
+                          dataUltimoCarico: '2026-07-23T08:10:14+02:00'
+                      navigazione: { numPagina: 1, numElementi: 25, numTotale: 145 }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE, AUDITOR]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+  /ansc/v1/dizionari/{codDizionario}:
+    parameters:
+      - $ref: '#/components/parameters/CodDizionario'
+    get:
+      operationId: leggiDizionario
+      summary: Legge la voce di catalogo di una decodifica
+      description: |
+        Restituisce la voce di catalogo di una singola decodifica, senza i valori.
+
+        Si usa per verificare la versione replicata prima di decidere un aggiornamento selettivo.
+
+        **Effetti**: nessuno.
+
+        **Un identificativo può corrispondere a più decodifiche.** Nel corpus pubblicato due
+        identificativi coprono tabelle distinte: in quel caso l'operazione restituisce l'esito
+        `AMBIGUO` e occorre indicare anche il nome con il parametro `nome`.
+      tags: [dizionari]
+      parameters:
+        - name: nome
+          in: query
+          required: false
+          description: |
+            Nome della tabella, necessario a disambiguare quando lo stesso identificativo copre più
+            decodifiche.
+          schema: { type: string }
+          example: dec_dichiarante_trascr_nascita
+      responses:
+        '200':
+          description: La voce di catalogo.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Dizionario' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '409':
+          description: L'identificativo corrisponde a più decodifiche e il nome non è stato indicato.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+              examples:
+                esempioAmbiguo:
+                  value:
+                    esito: KO
+                    messaggi:
+                      - tipo: ERROR
+                        campo: codDizionario
+                        codice: DIZIONARIO_AMBIGUO
+                        descrizione: 'ANSC_134 corrisponde a due decodifiche: indicare il nome con il parametro nome'
+                    dati: null
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE, AUDITOR]
+      x-effetti: Sola lettura, sicura e ripetibile.
+      x-codici-errore:
+        - codice: DIZIONARIO_AMBIGUO
+          condizione: L'identificativo corrisponde a più decodifiche e il nome non è stato indicato.
+
+  /ansc/v1/dizionari/valori:
+    get:
+      operationId: cercaValori
+      summary: Cerca un valore in tutte le decodifiche replicate
+      description: |
+        Cerca un testo nel codice e nella descrizione dei valori di **tutte** le decodifiche
+        replicate in locale e restituisce, per ciascuna corrispondenza, la decodifica di
+        appartenenza.
+
+        Serve quando si conosce la descrizione di un valore ma non la decodifica che lo contiene:
+        è il caso ordinario nel lavoro di riconciliazione fra i valori di SIPO e quelli di ANSC, e
+        nella diagnosi di un rifiuto che cita un codice senza dire da quale tabella provenga.
+
+        **Non è la via di consumo delle maschere**, che leggono i valori in base dati sulla vista di
+        sola lettura: questa operazione serve il back-office e la diagnosi.
+
+        **Effetti**: nessuno.
+      tags: [dizionari]
+      parameters:
+        - name: ricerca
+          in: query
+          required: true
+          description: |
+            Testo cercato, almeno due caratteri. Il confronto ignora maiuscole, accenti e apostrofi
+            tipografici.
+          schema: { type: string, minLength: 2, maxLength: 100 }
+        - name: codDizionario
+          in: query
+          required: false
+          description: Limita la ricerca a una decodifica.
+          schema: { type: string }
+        - name: flagSoloValidi
+          in: query
+          required: false
+          description: Limita ai valori in corso di validità alla data odierna.
+          schema: { type: boolean, default: true }
+        - $ref: '#/components/parameters/NumPagina'
+        - $ref: '#/components/parameters/NumElementi'
+      responses:
+        '200':
+          description: I valori che corrispondono al testo cercato, con la decodifica di appartenenza.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati:
+                        type: object
+                        properties:
+                          valori:
+                            type: array
+                            description: Le corrispondenze della pagina richiesta.
+                            items:
+                              allOf:
+                                - $ref: '#/components/schemas/ValoreDizionario'
+                                - type: object
+                                  properties:
+                                    codDizionario:
+                                      type: string
+                                      description: Decodifica che contiene il valore.
+                                      example: ANSC_09
+                                    nomeDizionario:
+                                      type: string
+                                      description: Nome della tabella pubblicato da ANSC.
+                                      example: dec_tipo_allegato
+                          navigazione: { $ref: '#/components/schemas/Navigazione' }
+              examples:
+                esempioRicerca:
+                  summary: Ricerca del termine «necroscopico»
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      valori:
+                        - codDizionario: ANSC_09
+                          nomeDizionario: dec_tipo_allegato
+                          codValore: '12'
+                          descrizione: Certificato necroscopico
+                      navigazione: { numPagina: 1, numElementi: 25, numTotale: 1 }
+        '400':
+          description: Testo di ricerca assente o più corto di due caratteri.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+
+  /ansc/v1/dizionari/{codDizionario}/valori/{codValore}:
+    parameters:
+      - $ref: '#/components/parameters/CodDizionario'
+      - name: codValore
+        in: path
+        required: true
+        description: Il valore codificato, come ANSC lo pubblica.
+        schema: { type: string, maxLength: 10 }
+    get:
+      operationId: leggiValoreDizionario
+      summary: Legge un valore per chiave, decodifica più valore
+      description: |
+        Restituisce un singolo valore dato il suo dominio e il suo codice: è la lettura per chiave,
+        e la chiave è la coppia **decodifica + valore**, cioè la chiave primaria della replica
+        locale.
+
+        È l'operazione che serve a chi deve **tradurre un codice in una descrizione** — la
+        costruzione del payload, la presentazione di un atto già formato, la diagnosi di un
+        rifiuto — e a chi deve **accertare che un valore esista** prima di trasmetterlo.
+
+        **Non è la via di consumo delle maschere**, che leggono la coppia in base dati sulla vista
+        di sola lettura: la chiave è la stessa, cambia il canale.
+
+        **Effetti**: nessuno.
+
+        **La validità non filtra la lettura per chiave.** Un valore cessato si legge, perché serve
+        a interpretare gli atti formati quando era in vigore; la risposta dichiara se sia ancora
+        valido e chi propone una scelta all'operatore esclude i cessati.
+
+        ⚠️ **Due decodifiche su 143 non sono univoche per il solo identificativo**: nel corpus
+        pubblicato gli identificativi 134 e 135 coprono due tabelle ciascuno. Per quelle la coppia
+        non basta e occorre il parametro `nome`; in sua assenza il servizio risponde `409` ed
+        elenca le tabelle fra cui scegliere, invece di restituire un valore a caso.
+      tags: [dizionari]
+      parameters:
+        - name: nome
+          in: query
+          required: false
+          description: |
+            Nome della tabella, obbligatorio per i soli identificativi che coprono più decodifiche.
+          schema: { type: string, maxLength: 50 }
+      responses:
+        '200':
+          description: Il valore richiesto, con la propria validità temporale.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/ValoreDizionario' }
+              examples:
+                esempioValore:
+                  summary: Stato dell'evento, valore CONFERMATO
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      codValore: '2'
+                      descrizione: CONFERMATO
+                      dataInizioValidita: '2000-01-01'
+                      dataFineValidita: '9999-12-31'
+                      flagValido: true
+        '404':
+          description: |
+            La decodifica non è replicata in locale, oppure non contiene quel valore. ⚠️ Le due
+            cause vanno distinte nel messaggio: la prima è un aggiornamento mancante, la seconda un
+            dato da correggere.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+        '409':
+          description: |
+            L'identificativo copre più decodifiche e il parametro `nome` non è stato indicato. Il
+            messaggio elenca le tabelle disponibili.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+
+  /ansc/v1/dizionari/{codDizionario}/valori:
+    parameters:
+      - $ref: '#/components/parameters/CodDizionario'
+    get:
+      operationId: elencaValoriDizionario
+      summary: Elenca i valori di una decodifica
+      description: |
+        Restituisce i valori di una decodifica, per difetto i soli in corso di validità.
+
+        Si usa in diagnosi e dal back-office per ispezionare che cosa sia stato effettivamente
+        caricato.
+
+        **Non è la via di consumo delle maschere**, che leggono i valori in base dati sulla vista di
+        sola lettura.
+
+        **Effetti**: nessuno.
+
+        **La validità temporale va sempre applicata in lettura.** I valori cessati restano in
+        catalogo perché servono a interpretare gli atti già formati: chiedendo
+        `flagSoloValidi=false` si ottengono anche quelli, che però non vanno proposti in scelta
+        all'operatore.
+      tags: [dizionari]
+      parameters:
+        - name: flagSoloValidi
+          in: query
+          required: false
+          description: Limita ai valori in corso di validità alla data odierna.
+          schema: { type: boolean, default: true }
+        - name: nome
+          in: query
+          required: false
+          description: Nome della tabella, per disambiguare gli identificativi che coprono più decodifiche.
+          schema: { type: string }
+        - name: ricerca
+          in: query
+          required: false
+          description: |
+            Testo cercato nel codice e nella descrizione dei valori, senza distinzione fra maiuscole
+            e minuscole e ignorando accenti e apostrofi tipografici, che nel corpus pubblicato non
+            sono uniformi.
+          schema: { type: string, maxLength: 100 }
+        - $ref: '#/components/parameters/NumPagina'
+        - $ref: '#/components/parameters/NumElementi'
+      responses:
+        '200':
+          description: I valori della decodifica.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati:
+                        type: object
+                        properties:
+                          valori:
+                            type: array
+                            description: I valori della pagina richiesta, nell'ordine suggerito da ANSC.
+                            items: { $ref: '#/components/schemas/ValoreDizionario' }
+                          navigazione: { $ref: '#/components/schemas/Navigazione' }
+              examples:
+                esempioValori:
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      valori:
+                        - codice: '1'
+                          descrizione: Bozza
+                          dataInizioValidita: '2022-11-01'
+                          dataFineValidita: null
+                          ordinamento: 1
+                          attributi: null
+                        - codice: '2'
+                          descrizione: Confermato
+                          dataInizioValidita: '2022-11-01'
+                          dataFineValidita: null
+                          ordinamento: 2
+                          attributi: null
+                      navigazione: { numPagina: 1, numElementi: 25, numTotale: 11 }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '409':
+          description: L'identificativo corrisponde a più decodifiche e il nome non è stato indicato.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE, AUDITOR, SUPPORTO]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+components:
+
+  securitySchemes:
+    bearerJwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Token di sessione interno a SIPO. Questo componente non costruisce né firma token verso ANSC.
+
+  parameters:
+    IdAggiornamento:
+      name: idAggiornamento
+      in: path
+      required: true
+      description: Identificativo dell'aggiornamento eseguito.
+      schema: { type: integer, format: int64 }
+      example: 412
+    CodDizionario:
+      name: codDizionario
+      in: path
+      required: true
+      description: Codice della decodifica nella forma usata dal modello dell'evento.
+      schema: { type: string }
+      example: ANSC_11
+    NumPagina:
+      name: numPagina
+      in: query
+      required: false
+      description: Numero della pagina richiesta, a partire da 1.
+      schema: { type: integer, minimum: 1, default: 1 }
+    NumElementi:
+      name: numElementi
+      in: query
+      required: false
+      description: Numero massimo di elementi per pagina.
+      schema: { type: integer, minimum: 1, maximum: 500, default: 25 }
+    Ordinamento:
+      name: ordinamento
+      in: query
+      required: false
+      description: Campi di ordinamento separati da virgola; il segno meno indica il verso discendente.
+      schema: { type: string }
+      example: -dataInizio
+
+  responses:
+    NonAutenticato:
+      description: Chiamante non autenticato o token scaduto.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+    NonAutorizzato:
+      description: Il ruolo del chiamante non consente l'operazione.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+    NonTrovato:
+      description: La decodifica o l'aggiornamento indicati non esistono.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+    AnscNonRaggiungibile:
+      description: |
+        Il servizio di configurazione ANSC non ha risposto. I dizionari locali restano quelli
+        precedenti: un aggiornamento fallito non degrada la replica esistente.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+    ErroreInterno:
+      description: Errore non previsto del componente.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+
+  schemas:
+
+    Busta:
+      type: object
+      description: Busta applicativa comune a tutte le risposte, nella stessa forma del concentratore operativo.
+      required: [esito]
+      properties:
+        esito:
+          type: string
+          enum: [OK, KO]
+          description: Esito applicativo dell'operazione, indipendente dal codice di stato HTTP.
+        messaggi:
+          type: array
+          description: Messaggi diagnostici, di errore o informativi.
+          items: { $ref: '#/components/schemas/Messaggio' }
+        dati:
+          nullable: true
+          description: Il contenuto proprio della risposta.
+
+    Messaggio:
+      type: object
+      description: Singolo messaggio della busta.
+      required: [tipo, codice, descrizione]
+      properties:
+        tipo:
+          type: string
+          enum: [ERROR, WARNING, INFO]
+          description: Gravità del messaggio.
+        campo:
+          type: string
+          nullable: true
+          description: Percorso del campo cui il messaggio si riferisce, se pertinente.
+        codice:
+          type: string
+          description: Codice applicativo stabile, in maiuscolo, nella forma «ambito_condizione».
+        descrizione:
+          type: string
+          description: Testo destinato alle persone.
+
+    Navigazione:
+      type: object
+      description: Dati di navigazione di una collezione paginata.
+      properties:
+        numPagina: { type: integer, description: 'Pagina restituita.' }
+        numElementi: { type: integer, description: 'Elementi per pagina.' }
+        numTotale: { type: integer, description: 'Elementi totali che soddisfano il filtro.' }
+
+    AggiornamentoRichiesta:
+      type: object
+      required: [codModalita]
+      properties:
+        codModalita:
+          type: string
+          enum: [COMPLETO, SELETTIVO, SIMULAZIONE]
+          description: |
+            Modalità di esecuzione. `SIMULAZIONE` esegue il confronto senza scrivere nulla.
+        codDecodifiche:
+          type: array
+          description: |
+            Codici delle decodifiche da esaminare. Valorizzato **solo** in modalità `SELETTIVO`; negli
+            altri casi è ignorato.
+          items: { type: string }
+
+    VoceAggiornamento:
+      type: object
+      description: Una decodifica interessata dall'aggiornamento.
+      properties:
+        codDecodifica: { type: string, description: 'Codice della decodifica.' }
+        nome: { type: string, description: 'Nome della tabella restituito dal servizio di configurazione.' }
+        codVersioneDa: { type: string, nullable: true, description: 'Versione replicata prima dell''aggiornamento.' }
+        codVersioneA: { type: string, description: 'Versione replicata dopo l''aggiornamento.' }
+        numValori: { type: integer, description: 'Valori caricati per la decodifica.' }
+        descErrore: { type: string, nullable: true, description: 'Motivo del mancato caricamento, se la decodifica è andata in errore.' }
+
+    AggiornamentoSintesi:
+      type: object
+      description: Un aggiornamento senza il dettaglio per decodifica.
+      properties:
+        idAggiornamento: { type: integer, format: int64, description: 'Identificativo dell''aggiornamento.' }
+        codModalita: { type: string, description: 'Modalità con cui è stato eseguito.' }
+        operatore: { type: string, description: 'Amministratore che ha impartito il comando.' }
+        numEsaminate: { type: integer, description: 'Decodifiche esaminate.' }
+        numAggiornate: { type: integer, description: 'Decodifiche aggiornate; in simulazione, quelle che cambierebbero.' }
+        numInvariate: { type: integer, description: 'Decodifiche già allineate.' }
+        numInErrore: { type: integer, description: 'Decodifiche non caricate.' }
+        esito: { type: string, enum: [OK, PARZIALE, KO], description: 'Esito complessivo.' }
+        dataInizio: { type: string, format: date-time, description: 'Istante di avvio, con fuso esplicito.' }
+        dataFine: { type: string, format: date-time, nullable: true, description: 'Istante di conclusione, con fuso esplicito.' }
+        numMillisecondi: { type: integer, nullable: true, description: 'Durata effettiva.' }
+
+    Aggiornamento:
+      allOf:
+        - $ref: '#/components/schemas/AggiornamentoSintesi'
+        - type: object
+          properties:
+            dettaglio:
+              type: array
+              description: Le decodifiche interessate, con la transizione di versione o il motivo dell'errore.
+              items: { $ref: '#/components/schemas/VoceAggiornamento' }
+
+    Dizionario:
+      type: object
+      description: Voce di catalogo di una decodifica replicata.
+      properties:
+        codDecodificaAnsc:
+          type: string
+          description: |
+            Codice nella forma usata dal modello dell'evento e dalla configurazione. **Non è univoco
+            da solo**: due identificativi del corpus pubblicato coprono decodifiche distinte, che si
+            distinguono per nome.
+        idDecodifica: { type: string, description: 'Identificativo numerico della tabella secondo il servizio di configurazione.' }
+        nome: { type: string, description: 'Nome della tabella. Con l''identificativo forma la chiave logica.' }
+        codVersioneAnsc: { type: string, nullable: true, description: 'Versione dichiarata da ANSC e replicata in locale.' }
+        numValori: { type: integer, description: 'Valori caricati.' }
+        esitoUltimoCarico: { type: string, enum: [AGGIORNATA, INVARIATA, ERRORE], description: 'Esito dell''ultimo caricamento.' }
+        dataUltimoCarico: { type: string, format: date-time, nullable: true, description: 'Istante dell''ultimo caricamento, con fuso esplicito.' }
+
+    ValoreDizionario:
+      type: object
+      description: Un valore di una decodifica.
+      properties:
+        codice: { type: string, description: 'Il valore codificato.' }
+        descrizione: { type: string, description: 'Descrizione pubblicata da ANSC.' }
+        dataInizioValidita: { type: string, format: date, nullable: true, description: 'Inizio di validità del valore.' }
+        dataFineValidita: { type: string, format: date, nullable: true, description: 'Fine di validità; nulla se il valore è ancora in vigore.' }
+        ordinamento: { type: integer, nullable: true, description: 'Ordine di presentazione suggerito da ANSC.' }
+        attributi:
+          type: object
+          nullable: true
+          description: |
+            Colonne aggiuntive delle sole decodifiche che le prevedono. Nel corpus attuale sono due
+            casi: il tipo di contenuto per i casi d'uso e il codice del consolato per i consolati.
+          additionalProperties: true

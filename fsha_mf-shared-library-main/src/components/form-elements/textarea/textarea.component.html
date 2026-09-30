@@ -1,0 +1,31 @@
+<div class="textarea-container">
+  <label [ngClass]="{'text-danger': !valid && !!touched}" [for]="id">
+    {{ label + (required ? ' *' : '') }}
+  </label>
+
+  <textarea
+    class="form-control border rounded with-indicator-padding"
+    [id]="id"
+    [rows]="rows"
+    [formControl]="formControl"
+    [readonly]="disabled"
+    [attr.maxlength]="maxLength ? maxLength : null"
+    [ngClass]="{
+      'textarea-disabled': disabled,
+      'resize-none': resize === 'none',
+      'resize-both': resize === 'both',
+      'resize-horizontal': resize === 'horizontal',
+      'resize-vertical': resize === 'vertical',
+      'outline-danger': !valid && !!touched
+    }"
+    [placeholder]="placeholder"
+  ></textarea>
+
+  <div *ngIf="textLengthIndicator" id="indicator" class="char-indicator">
+    {{ textLengthIndicator }}
+  </div>
+
+  <div *ngIf="formControl.invalid && formControl.touched" class="text-danger error-message">
+    {{ errorMessage }}
+  </div>
+</div>

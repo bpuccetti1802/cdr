@@ -1,0 +1,22 @@
+/* Overlay che copre tutta la viewport */
+.overlay-spinner {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+}
+
+/* Backdrop */
+.overlay-spinner .modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+}
+
+/* Spinner sempre visibile e centrato */
+.spinner-centered {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2010;
+}

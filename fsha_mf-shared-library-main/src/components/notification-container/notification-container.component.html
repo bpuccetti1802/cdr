@@ -1,0 +1,8 @@
+<div *ngIf="notifications.length > 0" class="notification-container">
+  <ng-container *ngFor="let notification of notifications; trackBy: trackById">
+    <app-rc-notification-toast [titleContent]="notification.payload.titleContent || ''"
+      [toastType]="notification.payload.toastType!" [message]="notification.payload.message"
+      [openNotification]="notification.payload.openNotification" [useTimer]="notification.payload.useTimer!"
+      (eventCloseCb)="eventCloseEmit($event)"></app-rc-notification-toast>
+  </ng-container>
+</div>

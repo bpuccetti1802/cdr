@@ -1,0 +1,20 @@
+<fieldset [id]="id">
+  <legend *ngIf="label">
+    {{ label }} <span *ngIf="required" class="text-danger">*</span>
+  </legend>
+
+  <div *ngFor="let item of items; trackBy: trackByValue" class="form-check" [ngClass]="{'form-check-inline': inline}">
+    <input type="radio"
+           class="form-check-input"
+           [id]="id + item.value"
+           [value]="item.value"
+           [formControl]="formControl"
+           [name]="id"
+           (change)="onChange(item.value)"
+           [checked]="item.value === formControl.value"
+           [readonly]="disabled">
+    <label class="form-check-label" [for]="id + item.value">
+      {{ item.label }}
+    </label>
+  </div>
+</fieldset>

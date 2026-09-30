@@ -1,0 +1,21 @@
+<ng-container *ngFor="let _ of rowsArray; let r = index; trackBy: trackByIndex">
+  <div class="row mb-3">
+    <ng-container *ngFor="let __ of colsArray; let c = index; trackBy: trackByIndex">
+      <div [ngClass]="[getColClass(c), getOffsetClass(c)]">
+        <ng-container *ngIf="cellTemplates[r]?.[c] as cell">
+          <!-- Se è TemplateRef -->
+          <ng-container
+            *ngIf="isTemplate(cell); else textCell"
+            [ngTemplateOutlet]="cell"
+            [ngTemplateOutletContext]="{ row: r, col: c }"
+          >
+          </ng-container>
+          <!-- Se è stringa -->
+          <ng-template #textCell>
+            {{ cell }}
+          </ng-template>
+        </ng-container>
+      </div>
+    </ng-container>
+  </div>
+</ng-container>

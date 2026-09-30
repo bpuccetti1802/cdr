@@ -1,0 +1,46 @@
+<!-- eslint-disable @angular-eslint/template/no-inline-styles -->
+<div
+  *ngIf="isBrowser"
+  class="rc-map-container"
+  #host
+  [style.height]="height"
+  [ngClass]="containerClass"
+  leaflet
+  [leafletOptions]="leafletOptions"
+  (leafletMapReady)="handleMapReady($event)"
+  (leafletClick)="handleClick($event)"
+  (leafletMapMoveEnd)="handleMoveEnd($event)"
+  (leafletMapZoomEnd)="handleZoomEnd($event)"
+  (leafletMapDragEnd)="handleMoveEnd($event)" 
+>
+  <div *ngIf="showLayerControls" class="rc-map-controls">
+    <button type="button" class="rc-map-btn" (click)="toggleLayersPanel()" [title]="'Seleziona layer'">
+      ☰
+    </button>
+    <button
+      type="button"
+      class="rc-map-btn"
+      (click)="syncNoneAndEmitClear()"
+      [disabled]="!activeLayerId"
+      title="Rimuovi layer"
+    >
+      ✕
+    </button>
+    <div class="rc-layer-panel" *ngIf="layersPanelOpen">
+      <div class="rc-layer-panel__header">
+        <span>Layer disponibili</span>
+        <button type="button" class="rc-layer-panel__close" (click)="layersPanelOpen = false">×</button>
+      </div>
+      <div class="rc-layer-panel__content">
+        <app-rc-radio
+          [id]="'wms-radio'"
+          [label]="'Layer disponibili'"
+          [items]="layerRadioItems"
+          [formControl]="selectedLayerCtrl"
+          [inline]="false"
+          [disabled]="false">
+        </app-rc-radio>
+      </div>
+    </div>
+  </div>
+</div>

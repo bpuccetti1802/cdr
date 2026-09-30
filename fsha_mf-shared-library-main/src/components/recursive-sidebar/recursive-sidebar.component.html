@@ -1,0 +1,44 @@
+<li *ngIf="level === 1 && hasHomeItem">
+  <span class="d-none" [routerLink]="'./'" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"
+    #rla="routerLinkActive"></span>
+  <a [routerLink]="'./'" [class.active]="rla.isActive" class="list-item">
+    <span>Home</span>
+  </a>
+</li>
+
+<ng-container *ngFor="let item of items; trackBy: trackBy">
+  <ng-container *ngIf="!item.shouldNotShowItem">
+    <li>
+      <ng-container *ngIf="item.children && item.children.length; else leafItem">
+        <span class="d-none" [routerLink]="parentPath + '/' + item.path | pathArray" routerLinkActive="active"
+          #rla="routerLinkActive" [routerLinkActiveOptions]="{ exact: false }">
+        </span>
+        <a [class.active]="rla.isActive" class="list-item medium right-icon nav-link" role="button"
+          [attr.href]="'#collapse-' + (parentPath + '/' + item.path | replaceSlashes)" data-bs-toggle="collapse"
+          [attr.aria-controls]="'collapse-' + (parentPath + '/' + item.path | replaceSlashes)" aria-expanded="false">
+          <span class="list-item-title-icon-wrapper">
+            <span>{{ item.label }}</span>
+            <app-rc-icon [attr]="{ role: 'img' }" class="icon-sm icon ms-1 d-flex align-items-center rotate-icon-custom"
+              name="it-expand" color="primary">
+            </app-rc-icon>
+          </span>
+        </a>
+        <ul [ngClass]="{
+              'link-sublist collapse': true,
+              'show': currentRoute && item.path && currentRoute.includes('/' + item.path + '/') 
+            }" [attr.id]="'collapse-' + (parentPath + '/' + item.path | replaceSlashes)">
+          <app-recursive-sidebar [items]="item.children" [parentPath]="parentPath + '/' + item.path"
+            [level]="level + 1">
+          </app-recursive-sidebar>
+        </ul>
+      </ng-container>
+
+      <ng-template #leafItem>
+        <a class="list-item" [routerLink]="parentPath + '/' + item.path | pathArray" [routerLinkActive]="['active']"
+          [routerLinkActiveOptions]="{ exact: true }">
+          <span>{{ item.label }}</span>
+        </a>
+      </ng-template>
+    </li>
+  </ng-container>
+</ng-container>

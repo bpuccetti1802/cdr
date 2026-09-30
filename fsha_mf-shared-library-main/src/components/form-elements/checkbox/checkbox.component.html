@@ -1,0 +1,37 @@
+<!-- eslint-disable @angular-eslint/template/no-inline-styles -->
+<div class="form-check" *ngIf="!useValue && formControl">
+  <input [readonly]="disabled" *ngIf="!useValue && formControl" class="form-check-input" [id]="'rc' + id" [formControl]="formControl"
+    type="checkbox" [ngClass]="{
+      'outline-danger-checkbox': !valid && !!touched,
+      'bg-white': bgWhite,
+    }" />
+  <label class="form-check-label fw-normal" [for]="'rc'+id" [ngStyle]="{color}" [ngClass]="{  
+      'text-danger': !valid && !!touched,
+      'checked-class': !!formControl.value,
+      'disabled-input': disabled
+    }">
+    <span [ngStyle]="{color: '#000', 'font-weight': fontWeight}">{{ label }}</span><span *ngIf="required"> *</span>
+  </label>
+</div>
+<div *ngIf="useValue" class="form-check" role="button" tabindex="0" (keydown)="!disabled && onKeydown($event)"
+  (click)="!disabled && handleCheckboxChange(!value)">
+    <input
+    [readonly]="disabled"
+    [checked]="value"
+    class="form-check-input"
+    [id]="id"
+    type="checkbox"
+    (change)="handleCheckboxChange(!value)"
+    aria-hidden="true"
+  />
+  <label class="form-check-label fw-normal" [for]="'rc'+id" [ngStyle]="{color}" [ngClass]="{  
+      'text-danger': !valid && !!touched,
+      'checked-class': !!formControl?.value || value
+    }">
+    <span [ngStyle]="{color: '#000', 'font-weight': fontWeight}">{{ label }}</span><span *ngIf="required"> *</span>
+  </label>
+</div>
+
+<div *ngIf="formControl && formControl.invalid && formControl.touched" class="text-danger mt-1">
+  {{ errorMessage }}
+</div>

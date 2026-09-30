@@ -1,0 +1,38 @@
+<div class="d-flex col-12 p-0">
+  <div class="mx-3">
+    <app-rc-picker
+      [mainFormControl]="formControl"
+      [formControl]="formControlFrom"
+      [placeholder]="placeholder"
+      [date]="timeFrom"
+      [options]="optionsFrom"
+      [required]="required"
+      [errorMessage]="''"
+      [class]="class"
+      [width]="width"
+      [label]="labelFrom"
+      [id]="id + '_from'"
+      [changeCallback]="onChangeFrom"
+    ></app-rc-picker>
+  </div>
+  <div class="mx-3">
+    <app-rc-picker
+      [mainFormControl]="formControl"
+      [formControl]="formControlTo"
+      [placeholder]="placeholder"
+      [date]="timeTo"
+      [options]="optionsTo"
+      [required]="required"
+      [errorMessage]="''"
+      [class]="class"
+      [width]="width"
+      [label]="labelTo"
+      [id]="id + '_to'"
+      [changeCallback]="onChangeTo"
+    ></app-rc-picker>
+  </div>
+</div>
+<div *ngIf="formControl && formControl.invalid && (formControlFrom.touched || formControlTo.touched)" class="m-3 text-danger error-message">
+  {{ errorMessage }}
+</div>
+

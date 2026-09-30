@@ -1,0 +1,40 @@
+.select-disabled {
+    background-color: #e9ecef;
+    color: #6c757d;
+    pointer-events: none;
+  }
+
+  .error-message {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.chevron-icon {
+  position: absolute;
+  top: 50%;
+  right: 0;
+}
+
+.chevron-icon-without-label {
+  top: 15%;
+}
+
+.chevron-icon-fixed {
+  bottom: 10px;
+  top: unset;
+}
+
+.scale {
+  transition: transform 0.3s;
+  transform: scaleY(1);
+}
+
+.scale-up {
+  transform: scaleY(-1);
+}
+.chevron-icon {
+  pointer-events: none; // importantissimo
+}
+.cursor-pointer {
+  cursor: pointer;
+}

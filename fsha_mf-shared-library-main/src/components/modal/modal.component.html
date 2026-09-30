@@ -1,0 +1,46 @@
+<ng-container *ngIf="state">
+  <!-- Backdrop -->
+  <div
+    class="modal-backdrop fade"
+    [ngClass]="'level-' + level"
+    [class.show]="openDelayed"
+    [id]="id + '-backdrop'"
+  ></div>
+
+  <!-- Modal -->
+  <div
+    class="modal d-block overflow-hidden fade"
+    [ngClass]="'level-' + level"
+    [class.show]="openDialog"
+    [id]="id"
+    tabindex="0"
+    role="dialog"
+    aria-labelledby="modalCenterTitle"
+  >
+    <div
+      [class]="'modal-dialog modal-dialog-centered modal-' + size"
+      [ngClass]="'level-' + level"
+      [class.show]="openDelayed"
+      role="document"
+    >
+      <div class="modal-content rounded">
+        <div class="modal-header pb-1">
+          <h2 class="modal-title h5" id="modalCenterTitle">{{ titleContent }}</h2>
+          <button *ngIf="closable" class="btn-close" type="button" aria-label="Chiudi finestra modale" (click)="close()"></button>
+        </div>
+        <div class="modal-body mt-0 modal-scroll-height" *ngIf="contentComponent">
+          <ng-container >
+            <ng-container *ngComponentOutlet="contentComponent; injector: componentChildInjector"></ng-container>
+          </ng-container>
+        </div>
+        <div class="modal-footer">
+          <div *ngIf="footerComponent">
+            <ng-container>
+              <ng-container *ngComponentOutlet="footerComponent"></ng-container>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>

@@ -1,0 +1,85 @@
+<!-- navbar.component.html -->
+<div [ngClass]="{ 'navbar-fixed': navbarFixed }">
+  <nav #navbar *ngIf="isLogged"
+    [class]="'shadow navbar navbar-expand-lg has-megamenu ' + (useGreyScaleTheme ? colorClass : greyScaleColorClass)"
+    aria-label="Menu principale" data-bs-toggle="sticky">
+    <div appWideContainer class="container-wide">
+      <div class="row">
+        <button type="button" aria-label="Mostra o nascondi il menu" class="custom-navbar-toggler" aria-controls="menu"
+          aria-expanded="false" data-bs-toggle="navbarcollapsible" data-bs-target="#navbar-A">
+          <app-rc-icon [useClass]="true" [colorClass]="useGreyScaleTheme ? iconColorClass : greyScaleIconColorClass"
+            [attr]="{'role': 'img'}" name="fa-bars"></app-rc-icon>
+        </button>
+
+        <div class="navbar-collapsable" id="navbar-A">
+          <div class="overlay fade"></div>
+          <div class="close-div p-2">
+            <app-rc-button-icon [useClass]="true" [color]="useGreyScaleTheme ? iconColorClass : greyScaleIconColorClass"
+              [attr]="{'role': 'img'}" name="fa-times"></app-rc-button-icon>
+          </div>
+          <div class="menu-wrapper justify-content-lg-between p-0">
+            <ul #navbarNav class="navbar-nav p-0 ">
+              <ng-container *ngFor="let route of visibleRoutes; trackBy: trackByRoute">
+                <li class="nav-item" [routerLink]="route.path === '' ? ['/'] : [route.path]" routerLinkActive
+                  #rla="routerLinkActive" [routerLinkActiveOptions]="{ exact: route.path === ''}">
+                  <a #navbarLink *ngIf="route && !route.children?.length && route.data && route.data['label']"
+                    class="nav-link" [routerLinkActive]="'active' + ' ' + bottomUnderlineClass"
+                    [routerLinkActiveOptions]="{ exact: route.path === ''}" [ngClass]="getLinkClasses(rla.isActive)">
+                    {{ route.data['label'] }}
+                  </a>
+                </li>
+                <!-- Dropdown -->
+                <li class="nav-item" [ngClass]="{ 'dropdown': route.children?.length }">
+                  <a #navbarLink [routerLinkActiveOptions]="{ exact: route.path === '' }" #rla="routerLinkActive"
+                    *ngIf="route && route.children?.length && route.data && route.data['label']"
+                    [ngClass]="getDynamicClasses(route)" class="nav-link dropdown-toggle"
+                    [routerLinkActive]="'active' + ' ' + bottomUnderlineClass" data-bs-toggle="dropdown"
+                    aria-expanded="false" id="megamenu-completo-A1">
+                    <span>{{ route.data['label'] }}
+                      <app-rc-icon [useClass]="true" [attr]="{'role': 'img'}"
+                        [colorClass]="isMobile ? iconColorClass : (useGreyScaleTheme ? greyScaleIconColorClass : iconColorClass)"
+                        name="fa-chevron-down" [fontSize]="IconSize.xs"></app-rc-icon>
+                    </span>
+                  </a>
+
+                  <ul *ngIf="route && route.children?.length && route.data && route.data['label']"
+                    class="dropdown-menu shadow-lg">
+                    <li *ngFor="let child of route.children; trackBy: trackByChild">
+                      <ng-container *ngIf="child && child.data && child.data['label']">
+                        <a #dropdownItem class="dropdown-item" [routerLink]="getFullPath(child?.path || '')"
+                          [ngClass]="getDynamicClasses(child)" routerLinkActive="active"
+                          [routerLinkActiveOptions]="{ exact: false }">
+                          {{ child.data['label'] }}
+                        </a>
+                      </ng-container>
+                    </li>
+                  </ul>
+                </li>
+              </ng-container>
+              <li *ngIf="overflowRoutes.length" class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#">
+                  Altro
+                </a>
+                <div class="dropdown text-center">
+                  <ul class="dropdown-menu dropdown-menu-start shadow-lg other-links">
+                    <li *ngFor="let route of overflowRoutes; trackBy: trackByOverflowRoute"
+                    [routerLink]="route.path === '' ? ['/'] : [route.path]" routerLinkActive
+                  #rla="routerLinkActive" [routerLinkActiveOptions]="{ exact: route.path === ''}">
+                      <a class="dropdown-item"
+                        *ngIf="route && !route.children?.length && route.data && route.data['label']"
+                        [routerLink]="route.path" [routerLinkActive]="'active mf-font-color-primary-main'"
+                        
+                        [routerLinkActiveOptions]="{ exact: route.path === ''}" [ngClass]="getLinkClasses(rla.isActive)">
+                        {{ route.data['label'] }}
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+</div>

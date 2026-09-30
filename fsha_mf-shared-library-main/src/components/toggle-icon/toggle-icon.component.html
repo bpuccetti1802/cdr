@@ -1,0 +1,23 @@
+<ng-container *ngIf="!active; else notActive">
+    <button type="button" class="toggle-icon-btn" (click)="toggle()">
+        <div class="icon-badge-wrapper" *ngIf="counter">
+            <div class="icon-badge">
+                <span class="badge-number">{{ counter }}</span>
+            </div>
+        </div>
+        <div class="icon-close-overlay">
+            <app-rc-icon [name]="'it-close'" [color]="'white'" [size]="smSize"></app-rc-icon>
+        </div>
+        <app-rc-icon [name]="name" color="primary" [size]="mdSize"></app-rc-icon>
+    </button>
+</ng-container>
+<ng-template #notActive>
+    <button type="button" class="toggle-icon-btn not-active" (click)="toggle()">
+        <div class="icon-badge-wrapper" *ngIf="counter">
+            <div class="icon-badge">
+                <span class="badge-number">{{ counter }}</span>
+            </div>
+        </div>
+        <app-rc-icon [name]="name" color="white" [size]="mdSize"></app-rc-icon>
+    </button>
+</ng-template>

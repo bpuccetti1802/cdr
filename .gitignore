@@ -1,0 +1,32 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Che cosa NON entra nel repository, e perché.
+#
+# 1. I sorgenti applicativi hanno già un'origine ufficiale: si riclonano da lì,
+#    non si ripubblicano. Portano inoltre chiavi private di produzione, password
+#    in chiaro e dati personali. Vedi RICOSTRUIRE.md.
+/ansc/
+/anpr-9.2.9/
+/common/
+/cross/
+/back-end/
+/front-end/
+/sipo-root/
+
+# 2. Le registrazioni schermo superano il limite di 100 MB per file di GitHub.
+#    Ciò che se ne è ricavato è già nei documenti.
+*.mov
+
+# 3. Artefatti di compilazione e file temporanei.
+**/target/
+~$*
+.DS_Store
+__pycache__/
+*.pyc
+
+# 4. File di blocco di Word (indicano solo un documento aperto).
+.~lock.*
+
+# 5. ⚠️ Credenziali personali di accesso: non devono mai entrare in un repository,
+#    nemmeno privato. Il QR FortiToken è il seme del secondo fattore.
+/accessi comune di Roma/
+Richiesta utenza Pitech.pdf

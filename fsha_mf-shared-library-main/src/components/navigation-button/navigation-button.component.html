@@ -1,0 +1,12 @@
+<ng-container *ngIf="!authenticated || (!!authenticated && hasToken)">
+<button type="button" (click)="onClick()" class="clickable-card w-100 h-100 shadow p-4">
+  <div class="color-strip"></div>
+  <div class="card-content">
+    <h5 class="card-label d-flex align-items-center">
+      <app-rc-icon *ngIf="iconName !== ''" [useClass]="true" [colorClass]="iconColorClass"
+        [name]="iconName"></app-rc-icon>
+      <p class="ps-3 mb-0 custom-label">{{ label }}</p>
+    </h5>
+  </div>
+</button>
+</ng-container>

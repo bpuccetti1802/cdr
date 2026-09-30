@@ -1,0 +1,19 @@
+<aside class="sidebar-wrapper my-2 my-lg-0 p-0 align-items-start bg-white mf-h-lg-100 shadow" [class.closed]="!isOpen">
+  <div class="d-flex flex-row w-100 p-2 justify-content-end">
+    <app-rc-button-icon *ngIf="isOpen" name="it-close" icon="it-close" (clickEvent)="toggleClosed()"></app-rc-button-icon>
+    <app-rc-button-icon *ngIf="!isOpen" name="it-burger" icon="it-burger" (clickEvent)="toggleClosed()"></app-rc-button-icon>
+  </div>
+
+  <nav *ngIf="isOpen" class="sidebar w-100 align-items-start it-navscroll-wrapper it-top-navscroll it-left-side"
+    data-bs-navscroll>
+    <div class="navbar-collapsable" id="navbarNavB" #collapsable>
+      <div class="menu-wrapper">
+        <div class="link-list-wrapper">
+          <ul class="link-list">
+            <app-recursive-sidebar [items]="items" [parentPath]="parentPath"></app-recursive-sidebar>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </nav>
+</aside>

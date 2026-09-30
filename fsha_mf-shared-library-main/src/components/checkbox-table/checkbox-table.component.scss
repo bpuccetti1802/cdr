@@ -1,0 +1,175 @@
+@import '../../styles/theme/palette';
+
+/* ---------- Lista / hover ---------- */
+.list-item:hover {
+  background-color: map-get($colors, 'grey', '200');
+}
+
+/* ---------- Wrapper / scrollable ---------- */
+.rc-wrapper-container {
+  min-height: 0px;
+  max-height: 500px;
+}
+
+.scrollable {
+  position: relative;
+  max-height: 390px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: auto;
+}
+
+/* rimuovere outline su tr focus se vuoi, ma tenere esperienza accessibile per keyboard */
+.scrollable tr:focus {
+  outline: none;
+}
+
+.scrollable table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Header sticky: rimosso `pointer-events: none` per permettere l'interazione
+   Aumentato z-index per assicurare che l'header sia sopra i contenuti scrollati */
+.scrollable thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: map-get($colors, primary, main);
+  color: white;
+}
+
+/* Assicurati che gli elementi interattivi dentro l'header siano cliccabili e visibili */
+.scrollable thead th,
+.scrollable thead td {
+  /* evita che il contenuto dell'header sia coperto visivamente */
+  position: relative;
+}
+
+/* Riabilita e metti in primo piano elementi interattivi dentro l'header */
+.scrollable thead input,
+.scrollable thead button,
+.scrollable thead a,
+.scrollable thead label {
+  pointer-events: auto;
+  position: relative; /* necessario per z-index che segua l'elemento */
+  z-index: 12;
+}
+
+/* style per la checkbox/bottoni nell'header per sicurezza */
+.scrollable thead .form-check-input {
+  pointer-events: auto;
+  position: relative;
+  z-index: 13;
+  cursor: pointer;
+}
+
+/* focus styles accessibili */
+.scrollable thead .form-check-input:focus,
+.scrollable thead button:focus,
+.scrollable thead a:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.25);
+  outline-offset: 2px;
+}
+
+/* ---------- Icone / dropdown / bottoni ---------- */
+.icon-style {
+  cursor: pointer;
+  color: map-get($colors, 'grey', '600') !important;
+}
+
+.dropdown-li {
+  cursor: pointer;
+}
+
+.no-data {
+  height: 300px;
+}
+
+.t-container {
+  min-height: 0px;
+  max-height: 500px;
+}
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+/* Tabella full width */
+.rc-table-full-width {
+  width: 100%;
+}
+
+/* Dropdown menu */
+.rc-dropdown {
+  position: absolute;
+  background-color: white;
+  border-radius: 4px;
+  z-index: 1000;
+}
+
+/* Posizionamento dinamico del dropdown */
+.rc-dropdown-position {
+  top: var(--rc-dropdown-top);
+  left: var(--rc-dropdown-left);
+}
+
+/* Lista link nel dropdown */
+.rc-link-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Singolo elemento della lista */
+.rc-dropdown-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: block;
+
+  &:hover {
+    background-color: map-get($colors, 'grey', '200');
+  }
+}
+
+/* ---------- Pulsanti rotondi ---------- */
+.rc-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  transition:
+    box-shadow 0.3s ease-in-out,
+    transform 0.2s ease-in-out;
+
+  &:hover,
+  &:focus {
+    transform: scale(1.07);
+    background-color: rgba(map-get($colors, secondary, darker), 0.05);
+  }
+
+  &:active {
+    transform: scale(1.03);
+  }
+}
+
+.col-width-max_content {
+  width: max-content;
+}
+
+.form-check-label {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+
+.form-check-input {
+  cursor: pointer;
+  position: relative;
+  z-index: 20;
+}

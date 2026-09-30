@@ -1,0 +1,4525 @@
+CREATE TABLE ANAG_STORICO.SENTENZA
+(
+  ID_SENTENZA                 NUMBER,
+  DATA_SENTENZA               DATE,
+  TIPO_TRIBUNALE              CHAR(1 CHAR),
+  DATA_VALIDITA               DATE,
+  COD_TIPO_PROTOCOLLO         CHAR(10 CHAR),
+  ANNO_PROTOCOLLO             NUMBER,
+  NUMERO_PROTOCOLLO           NUMBER,
+  ID_TIPO_SENTENZA            NUMBER,
+  ID_COMUNE                   NUMBER,
+  RICHIEDENTE                 NUMBER,
+  VALIDANTE                   NUMBER,
+  DATA_CONVENZIONE            DATE,
+  DATA_ANNOTAZIONE            DATE,
+  NOME_VALIDANTE              VARCHAR2(50 BYTE),
+  COGNOME_VALIDANTE           VARCHAR2(50 BYTE),
+  PARTE_REGISTRO              VARCHAR2(50 BYTE),
+  SERIE_REGISTRO              VARCHAR2(50 BYTE),
+  ANNO_REGISTRO               NUMBER,
+  ID_ATTO                     NUMBER,
+  ID_TIPO_CONVENZIONE         NUMBER,
+  NOTE_SENTENZA               VARCHAR2(200 BYTE),
+  NUMERO_REGISTRO             VARCHAR2(10 BYTE),
+  NUMERO                      VARCHAR2(10 BYTE),
+  AUTORITA                    VARCHAR2(100 BYTE),
+  ID_LOCALITA                 NUMBER,
+  ID_TITOLO_NOTAIO            NUMBER,
+  DISTRETTO                   VARCHAR2(200 BYTE),
+  ID_DESCRIZIONE_CONVENZIONE  NUMBER,
+  ID_TIPO_FONDO               NUMBER,
+  LEGGE                       VARCHAR2(200 BYTE),
+  TESTO_AGGIUNTIVO            VARCHAR2(2000 BYTE),
+  ID_ARTICOLO_NOTAIO          NUMBER,
+  AMBASCIATA_CONSOLATO        VARCHAR2(200 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.SENTENZA IS 'Tabella che contiene le informazioni su una sentenza emessa da un tribunale.';
+
+COMMENT ON COLUMN ANAG_STORICO.SENTENZA.ID_SENTENZA IS 'Identificativo della sentenza';
+
+COMMENT ON COLUMN ANAG_STORICO.SENTENZA.DATA_SENTENZA IS 'Data di emissione della sentenza';
+
+COMMENT ON COLUMN ANAG_STORICO.SENTENZA.TIPO_TRIBUNALE IS 'Tipologia del tribunale che ha emesso la sentenza';
+
+COMMENT ON COLUMN ANAG_STORICO.SENTENZA.DATA_VALIDITA IS 'Data validità della sentenza';
+
+COMMENT ON COLUMN ANAG_STORICO.SENTENZA.COD_TIPO_PROTOCOLLO IS 'Codice del protocollo della sentenza';
+
+COMMENT ON COLUMN ANAG_STORICO.SENTENZA.ANNO_PROTOCOLLO IS 'Anno del protocollo della sentenza';
+
+COMMENT ON COLUMN ANAG_STORICO.SENTENZA.NUMERO_PROTOCOLLO IS 'Numero protocollo della sentenza';
+
+COMMENT ON COLUMN ANAG_STORICO.SENTENZA.ID_TIPO_SENTENZA IS 'Indica il tipo di sentenza';
+
+COMMENT ON COLUMN ANAG_STORICO.SENTENZA.ID_COMUNE IS 'indica il comune della sentenza';
+
+COMMENT ON COLUMN ANAG_STORICO.SENTENZA.RICHIEDENTE IS '1-> SPOSO , 2->SPOSA , 3 ->SPOSI';
+
+COMMENT ON COLUMN ANAG_STORICO.SENTENZA.VALIDANTE IS '1->NOTAIO, 2-> CONSOLE';
+
+COMMENT ON COLUMN ANAG_STORICO.SENTENZA.DATA_CONVENZIONE IS 'data di convenzione della sentenza';
+
+COMMENT ON COLUMN ANAG_STORICO.SENTENZA.DATA_ANNOTAZIONE IS 'data di annotazione della sentenza';
+
+COMMENT ON COLUMN ANAG_STORICO.SENTENZA.NOME_VALIDANTE IS 'nome del validante';
+
+COMMENT ON COLUMN ANAG_STORICO.SENTENZA.COGNOME_VALIDANTE IS 'cognome del validante ';
+
+COMMENT ON COLUMN ANAG_STORICO.SENTENZA.PARTE_REGISTRO IS 'parte registro della sentenza';
+
+COMMENT ON COLUMN ANAG_STORICO.SENTENZA.SERIE_REGISTRO IS 'serie registro della sentenza';
+
+COMMENT ON COLUMN ANAG_STORICO.SENTENZA.ANNO_REGISTRO IS 'anno registro della sentenza';
+
+COMMENT ON COLUMN ANAG_STORICO.SENTENZA.ID_ATTO IS 'indica l''atto di riferimento per la sentenza';
+
+COMMENT ON COLUMN ANAG_STORICO.SENTENZA.ID_LOCALITA IS 'Identificativo della località';
+CREATE TABLE ANAG_STORICO.RECAPITI
+(
+  ID_RECAPITO    NUMBER,
+  VIA_PIAZZA     VARCHAR2(200 BYTE),
+  NUMERO_CIVICO  VARCHAR2(20 BYTE),
+  ID_COMUNE      NUMBER,
+  TELEFONO       VARCHAR2(50 BYTE),
+  EMAIL          VARCHAR2(100 BYTE),
+  FAX            VARCHAR2(50 BYTE),
+  CELLULARE      VARCHAR2(50 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+CREATE TABLE ANAG_STORICO.CAMBIO_RESIDENZA_EMIGRAZIONE
+(
+  ID_CAMBIO_RESIDENZA_EMIGR     NUMBER,
+  CONTEGGIO                     VARCHAR2(1 BYTE),
+  TIPO_ISTANZA                  VARCHAR2(1 BYTE),
+  DATA_EMIGRAZIONE              DATE,
+  DATA_AGGIORNAMENTO            DATE,
+  ID_FAMIGLIA_CONVIVENZA        NUMBER,
+  NOTE                          VARCHAR2(4000 BYTE),
+  ID_STATO_PRATICA              NUMBER,
+  ID_RESIDENZA_ATTUALE          NUMBER,
+  ID_RESIDENZA_EMIGRAZIONE      NUMBER,
+  NUMERO_PRATICA                NUMBER,
+  DATA_PRATICA                  DATE,
+  NUMERO_PROTOCOLLO             NUMBER,
+  ANNO_PROTOCOLLO               NUMBER,
+  CODICE_TIPO_PROTOCOLLO        VARCHAR2(10 BYTE),
+  MODELLO_APR4                  BLOB,
+  ID_STATO_EMIGRAZIONE          NUMBER,
+  FLAG_CANCELLAZIONE_ABBANDONO  CHAR(1 BYTE),
+  NOME_ALLEGATO_APR4            VARCHAR2(80 BYTE),
+  MODELLO_APR4_NEG              BLOB,
+  NOME_ALLEGATO_APR4_NEG        VARCHAR2(80 BYTE),
+  ID_MOTIVO_COMUNICAZIONE       NUMBER,
+  NUMERO_PRATICA_INTERNO        NUMBER,
+  ANNO_PRATICA_INTERNO          NUMBER(4),
+  FLAG_AIRE                     VARCHAR2(1 BYTE)
+)
+LOB (MODELLO_APR4) STORE AS SECUREFILE (
+  TABLESPACE  ANAG_USR
+  ENABLE      STORAGE IN ROW
+  CHUNK       8192
+  NOCACHE
+  LOGGING
+      STORAGE    (
+                  INITIAL          104K
+                  NEXT             1M
+                  MINEXTENTS       1
+                  MAXEXTENTS       UNLIMITED
+                  PCTINCREASE      0
+                  BUFFER_POOL      DEFAULT
+                  FLASH_CACHE      DEFAULT
+                  CELL_FLASH_CACHE DEFAULT
+                 ))
+LOB (MODELLO_APR4_NEG) STORE AS SECUREFILE (
+  TABLESPACE  ANAG_USR
+  ENABLE      STORAGE IN ROW
+  CHUNK       8192
+  NOCACHE
+  LOGGING
+      STORAGE    (
+                  INITIAL          104K
+                  NEXT             1M
+                  MINEXTENTS       1
+                  MAXEXTENTS       UNLIMITED
+                  PCTINCREASE      0
+                  BUFFER_POOL      DEFAULT
+                  FLASH_CACHE      DEFAULT
+                  CELL_FLASH_CACHE DEFAULT
+                 ))
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_EMIGRAZIONE.ID_RESIDENZA_ATTUALE IS 'residenza prima dell''emigrazione';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_EMIGRAZIONE.ID_RESIDENZA_EMIGRAZIONE IS 'residenza di emigrazione';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_EMIGRAZIONE.NOME_ALLEGATO_APR4 IS 'Campo che indica il nome del modello apr4 caricato.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_EMIGRAZIONE.MODELLO_APR4_NEG IS 'campo che contiene il modello Apr4 nel caso in cui la pratica è stata lavorata negativamente';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_EMIGRAZIONE.NOME_ALLEGATO_APR4_NEG IS 'campo che contiene il nome del file nel caso in cui la pratica è stata lavorata negativamente';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_EMIGRAZIONE.NUMERO_PRATICA_INTERNO IS 'Numero pratica per integrazione Aggior. Aggiornato con la seq NUM_PRATICA_INT_CRE_SEQ';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_EMIGRAZIONE.ANNO_PRATICA_INTERNO IS 'Anno pratica per integrazione Aggior. Anno in cui viene aperta la pratica';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_EMIGRAZIONE.FLAG_AIRE IS 'Campo che identifica se è un''emigrazione o una cancellazione per trasferimento in altra AIRE';
+
+
+
+CREATE INDEX ANAG_STORICO.CAMBIO_RESIDENZA_EMIGR_I1 ON ANAG_STORICO.CAMBIO_RESIDENZA_EMIGRAZIONE
+(ID_CAMBIO_RESIDENZA_EMIGR)
+LOGGING
+TABLESPACE ANAG_USR
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+NOPARALLEL;
+
+
+CREATE INDEX ANAG_STORICO.CAMBIO_RESIDENZA_EMIGR_I2 ON ANAG_STORICO.CAMBIO_RESIDENZA_EMIGRAZIONE
+(ID_STATO_PRATICA, NOME_ALLEGATO_APR4_NEG)
+LOGGING
+TABLESPACE ANAG_USR
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+NOPARALLEL;
+CREATE TABLE ANAG_STORICO.R_SOGGETTO_CRE
+(
+  ID_SOGGETTO                NUMBER,
+  ID_CAMBIO_RESIDENZA_EMIGR  NUMBER             NOT NULL,
+  NOME_ALLEGATO_APR4         VARCHAR2(80 BYTE),
+  MODELLO_APR4               BLOB,
+  ID_IRREPERIBILITA_CHIUSA   NUMBER
+)
+LOB (MODELLO_APR4) STORE AS SECUREFILE (
+  TABLESPACE  ANAG_USR
+  ENABLE      STORAGE IN ROW
+  CHUNK       8192
+  NOCACHE
+  LOGGING
+      STORAGE    (
+                  INITIAL          104K
+                  NEXT             1M
+                  MINEXTENTS       1
+                  MAXEXTENTS       UNLIMITED
+                  PCTINCREASE      0
+                  BUFFER_POOL      DEFAULT
+                  FLASH_CACHE      DEFAULT
+                  CELL_FLASH_CACHE DEFAULT
+                 ))
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTO_CRE.NOME_ALLEGATO_APR4 IS 'Indica il nome del file';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTO_CRE.MODELLO_APR4 IS 'Contiene il file APR4';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTO_CRE.ID_IRREPERIBILITA_CHIUSA IS 'Identificativo dell''ierreperibilità chiusa con l''emigrazione';
+CREATE TABLE ANAG_STORICO.R_ATTO_MATRIMONIO
+(
+  ID_MATRIMONIO              NUMBER             NOT NULL,
+  ID_ATTO                    NUMBER             NOT NULL,
+  ID_TIPO_ATTO_ANNULLAMENTO  NUMBER,
+  ID_UTENTE                  NUMBER,
+  ID_ORGANIZZAZIONE          NUMBER,
+  DATA_OPERAZIONE            DATE
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+CREATE TABLE ANAG_STORICO.VEICOLI
+(
+  TARGA            VARCHAR2(200 CHAR),
+  ID_TIPO_VEICOLO  NUMBER(2),
+  ID_SOGGETTO      NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+CREATE TABLE ANAG_STORICO.SCIOGLIMENTOUNIONE
+(
+  ID_SCIOGLIMENTO       NUMBER,
+  MOTIVO_SCIOGLIMENTO   VARCHAR2(200 CHAR),
+  DATA_EVENTO           DATE,
+  FLG_SENZA_GIORNO      CHAR(1 CHAR),
+  FLG_SENZA_MESE        CHAR(1 CHAR),
+  LUOGO_ECCEZIONALE     VARCHAR2(50 CHAR),
+  ID_SENTENZA           NUMBER,
+  ID_SOGGETTO           NUMBER,
+  ID_ATTO               NUMBER,
+  COD_COMUNE_AGGIOR     VARCHAR2(20 BYTE),
+  ID_COMUNE             NUMBER,
+  ID_LOCALITA           NUMBER,
+  ID_TIPO_SCIOGLIMENTO  NUMBER,
+  ID_UNIONE             NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.SCIOGLIMENTOUNIONE IS 'Tabella contenente le informazioni sull''atto di scioglimento di una unione civile.';
+
+COMMENT ON COLUMN ANAG_STORICO.SCIOGLIMENTOUNIONE.ID_SCIOGLIMENTO IS 'Identificativo dello scioglimento dell''unione civile';
+
+COMMENT ON COLUMN ANAG_STORICO.SCIOGLIMENTOUNIONE.MOTIVO_SCIOGLIMENTO IS 'Motivazione dello scioglimento';
+
+COMMENT ON COLUMN ANAG_STORICO.SCIOGLIMENTOUNIONE.DATA_EVENTO IS 'Data dello scioglimento';
+
+COMMENT ON COLUMN ANAG_STORICO.SCIOGLIMENTOUNIONE.FLG_SENZA_GIORNO IS 'S -> non è presente il giorno dello scioglimento dell''unione civile
+N -> è presente il giorno dello scioglimento dell''unione civile';
+
+COMMENT ON COLUMN ANAG_STORICO.SCIOGLIMENTOUNIONE.FLG_SENZA_MESE IS 'S -> non è presente il mese dello scioglimento dell''unione civile
+N -> è presente il mese dello scioglimento dell''unione civile';
+
+COMMENT ON COLUMN ANAG_STORICO.SCIOGLIMENTOUNIONE.LUOGO_ECCEZIONALE IS 'Luogo eccezionale dello scioglimento';
+
+COMMENT ON COLUMN ANAG_STORICO.SCIOGLIMENTOUNIONE.ID_SENTENZA IS 'Identificativo della senteza di unione civile';
+
+COMMENT ON COLUMN ANAG_STORICO.SCIOGLIMENTOUNIONE.ID_SOGGETTO IS 'Id del soggetto per cui viene apposto lo scioglimento';
+
+COMMENT ON COLUMN ANAG_STORICO.SCIOGLIMENTOUNIONE.ID_ATTO IS 'FK all''atto di scioglimento di unione civile';
+
+COMMENT ON COLUMN ANAG_STORICO.SCIOGLIMENTOUNIONE.COD_COMUNE_AGGIOR IS 'identificativo aggior del comune salvato in LUOGO_ECCEZIONALE';
+CREATE TABLE ANAG_STORICO.R_SOGGETTI_PATENTI
+(
+  NUMERO_PATENTE       VARCHAR2(40 CHAR),
+  ID_SOGGETTO          NUMBER,
+  CATEGORIA            VARCHAR2(20 BYTE),
+  DATA_RILASCIO        TIMESTAMP(6),
+  DATA_SCADENZA        TIMESTAMP(6),
+  ID_CAMBIO_RESIDENZA  NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+CREATE TABLE ANAG_STORICO.UNIONECIVILE
+(
+  ID_UNIONE               NUMBER,
+  DATA_EVENTO             DATE,
+  FLG_SENZA_GIORNO        CHAR(1 CHAR),
+  FLG_SENZA_MESE          CHAR(1 CHAR),
+  ORDINE_UNIONE           NUMBER,
+  LUOGO_ECCEZIONALE       VARCHAR2(120 CHAR),
+  ID_LOCALITA             NUMBER,
+  ID_SOGGETTO_PRIMO       NUMBER,
+  ID_SOGGETTO_SECONDO     NUMBER,
+  ID_COMUNE               NUMBER,
+  ID_ATTO                 NUMBER,
+  ID_SCELTA_PATRIMONIALE  NUMBER,
+  COD_COMUNE_AGGIOR       VARCHAR2(20 BYTE),
+  ID_OPERAZIONE_ANPR      NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.UNIONECIVILE IS 'Tabella contenente le informazioni di un atto di unione civile.';
+
+COMMENT ON COLUMN ANAG_STORICO.UNIONECIVILE.ID_UNIONE IS 'Identificativo dell''unione civile';
+
+COMMENT ON COLUMN ANAG_STORICO.UNIONECIVILE.DATA_EVENTO IS 'Data dell''unione civile';
+
+COMMENT ON COLUMN ANAG_STORICO.UNIONECIVILE.FLG_SENZA_GIORNO IS 'S -> non è presente il giorno dell''unione civile
+N -> è presente il giorno dell''unione civile';
+
+COMMENT ON COLUMN ANAG_STORICO.UNIONECIVILE.FLG_SENZA_MESE IS 'S -> non è presente il mese dell''unione civile
+N -> è presente il mese dell''unione civile';
+
+COMMENT ON COLUMN ANAG_STORICO.UNIONECIVILE.ORDINE_UNIONE IS 'Ordine dell''unione civile';
+
+COMMENT ON COLUMN ANAG_STORICO.UNIONECIVILE.LUOGO_ECCEZIONALE IS 'Luogo eccezionale dell''unione civile';
+
+COMMENT ON COLUMN ANAG_STORICO.UNIONECIVILE.ID_LOCALITA IS 'Identificativo località dell''unione civile';
+
+COMMENT ON COLUMN ANAG_STORICO.UNIONECIVILE.ID_SOGGETTO_PRIMO IS 'Id del primo soggetto unito civilmente con il secondo soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.UNIONECIVILE.ID_SOGGETTO_SECONDO IS 'Id del secondo soggetto unito civilmente con il primo soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.UNIONECIVILE.ID_COMUNE IS 'Comune dell''unione civile';
+
+COMMENT ON COLUMN ANAG_STORICO.UNIONECIVILE.ID_ATTO IS 'FK All''atto di unione civile';
+
+COMMENT ON COLUMN ANAG_STORICO.UNIONECIVILE.ID_SCELTA_PATRIMONIALE IS 'Scelta patrimoniale effettuata dai soggetti uniti civilmente.';
+
+COMMENT ON COLUMN ANAG_STORICO.UNIONECIVILE.COD_COMUNE_AGGIOR IS 'identificativo aggior del comune salvato in LUOGO_ECCEZIONALE';
+
+COMMENT ON COLUMN ANAG_STORICO.UNIONECIVILE.ID_OPERAZIONE_ANPR IS 'Identificativo dell''operazione ANPR, da valorizzare solo nel momento della creazione';
+CREATE TABLE ANAG_STORICO.PENSIONE
+(
+  NUMERO_LIBRETTO   VARCHAR2(4000 BYTE),
+  ID_CATEGORIA      VARCHAR2(20 BYTE),
+  ID_ENTE_RILASCIO  NUMBER(2),
+  SEDE              VARCHAR2(4000 BYTE),
+  DATA_INSERIMENTO  DATE,
+  ID_SOGGETTO       NUMBER,
+  ID_PENSIONE       NUMBER,
+  DATA_STAMPA       DATE
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.PENSIONE IS 'Tabella contente le informazioni sul libretto di pensione associato ad un soggetto.';
+
+COMMENT ON COLUMN ANAG_STORICO.PENSIONE.NUMERO_LIBRETTO IS 'Numeo identidicativo del libretto pensionistico';
+
+COMMENT ON COLUMN ANAG_STORICO.PENSIONE.ID_CATEGORIA IS 'categoria del libretto pensionistico';
+
+COMMENT ON COLUMN ANAG_STORICO.PENSIONE.ID_ENTE_RILASCIO IS 'ente che ha rilasciato ill libretto pensionistico';
+
+COMMENT ON COLUMN ANAG_STORICO.PENSIONE.SEDE IS 'Sede dell''INPS che gestisce la pratica pensionistica';
+
+COMMENT ON COLUMN ANAG_STORICO.PENSIONE.DATA_INSERIMENTO IS 'data in cui il libertto pensionistico è stato associato al soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.PENSIONE.ID_SOGGETTO IS 'identificativo del soggetto a cui è associato il libretto pensionistico';
+
+COMMENT ON COLUMN ANAG_STORICO.PENSIONE.ID_PENSIONE IS 'Identificativo ID pensione';
+CREATE TABLE ANAG_STORICO.MATRIMONIO
+(
+  ID_MATRIMONIO             NUMBER,
+  ORDINE_MATRIMONIO         NUMBER(2),
+  DATA_EVENTO               DATE,
+  LUOGO_ECCEZIONALE         VARCHAR2(120 BYTE),
+  ID_LOCALITA               NUMBER,
+  ID_SCELTA_PATRIMONIALE    NUMBER,
+  ID_SOGGETTO_MARITO        NUMBER,
+  ID_SOGGETTO_MOGLIE        NUMBER,
+  ID_COMUNE                 NUMBER,
+  ID_ATTO                   NUMBER,
+  FLG_SENZA_GIORNO          VARCHAR2(1 BYTE),
+  FLG_SENZA_MESE            VARCHAR2(1 BYTE),
+  COD_COMUNE_AGGIOR         VARCHAR2(20 BYTE),
+  ID_MATRIMONIO_ANPR        VARCHAR2(20 BYTE),
+  ID_OPERAZIONE_ANPR        NUMBER,
+  ID_SENTENZA_PATRIMONIALE  NUMBER,
+  FLAG_ANPR                 VARCHAR2(20 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.MATRIMONIO IS 'Tabella contenente le informazioni sull''atto di  matrimonio di due soggetti.';
+
+COMMENT ON COLUMN ANAG_STORICO.MATRIMONIO.ID_MATRIMONIO IS 'Identificativo del matrimonio';
+
+COMMENT ON COLUMN ANAG_STORICO.MATRIMONIO.ORDINE_MATRIMONIO IS 'Ordine del matrimonio';
+
+COMMENT ON COLUMN ANAG_STORICO.MATRIMONIO.DATA_EVENTO IS 'Data della celebrazione del matrimonio';
+
+COMMENT ON COLUMN ANAG_STORICO.MATRIMONIO.LUOGO_ECCEZIONALE IS 'Descrizione del luogo eccezionale (luogo diverso da comune o località) in cui si è svolto il matrmonio. ';
+
+COMMENT ON COLUMN ANAG_STORICO.MATRIMONIO.ID_LOCALITA IS 'Identificativo della località di celebrazione dell''evento';
+
+COMMENT ON COLUMN ANAG_STORICO.MATRIMONIO.ID_SCELTA_PATRIMONIALE IS 'Identificativo della scelta patrimoniale effettuata dai coniugi';
+
+COMMENT ON COLUMN ANAG_STORICO.MATRIMONIO.ID_SOGGETTO_MARITO IS 'Id soggetto del marito';
+
+COMMENT ON COLUMN ANAG_STORICO.MATRIMONIO.ID_SOGGETTO_MOGLIE IS 'Id soggetto della moglie';
+
+COMMENT ON COLUMN ANAG_STORICO.MATRIMONIO.ID_COMUNE IS 'Identificativo del comune di celebrazione';
+
+COMMENT ON COLUMN ANAG_STORICO.MATRIMONIO.ID_ATTO IS 'FK alle informazioni specifiche e relative all''atto di matrimonio.';
+
+COMMENT ON COLUMN ANAG_STORICO.MATRIMONIO.FLG_SENZA_GIORNO IS 'se 1 allora data evento non ha giorno ma data fittizia';
+
+COMMENT ON COLUMN ANAG_STORICO.MATRIMONIO.FLG_SENZA_MESE IS 'se 1 allora data evento non ha giorno e mese ma data fittizia';
+
+COMMENT ON COLUMN ANAG_STORICO.MATRIMONIO.COD_COMUNE_AGGIOR IS 'identificativo aggior del comune salvato in LUOGO_ECCEZIONALE';
+
+COMMENT ON COLUMN ANAG_STORICO.MATRIMONIO.ID_OPERAZIONE_ANPR IS 'Identificativo dell''operazione ANPR, da valorizzare solo nel momento della creazione';
+
+COMMENT ON COLUMN ANAG_STORICO.MATRIMONIO.ID_SENTENZA_PATRIMONIALE IS 'Identificativo della sentenza patrimoniale';
+
+COMMENT ON COLUMN ANAG_STORICO.MATRIMONIO.FLAG_ANPR IS 'N -> il matrimonio NON è stato inviato ad ANPR (doppione in fase di subentro)';
+CREATE TABLE ANAG_STORICO.LIBRETTO_LAVORO
+(
+  NUMERO_LIBRETTO    VARCHAR2(40 CHAR),
+  DATA_RILASCIO      TIMESTAMP(6),
+  COMUNE_RILASCIO    NUMBER,
+  MODALITA_RILASCIO  VARCHAR2(30 CHAR),
+  ID_SOGGETTO        NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ANAG_STORICO.LIBRETTO_LAVORO.NUMERO_LIBRETTO IS 'Codice identificativo del libretto di lavoro';
+
+COMMENT ON COLUMN ANAG_STORICO.LIBRETTO_LAVORO.DATA_RILASCIO IS 'data in cui il libretto di lavoro è stato rilascito';
+
+COMMENT ON COLUMN ANAG_STORICO.LIBRETTO_LAVORO.COMUNE_RILASCIO IS 'comune di rilascio del libretto di lavoro';
+
+COMMENT ON COLUMN ANAG_STORICO.LIBRETTO_LAVORO.MODALITA_RILASCIO IS 'modalità di rilascio del libretto di lavoro';
+
+COMMENT ON COLUMN ANAG_STORICO.LIBRETTO_LAVORO.ID_SOGGETTO IS 'Id del soggetto possessore del libretto di lavoro';
+CREATE TABLE ANAG_STORICO.FOGLIO_VIA
+(
+  ID_FOGLIO_VIA                   NUMBER,
+  TIPO_FOGLIO_VIA                 CHAR(1 BYTE),
+  DATA_INIZIO_OSTATIVA            DATE,
+  ID_SOGGETTO                     NUMBER,
+  ID_COMUNE_OSTATIVA_EMIGRAZIONE  NUMBER,
+  ANNI_DURATA_OSTATIVA            NUMBER(2),
+  MESI_DURATA_OSTATIVA            NUMBER(3),
+  CODICE_TIPO_PROTOCOLLO          VARCHAR2(10 BYTE),
+  NUMERO_PROTOCOLLO               NUMBER,
+  ANNO_PROTOCOLLO                 NUMBER(4),
+  NUMERO_PRATICA                  NUMBER,
+  ANNO_PRATICA                    NUMBER(4),
+  ID_STATO_PRATICA                NUMBER,
+  DATA_AGGIORNAMENTO              DATE,
+  DATA_FINE_OSTATIVA              DATE,
+  ID_COMUNE_RESIDENZA             NUMBER,
+  INDIRIZZO_RESIDENZA             VARCHAR2(50 BYTE),
+  DOC_QUESTURA                    BLOB,
+  NOME_DOC_QUESTURA               VARCHAR2(100 BYTE),
+  ID_QUESTURA                     NUMBER,
+  DATA_INSERIMENTO                DATE
+)
+LOB (DOC_QUESTURA) STORE AS SECUREFILE (
+  TABLESPACE  ANAG_USR
+  ENABLE      STORAGE IN ROW
+  CHUNK       8192
+  NOCACHE
+  LOGGING
+      STORAGE    (
+                  INITIAL          104K
+                  NEXT             1M
+                  MINEXTENTS       1
+                  MAXEXTENTS       UNLIMITED
+                  PCTINCREASE      0
+                  BUFFER_POOL      DEFAULT
+                  FLASH_CACHE      DEFAULT
+                  CELL_FLASH_CACHE DEFAULT
+                 ))
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.FOGLIO_VIA IS 'Tabella contenente le informazioni registrate a sistema sui Fogli di Via emessi dalla questura per determinati soggetti.';
+
+COMMENT ON COLUMN ANAG_STORICO.FOGLIO_VIA.ID_FOGLIO_VIA IS 'Identificativo del foglio via.';
+
+COMMENT ON COLUMN ANAG_STORICO.FOGLIO_VIA.TIPO_FOGLIO_VIA IS 'Flag che indica la tipologia di foglio via.
+
+Valorizzato con:
+- I se il foglio via è di interdizione di immigrazione
+- E se il foglio via è di interdizione di emigrazione';
+
+COMMENT ON COLUMN ANAG_STORICO.FOGLIO_VIA.DATA_INIZIO_OSTATIVA IS 'Data di inizio validità dell''ostativa.';
+
+COMMENT ON COLUMN ANAG_STORICO.FOGLIO_VIA.ID_SOGGETTO IS 'Soggetto a cui è intetato il foglio via.
+';
+
+COMMENT ON COLUMN ANAG_STORICO.FOGLIO_VIA.ID_COMUNE_OSTATIVA_EMIGRAZIONE IS 'Identificativo del comune nel quale il soggetto non potrà emigrare per la durata dell''ostativa. 
+Da valorizzare solo se TIPO_FOGLIO_VIA è emigrazione.';
+
+COMMENT ON COLUMN ANAG_STORICO.FOGLIO_VIA.ANNI_DURATA_OSTATIVA IS 'Numero di anni di durata dell''ostativa emessa nel foglio via.';
+
+COMMENT ON COLUMN ANAG_STORICO.FOGLIO_VIA.MESI_DURATA_OSTATIVA IS 'Numero di mesi  di durata dell''ostativa emessa nel foglio via.';
+
+COMMENT ON COLUMN ANAG_STORICO.FOGLIO_VIA.CODICE_TIPO_PROTOCOLLO IS 'Codice identificativo dell''ente protocollante del foglio via.';
+
+COMMENT ON COLUMN ANAG_STORICO.FOGLIO_VIA.NUMERO_PROTOCOLLO IS 'Campo che indica il numero del protocollo.';
+
+COMMENT ON COLUMN ANAG_STORICO.FOGLIO_VIA.ANNO_PROTOCOLLO IS 'Campo che indica l''anno del protocollo.';
+
+COMMENT ON COLUMN ANAG_STORICO.FOGLIO_VIA.NUMERO_PRATICA IS 'Campo che indica il numero della pratica.';
+
+COMMENT ON COLUMN ANAG_STORICO.FOGLIO_VIA.ANNO_PRATICA IS 'Campo che indica il l''anno della pratica.';
+
+COMMENT ON COLUMN ANAG_STORICO.FOGLIO_VIA.ID_STATO_PRATICA IS 'Campo che indica lo stato della pratica.';
+
+COMMENT ON COLUMN ANAG_STORICO.FOGLIO_VIA.DATA_FINE_OSTATIVA IS 'Campo che indica la scadenza del foglioVia';
+
+COMMENT ON COLUMN ANAG_STORICO.FOGLIO_VIA.ID_COMUNE_RESIDENZA IS 'il campo indica il comune di residenza del soggetto. interessa soltanto il foglio via di immigrazione
+';
+
+COMMENT ON COLUMN ANAG_STORICO.FOGLIO_VIA.INDIRIZZO_RESIDENZA IS 'il campo indica l''indirizzo di residenza del soggetto. interessa soltanto il foglio via di immigrazione';
+
+COMMENT ON COLUMN ANAG_STORICO.FOGLIO_VIA.DOC_QUESTURA IS 'Documento inviato dalla questura';
+
+COMMENT ON COLUMN ANAG_STORICO.FOGLIO_VIA.NOME_DOC_QUESTURA IS 'Nome documento inviato dalla Questura';
+
+COMMENT ON COLUMN ANAG_STORICO.FOGLIO_VIA.ID_QUESTURA IS 'Id della questura di riferimento';
+
+COMMENT ON COLUMN ANAG_STORICO.FOGLIO_VIA.DATA_INSERIMENTO IS 'Data di inserimento del foglio di via';
+CREATE TABLE ANAG_STORICO.CERTIFICATI
+(
+  ID_CERTIFICATO          NUMBER,
+  ID_PRATICA_CERTIFICATI  NUMBER,
+  COD_TIPO_PROTOCOLLO     VARCHAR2(10 CHAR),
+  ANNO_PROTOCOLLO         NUMBER,
+  NUMERO_PROTOCOLLO       NUMBER,
+  DATA_RICHIESTA          DATE,
+  DATA_EMISSIONE          DATE,
+  NOME_FILE_CERTIFICATO   VARCHAR2(200 CHAR),
+  FLG_PAGAMENTO           CHAR(1 CHAR),
+  DATA_PAGAMENTO          DATE,
+  ID_SOGGETTO_INT         NUMBER,
+  ID_CONF_CERTIFICATO     NUMBER,
+  DOCUMENTO_CERTIFICATO   BLOB,
+  FLG_SEMPLICE_BOLLATA    CHAR(1 BYTE),
+  ID_ESENZIONE            NUMBER
+)
+LOB (DOCUMENTO_CERTIFICATO) STORE AS SECUREFILE (
+  TABLESPACE  ANAG_USR
+  ENABLE      STORAGE IN ROW
+  CHUNK       8192
+  NOCACHE
+  LOGGING
+      STORAGE    (
+                  INITIAL          104K
+                  NEXT             1M
+                  MINEXTENTS       1
+                  MAXEXTENTS       UNLIMITED
+                  PCTINCREASE      0
+                  BUFFER_POOL      DEFAULT
+                  FLASH_CACHE      DEFAULT
+                  CELL_FLASH_CACHE DEFAULT
+                 ))
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.CERTIFICATI IS 'La tabella contiene le richieste di certificazione effettuate da un soggetto ed emesse da Roma Capitale.';
+
+COMMENT ON COLUMN ANAG_STORICO.CERTIFICATI.ID_CERTIFICATO IS 'Identificativo del certificato';
+
+COMMENT ON COLUMN ANAG_STORICO.CERTIFICATI.ID_PRATICA_CERTIFICATI IS 'Identificativo della pratica a cui questo certificato fa riferimento';
+
+COMMENT ON COLUMN ANAG_STORICO.CERTIFICATI.COD_TIPO_PROTOCOLLO IS 'Codice del protocollo relativo alla richiesta di un certificato';
+
+COMMENT ON COLUMN ANAG_STORICO.CERTIFICATI.ANNO_PROTOCOLLO IS 'Anno del protocollo relativo alla richiesta di un certificato';
+
+COMMENT ON COLUMN ANAG_STORICO.CERTIFICATI.NUMERO_PROTOCOLLO IS 'Numero del protocollo relativo alla richiesta di un certificato';
+
+COMMENT ON COLUMN ANAG_STORICO.CERTIFICATI.DATA_RICHIESTA IS 'Data di richiesta del certificato';
+
+COMMENT ON COLUMN ANAG_STORICO.CERTIFICATI.DATA_EMISSIONE IS 'Data di emissione del certificato.';
+
+COMMENT ON COLUMN ANAG_STORICO.CERTIFICATI.NOME_FILE_CERTIFICATO IS 'Rappresenta il nome del file del certificato emesso.';
+
+COMMENT ON COLUMN ANAG_STORICO.CERTIFICATI.FLG_PAGAMENTO IS 'S -> Pagamento effettuato
+N -> Pagamento da effettuare
+G -> Certificato Gratuito';
+
+COMMENT ON COLUMN ANAG_STORICO.CERTIFICATI.DATA_PAGAMENTO IS 'Data di avvenuto pagamento';
+
+COMMENT ON COLUMN ANAG_STORICO.CERTIFICATI.ID_SOGGETTO_INT IS 'Id dell''intestatario del certificato.';
+
+COMMENT ON COLUMN ANAG_STORICO.CERTIFICATI.ID_CONF_CERTIFICATO IS 'identificativo delle conf_certificato';
+
+COMMENT ON COLUMN ANAG_STORICO.CERTIFICATI.DOCUMENTO_CERTIFICATO IS 'File del certificato';
+
+COMMENT ON COLUMN ANAG_STORICO.CERTIFICATI.FLG_SEMPLICE_BOLLATA IS 'S->semplice, B-> bollata';
+CREATE TABLE ANAG_STORICO.ANNULLAMENTO
+(
+  ID_ANNULLAMENTO      NUMBER,
+  ID_ATTO              NUMBER,
+  MOTIVO_ANNULLAMENTO  VARCHAR2(200 CHAR),
+  ID_SENTENZA          NUMBER,
+  ID_MATRIMONIO        NUMBER,
+  ID_OPERAZIONE_ANPR   NUMBER,
+  ID_TIPO_RICHIESTA    NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.ANNULLAMENTO IS 'La tabella contiene gli annullamenti di atti di stato civile.';
+
+COMMENT ON COLUMN ANAG_STORICO.ANNULLAMENTO.ID_ANNULLAMENTO IS 'Identificato dell''annullamento';
+
+COMMENT ON COLUMN ANAG_STORICO.ANNULLAMENTO.ID_ATTO IS 'FK verso l''atto relativo per il quale si sta registrando l''annullamento';
+
+COMMENT ON COLUMN ANAG_STORICO.ANNULLAMENTO.MOTIVO_ANNULLAMENTO IS 'Motivazione che ha condotto all''annullamento';
+
+COMMENT ON COLUMN ANAG_STORICO.ANNULLAMENTO.ID_SENTENZA IS 'FK verso la sentenza di annullamento prodotta da un organo accreditato';
+
+COMMENT ON COLUMN ANAG_STORICO.ANNULLAMENTO.ID_MATRIMONIO IS 'Identificativo del soggetto per il quale è stato emesso l''atto di annullamento.';
+
+COMMENT ON COLUMN ANAG_STORICO.ANNULLAMENTO.ID_OPERAZIONE_ANPR IS 'Identificativo dell''operazione ANPR';
+
+COMMENT ON COLUMN ANAG_STORICO.ANNULLAMENTO.ID_TIPO_RICHIESTA IS 'Identificativo del tipo richiesta di divorzio';
+CREATE TABLE ANAG_STORICO.FAMIG2S
+(
+  ID                    NUMBER                  NOT NULL,
+  ID_SOGGETTO           NUMBER,
+  CODICE_INDIVIDUALE    VARCHAR2(20 BYTE),
+  ID_FAMIGLIA           NUMBER,
+  CODICE_FAMIGLIA       VARCHAR2(20 BYTE),
+  ID_CODICE_LEGAME      NUMBER,
+  DATA_INIZIO_VALIDITA  DATE
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIG2S.ID IS 'Identificativo incrementale di tabella';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIG2S.ID_SOGGETTO IS 'Identificativo del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIG2S.CODICE_INDIVIDUALE IS 'Codice individuale';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIG2S.ID_FAMIGLIA IS 'Identificativo della famiglia del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIG2S.CODICE_FAMIGLIA IS 'Codice famiglia del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIG2S.ID_CODICE_LEGAME IS 'Identificativo del rapporto di parentela';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIG2S.DATA_INIZIO_VALIDITA IS 'Data inizio validità famiglia';
+
+
+
+CREATE UNIQUE INDEX ANAG_STORICO.FAMIG2S_PK ON ANAG_STORICO.FAMIG2S
+(ID)
+LOGGING
+TABLESPACE ANAG_USR
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+NOPARALLEL;
+
+
+ALTER TABLE ANAG_STORICO.FAMIG2S ADD (
+  CONSTRAINT FAMIG2S_PK
+  PRIMARY KEY
+  (ID)
+  USING INDEX ANAG_STORICO.FAMIG2S_PK
+  ENABLE VALIDATE);
+CREATE TABLE ANAG_STORICO.PERSONAS
+(
+  ID                          NUMBER            NOT NULL,
+  ID_SOGGETTO                 NUMBER,
+  CODICE_INDIVIDUALE          VARCHAR2(20 BYTE),
+  ID_FAMIGLIA                 NUMBER,
+  CODICE_FAMIGLIA             VARCHAR2(20 BYTE),
+  DATA_APPARTENENZA_FAMIGLIA  DATE,
+  DATA_INIZIO_RESIDENZA       DATE,
+  DATA_FINE_RESIDENZA         DATE,
+  ID_COMUNE_PROVENIENZA       NUMBER,
+  ID_LOCALITA_PROVENIENZA     NUMBER,
+  ID_COMUNE_EMIGRAZIONE       NUMBER,
+  ID_LOCALITA_EMIGRAZIONE     NUMBER,
+  PRATICA_IMMIGRAZIONE        VARCHAR2(20 BYTE),
+  ANNO_PRATICA_IMMIGRAZIONE   VARCHAR2(4 BYTE),
+  PRATICA_EMIGRAZIONE         VARCHAR2(20 BYTE),
+  ANNO_PRATICA_EMIGRAZIONE    VARCHAR2(4 BYTE),
+  DATA_INIZIO_STORICO         DATE,
+  DATA_FINE_STORICO           DATE,
+  ID_STATUS_SOGGETTO          NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ANAG_STORICO.PERSONAS.ID IS 'Identificativo incrementale di tabella';
+
+COMMENT ON COLUMN ANAG_STORICO.PERSONAS.ID_SOGGETTO IS 'Identificativo del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.PERSONAS.CODICE_INDIVIDUALE IS 'Codice individuale del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.PERSONAS.ID_FAMIGLIA IS 'Identificativo della famiglia';
+
+COMMENT ON COLUMN ANAG_STORICO.PERSONAS.CODICE_FAMIGLIA IS 'Codice famiglia del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.PERSONAS.DATA_APPARTENENZA_FAMIGLIA IS 'Data di inizio appartenenza alla famiglia';
+
+COMMENT ON COLUMN ANAG_STORICO.PERSONAS.DATA_INIZIO_RESIDENZA IS 'Data di inizio residenza';
+
+COMMENT ON COLUMN ANAG_STORICO.PERSONAS.DATA_FINE_RESIDENZA IS 'Data fine residenza / Data iscrizione AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.PERSONAS.ID_COMUNE_PROVENIENZA IS 'Identificativo del comune di provenienza';
+
+COMMENT ON COLUMN ANAG_STORICO.PERSONAS.ID_LOCALITA_PROVENIENZA IS 'Identificativo della località di provenienza';
+
+COMMENT ON COLUMN ANAG_STORICO.PERSONAS.ID_COMUNE_EMIGRAZIONE IS 'Identificativo del comune di emigrazione';
+
+COMMENT ON COLUMN ANAG_STORICO.PERSONAS.ID_LOCALITA_EMIGRAZIONE IS 'Identificativo della località di emigrazione / iscrizione AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.PERSONAS.PRATICA_IMMIGRAZIONE IS 'Numero pratica di immigrazione a Roma';
+
+COMMENT ON COLUMN ANAG_STORICO.PERSONAS.ANNO_PRATICA_IMMIGRAZIONE IS 'Anno pratica di immigrazione a Roma';
+
+COMMENT ON COLUMN ANAG_STORICO.PERSONAS.PRATICA_EMIGRAZIONE IS 'Numero pratica emigrazione da Roma';
+
+COMMENT ON COLUMN ANAG_STORICO.PERSONAS.ANNO_PRATICA_EMIGRAZIONE IS 'Anno pratica emigrazione da Roma';
+
+COMMENT ON COLUMN ANAG_STORICO.PERSONAS.DATA_INIZIO_STORICO IS 'Data inizio validità storico';
+
+COMMENT ON COLUMN ANAG_STORICO.PERSONAS.DATA_FINE_STORICO IS 'Data fine validità storico';
+
+COMMENT ON COLUMN ANAG_STORICO.PERSONAS.ID_STATUS_SOGGETTO IS 'Status Soggetto';
+
+
+
+CREATE UNIQUE INDEX ANAG_STORICO.POP_PK ON ANAG_STORICO.PERSONAS
+(ID)
+LOGGING
+TABLESPACE ANAG_USR
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+NOPARALLEL;
+
+
+ALTER TABLE ANAG_STORICO.PERSONAS ADD (
+  CONSTRAINT POP_PK
+  PRIMARY KEY
+  (ID)
+  USING INDEX ANAG_STORICO.POP_PK
+  ENABLE VALIDATE);
+CREATE TABLE ANAG_STORICO.FAMIGLS
+(
+  ID                        NUMBER              NOT NULL,
+  ID_FAMIGLIA               NUMBER,
+  CODICE_FAMIGLIA           VARCHAR2(20 BYTE),
+  ID_TOPONIMO               NUMBER,
+  ID_CIVICO                 NUMBER,
+  LOTTO                     VARCHAR2(20 BYTE),
+  PALAZZINA                 VARCHAR2(20 BYTE),
+  SCALA                     VARCHAR2(20 BYTE),
+  PIANO                     VARCHAR2(20 BYTE),
+  INTERNO                   VARCHAR2(20 BYTE),
+  FLAG_ATTIVO               VARCHAR2(1 BYTE),
+  DATA_INIZIO_VALIDITA      DATE,
+  DATA_CAMBIO_DOMICILIO     DATE,
+  PRATICA_CAMBIO_DOMICILIO  VARCHAR2(20 BYTE),
+  ID_LOCALITA_AIRE          NUMBER,
+  INDIRIZZO_AIRE            VARCHAR2(500 BYTE),
+  CAP_AIRE                  VARCHAR2(20 BYTE),
+  ID_CONSOLATO              NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLS.ID IS 'Identificativo incrementale di tabella';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLS.ID_FAMIGLIA IS 'Identificativo della famiglia';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLS.CODICE_FAMIGLIA IS 'Codice famiglia';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLS.ID_TOPONIMO IS 'Identificativo del toponimo';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLS.ID_CIVICO IS 'Identificativo del civico';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLS.LOTTO IS 'Numero del lotto';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLS.FLAG_ATTIVO IS 'S -> Attivo, N -> Non attivo';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLS.DATA_CAMBIO_DOMICILIO IS 'Data cambio di domicilio';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLS.PRATICA_CAMBIO_DOMICILIO IS 'Numero pratica del cambio di domicilio';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLS.ID_LOCALITA_AIRE IS 'Identificativo della località AIRE di residenza';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLS.INDIRIZZO_AIRE IS 'Indirizzo AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLS.CAP_AIRE IS 'CAP AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLS.ID_CONSOLATO IS 'Identificativo del consolato di appartenenza';
+
+
+
+CREATE UNIQUE INDEX ANAG_STORICO.FAMIGLS_PK ON ANAG_STORICO.FAMIGLS
+(ID)
+LOGGING
+TABLESPACE ANAG_USR
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+NOPARALLEL;
+
+
+ALTER TABLE ANAG_STORICO.FAMIGLS ADD (
+  CONSTRAINT FAMIGLS_PK
+  PRIMARY KEY
+  (ID)
+  USING INDEX ANAG_STORICO.FAMIGLS_PK
+  ENABLE VALIDATE);
+CREATE TABLE ANAG_STORICO.CERTIFICAZIONE_SOSPESA
+(
+  ID_CERTIFICAZIONE_SOSPESA       NUMBER,
+  FLAG_CERTIFICAZIONE_NASCITA     CHAR(1 BYTE),
+  FLAG_ESTRATTO_NASCITA           CHAR(1 BYTE),
+  FLAG_CERTIFICAZIONE_MATRIMONIO  CHAR(1 BYTE),
+  FLAG_ESTRATTO_MATRIMONIO        CHAR(1 BYTE),
+  FLAG_CERTIFICAZIONE_MORTE       CHAR(1 BYTE),
+  FLAG_ESTRATTO_MORTE             CHAR(1 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ANAG_STORICO.CERTIFICAZIONE_SOSPESA.ID_CERTIFICAZIONE_SOSPESA IS 'identificazione delle certificazioni sospese';
+
+COMMENT ON COLUMN ANAG_STORICO.CERTIFICAZIONE_SOSPESA.FLAG_CERTIFICAZIONE_NASCITA IS 'Flag che identifica il blocco sblocco della certificazione : S -> sblocco, N -> blocco';
+
+COMMENT ON COLUMN ANAG_STORICO.CERTIFICAZIONE_SOSPESA.FLAG_ESTRATTO_NASCITA IS 'Flag che identifica il blocco sblocco dell estratto : S -> sblocco, N -> blocco';
+
+COMMENT ON COLUMN ANAG_STORICO.CERTIFICAZIONE_SOSPESA.FLAG_CERTIFICAZIONE_MATRIMONIO IS 'Flag che identifica il blocco sblocco della certificazione : S -> sblocco, N -> blocco';
+
+COMMENT ON COLUMN ANAG_STORICO.CERTIFICAZIONE_SOSPESA.FLAG_ESTRATTO_MATRIMONIO IS 'Flag che identifica il blocco sblocco dell estratto : S -> sblocco, N -> blocco';
+
+COMMENT ON COLUMN ANAG_STORICO.CERTIFICAZIONE_SOSPESA.FLAG_CERTIFICAZIONE_MORTE IS 'Flag che identifica il blocco sblocco della certificazione : S -> sblocco, N -> blocco';
+
+COMMENT ON COLUMN ANAG_STORICO.CERTIFICAZIONE_SOSPESA.FLAG_ESTRATTO_MORTE IS 'Flag che identifica il blocco sblocco dell estratto : S -> sblocco, N -> blocco';
+CREATE TABLE ANAG_STORICO.SOGGETTO
+(
+  ID_SOGGETTO                     NUMBER        NOT NULL,
+  CODICE_INDIVIDUALE              VARCHAR2(20 BYTE),
+  ID_SCHEDA_ANPR                  NUMBER(15),
+  CODICE_FISCALE                  VARCHAR2(16 BYTE),
+  VALIDITA_CF                     NUMBER(2),
+  DATA_ATTRIBUZIONE_VALIDITA_CF   DATE,
+  NOME                            VARCHAR2(250 BYTE),
+  COGNOME                         VARCHAR2(250 BYTE),
+  SESSO                           CHAR(1 BYTE),
+  AIRE                            CHAR(1 BYTE),
+  ANNO_ESPATRIO                   NUMBER(4),
+  DATA_ULTIMO_AGGIORNAMENTO       DATE,
+  ID_STATO_CIVILE                 NUMBER(2),
+  NOTE_STATO_CIVILE               VARCHAR2(250 BYTE),
+  DATA_PRIMA_ISCRIZIONE_COMUNE    DATE,
+  NUMERO_CARTA_IDENTITA           VARCHAR2(20 BYTE),
+  ID_SOGGIORNO                    NUMBER,
+  ID_FAMIGLIA_CONVIVENZA          NUMBER,
+  ID_CENSIMENTO                   NUMBER,
+  ID_CITTADINANZA                 NUMBER,
+  DATA_VALIDITA_CITTADINANZA      DATE,
+  ID_CITTADINANZA2                NUMBER,
+  DATA_VALIDITA_CITTADINANZA2     DATE,
+  ID_SENZA_FISSA_DIMORA           NUMBER,
+  ID_SOGGETTO_MADRE               NUMBER,
+  ID_SOGGETTO_PADRE               NUMBER,
+  ID_CODICE_LEGAME_APR            NUMBER(5),
+  ID_COMUNE_LEVA                  NUMBER,
+  ID_COMUNE_ELETTORE              NUMBER,
+  ID_MOTIVO_ISCRIZIONE_APR        NUMBER(2),
+  ID_CERTIFICABILITA              NUMBER,
+  ID_COND_NON_PROFESSIONALE_ANPR  NUMBER(2),
+  PROGR_COMPONENTE_FAMCONV        NUMBER(4),
+  DATA_DECORRENZA_FAMCONV         DATE,
+  DATA_DECORRENZA_LEGAME_FAMCONV  DATE,
+  ID_CODICE_LEGAME_FAMCONV        NUMBER(2),
+  ID_NASCITA                      NUMBER,
+  ID_MORTE                        NUMBER,
+  ID_SOGGETTO_PREC                NUMBER,
+  FLAG_SOGGETTO_ATTIVO            CHAR(1 BYTE),
+  ID_RESPONSABILE                 NUMBER,
+  ID_CERTIFICAZIONE_SOSPESA       NUMBER,
+  ID_MOTIVO_MEMORIZZAZIONE        NUMBER,
+  FLAG_CF_ATTIVO                  VARCHAR2(1 BYTE),
+  MOTIVO_ELIMINAZIONE_CF          VARCHAR2(50 BYTE),
+  POSSESSO_AUTOVEICOLI            VARCHAR2(1 BYTE),
+  RECAPITO_TELEFONICO             VARCHAR2(100 BYTE),
+  EMAIL                           VARCHAR2(100 BYTE),
+  ID_TIPO_ISCRIZIONE              NUMBER,
+  ID_STATUS_SOGGETTO              NUMBER,
+  ID_DISATTIVAZIONE_SOGGETTO      NUMBER,
+  ID_OPERAZIONE_ANPR              NUMBER,
+  ID_ELENCO_PREP_LEVA             NUMBER,
+  ID_LISTA_LEVA                   NUMBER,
+  RUOLO_MATRICOLARE               VARCHAR2(400 BYTE),
+  FLG_VARIAZIONE_ANAG             VARCHAR2(1 BYTE),
+  DATA_INSERIMENTO_LISTA_LEVA     DATE,
+  DATA_VARIAZIONE_ANAGRAFICA      DATE,
+  DATA_ACQUISIZIONE_CITTADINANZA  DATE,
+  COMUNE_GIURAMENTO_CITT          NUMBER,
+  ID_FAMIGLIA_PROVENIENZA_ANPR    VARCHAR2(20 BYTE),
+  ID_SOGGETTO_REFERENTE           NUMBER,
+  ID_SOGG_PRESENTE                NUMBER,
+  DATA_STORICIZZAZIONE            DATE,
+  DATA_DECORRENZA_REFERENTE       DATE,
+  DATA_DECORRENZA_RESIDENZA       DATE,
+  CODICE_ANAGAIRE                 VARCHAR2(30 BYTE),
+  MOTIVO_STORICIZZAZIONE          VARCHAR2(100 BYTE),
+  ID_POS_PROFESSIONALE_ANPR       VARCHAR2(5 BYTE),
+  ID_TITOLO_STUDIO_ANPR           VARCHAR2(5 BYTE),
+  ID_ALTRO_DOC_RIC                NUMBER,
+  ID_UNICO_NAZIONALE              VARCHAR2(20 BYTE),
+  DATA_FINE_ISCRIZIONE_COMUNE     DATE
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.SOGGETTO IS 'Tabella contenente l''anagrafica di un soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_SOGGETTO IS 'Identificativo del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.CODICE_INDIVIDUALE IS 'Codice  utilizzato in APR per identificare univocamente il soggetto.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_SCHEDA_ANPR IS 'Codice  utilizzato in ANPR per identificare univocamente il soggetto.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.CODICE_FISCALE IS 'Codice fiscale del soggetto.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.VALIDITA_CF IS 'Indica l''esito della validazione dei dati anagrafici con il servizio di AE';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.DATA_ATTRIBUZIONE_VALIDITA_CF IS 'Data in cui è stato validato il codice fiscale.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.NOME IS 'Nome del soggetto.
+';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.COGNOME IS 'Cognome del soggetto.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.SESSO IS 'Sesso del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.AIRE IS 'Flag che indica se il soggetto è iscritto all'' AIRE. 
+Valorizzato con:
+- S per indicare AIRE
+- N per indicare non AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ANNO_ESPATRIO IS 'Anno in cui il soggetto è entrato in AIRE.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.DATA_ULTIMO_AGGIORNAMENTO IS 'data in cui la scheda del soggetto ha subito l''ultimo aggiornamento';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_STATO_CIVILE IS 'Codice identificativo dello stato civile attuale del soggetto.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.NOTE_STATO_CIVILE IS 'Campo che contiene eventuali note relative allo stato civile del soggetto.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.DATA_PRIMA_ISCRIZIONE_COMUNE IS 'Data in cui il soggetto è stato iscritto per la prima volta in APR.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.NUMERO_CARTA_IDENTITA IS 'Codice identificativo della carta d''identità associata al soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_SOGGIORNO IS 'Identificativo del permesso o attestato di soggiorno.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_FAMIGLIA_CONVIVENZA IS 'Identificativo della famiglia o convivenza in APR';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_CENSIMENTO IS 'Identificativo del censimento associato al soggetto.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_CITTADINANZA IS 'Identifica lo stato della prima cittadinanza del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.DATA_VALIDITA_CITTADINANZA IS 'La data a partire dalla quale il soggetto ha assunto la cittadinanza indicata con ID_CITTADINANZA';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_CITTADINANZA2 IS 'Identifica lo stato della seconda cittadinanza del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.DATA_VALIDITA_CITTADINANZA2 IS 'La data a partire dalla quale il soggetto ha assunto la cittadinanza indicata con ID_CITTADINANZA2';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_SENZA_FISSA_DIMORA IS 'Identificativo dei dati relativi ad un eventuale stato di senza fissa dimora del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_SOGGETTO_MADRE IS 'Identificativo della madre del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_SOGGETTO_PADRE IS 'Identificativo del padre del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_CODICE_LEGAME_APR IS 'Codice del legame del soggetto con la famiglia o con la convivenza a cui è associato.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_COMUNE_LEVA IS 'Identificativo del comune appartenenza della lista di leva.
+';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_COMUNE_ELETTORE IS 'Identificativo del comune appartenenza della lista elettorale.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_MOTIVO_ISCRIZIONE_APR IS 'Codice identificativo della motivazione per cui il soggetto è iscritto all''apr.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_CERTIFICABILITA IS 'Codice identificativo della tipologia di certificabilità che è possibile emettere ad un soggetto.
+';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_COND_NON_PROFESSIONALE_ANPR IS 'Identificativo della condizione non professionale del soggetto. (in alternativa con ID_POS_PROFESSIONALE_ANPR)';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.PROGR_COMPONENTE_FAMCONV IS 'Indica il progressivo con cui il soggetto è attribuito alla famiglia.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.DATA_DECORRENZA_FAMCONV IS 'La data a partire dalla quale il soggetto appartiene alla famiglia/convivenza.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.DATA_DECORRENZA_LEGAME_FAMCONV IS 'La data a partire dalla quale il soggetto ha assunto un determinato rapporto di parentela/legame rispetto all''intestatario della scheda famiglia/convivenza';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_CODICE_LEGAME_FAMCONV IS 'Codice del legame che lega il soggetto all''intestatario della famiglia/convivenza ad esso associata.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_NASCITA IS 'Identificativo della nascita del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_MORTE IS 'Identificativo della morte del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.FLAG_SOGGETTO_ATTIVO IS 'Flag che identifica il soggetto attivo da quelli deprecati: S -> Attivo, N -> Deprecato';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_CERTIFICAZIONE_SOSPESA IS 'indica la lo sblocco blocco delle certificazioni del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_MOTIVO_MEMORIZZAZIONE IS 'identificatore del motivo di memorizzazione';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.FLAG_CF_ATTIVO IS 'Flag per la validazione del codice fiscale per Variazioni Anagrafiche. S -> Attivo, N -> Cancellato';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.MOTIVO_ELIMINAZIONE_CF IS 'Motivo dell''eliminazione del codice fiscale in Variazioni Anagrafiche';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.POSSESSO_AUTOVEICOLI IS 'S se il soggetto possiede autoveicoli, N viceversa';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.RECAPITO_TELEFONICO IS 'Indica il recapito telefonico fornito dal soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.EMAIL IS 'Indica la email del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_OPERAZIONE_ANPR IS 'Identificativo dell''operazione ANPR';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_ELENCO_PREP_LEVA IS 'Identificativo elenco preparatorio leva di appartenenza.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_LISTA_LEVA IS 'Identificativo lista di leva di appartenenza';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.FLG_VARIAZIONE_ANAG IS 'G->GENERALITA E SESSO; A->ALTRE VARIAZIONI';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_FAMIGLIA_PROVENIENZA_ANPR IS 'Identificativo famiglia provenienza associato da Anpr';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_SOGGETTO_REFERENTE IS 'id del soggetto referente';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.DATA_DECORRENZA_REFERENTE IS 'data in cui è stato nominato come referente/tutore il soggetto_referente.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.DATA_DECORRENZA_RESIDENZA IS 'data in cui il soggetto ha acquisito la residenza ad esso associata.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.CODICE_ANAGAIRE IS 'Codice identificativo AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.MOTIVO_STORICIZZAZIONE IS 'indica il motivo per cui è stato creato il record storico (es, MIGRAZIONE,VARIAZIONE,CRI,...)';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_POS_PROFESSIONALE_ANPR IS 'Identificativo della posizione professionale del soggetto. (in alternativa con ID_COND_NON_PROFESSIONALE_ANPR)';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_TITOLO_STUDIO_ANPR IS 'Identificativo del titolo di studio del soggetto.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGETTO.ID_ALTRO_DOC_RIC IS 'Codice identificativo del documento di riconoscimento, diverso dalla carta d''identità italiana, associato al soggetto';
+
+
+
+CREATE INDEX ANAG_STORICO.IDX_SOGGETTO_CODIND ON ANAG_STORICO.SOGGETTO
+(CODICE_INDIVIDUALE)
+LOGGING
+TABLESPACE ANAG_USR
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+NOPARALLEL;
+
+
+CREATE INDEX ANAG_STORICO.IDX_SOGGETTO_D1 ON ANAG_STORICO.SOGGETTO
+(DATA_STORICIZZAZIONE, MOTIVO_STORICIZZAZIONE)
+LOGGING
+TABLESPACE ANAG_USR
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+NOPARALLEL;
+
+
+CREATE INDEX ANAG_STORICO.IDX_SOGGETTO_ID_SOGG_PRES ON ANAG_STORICO.SOGGETTO
+(ID_SOGG_PRESENTE)
+LOGGING
+TABLESPACE ANAG_USR
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+NOPARALLEL;
+
+
+CREATE INDEX ANAG_USR.SID_SOGETTO_IDX ON ANAG_STORICO.SOGGETTO
+(ID_SOGGETTO)
+LOGGING
+TABLESPACE ANAG_USR
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+NOPARALLEL;
+CREATE TABLE ANAG_STORICO.R_SOGGETTO_OSTATIVA
+(
+  ID_SOGGETTO  NUMBER,
+  ID_OSTATIVA  NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTO_OSTATIVA.ID_SOGGETTO IS 'Campo che identifica il soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTO_OSTATIVA.ID_OSTATIVA IS 'Campo che identifica l''ostativa';
+CREATE TABLE ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO
+(
+  ID_CAMBIO_RESIDENZA_DOMICILIO  NUMBER,
+  CONTEGGIO                      CHAR(1 BYTE),
+  TIPO_ISTANZA                   CHAR(1 BYTE),
+  DATA_IMMIGRAZIONE              DATE,
+  NOTE                           VARCHAR2(4000 BYTE),
+  ID_RESIDENZA                   NUMBER,
+  ID_FAMIGLIA_CONVIVENZA         NUMBER,
+  CODICE_TIPO_PROTOCOLLO         VARCHAR2(10 BYTE),
+  ANNO_PROTOCOLLO                NUMBER(4),
+  NUMERO_PROTOCOLLO              NUMBER,
+  ID_TIPO_RICHIESTA_CAMBIO       NUMBER,
+  ID_COMUNE_PROVENIENZA          NUMBER,
+  ID_STATO_PRATICA               NUMBER,
+  NUMERO_PRATICA                 NUMBER,
+  ANNO_PRATICA                   INTEGER,
+  DATA_AGGIORNAMENTO             DATE,
+  TIPOLOGIA_CAMBIO               CHAR(1 BYTE),
+  ID_RECAPITO                    NUMBER,
+  ID_STATO_ESTERO                NUMBER,
+  ID_CONTRATTO_ABITATIVO         NUMBER,
+  ID_LOCALITA                    NUMBER,
+  CHK_PROVENIENZA                CHAR(1 BYTE),
+  CHK_DICHIARANTE                CHAR(1 BYTE),
+  CHK_INDIRIZZO                  CHAR(1 BYTE),
+  CHK_FAMIGLIA_RES               CHAR(1 BYTE),
+  CHK_FAMILIARI                  CHAR(1 BYTE),
+  CHK_CONTRATTO_AB               CHAR(1 BYTE),
+  CHK_RECAPITI                   CHAR(1 BYTE),
+  CHK_ALLEGATI                   CHAR(1 BYTE),
+  FLAG_ENTRATA_FAMIGLIA          NUMBER,
+  ID_SOGGETTO_RESIDENTE          NUMBER,
+  ID_OPERAZIONE_ANPR             VARCHAR2(20 BYTE),
+  DATA_DEFINIZIONE_PRATICA       DATE,
+  FLG_ACCERTAMENTO               NUMBER,
+  DICHIARAZIONE                  BLOB,
+  NOME_DICHIARAZIONE             VARCHAR2(80 BYTE),
+  FLAG_FAMIGLIA_COABITANTE       NUMBER,
+  ID_CODICE_LEGAME               NUMBER,
+  PDF_FINE_PROCEDIMENTO          BLOB,
+  NOME_PDF_FINE_PROC             VARCHAR2(80 BYTE),
+  PDF_INIZIO_PROCEDIMENTO        BLOB,
+  NOME_PDF_INIZIO_PROC           VARCHAR2(80 BYTE),
+  ID_MOTIVO_PROVENIENZA          NUMBER,
+  CHK_FAMIGLIE                   CHAR(1 BYTE),
+  ID_UTENTE                      NUMBER,
+  PDF_COMUNICAZ_POP_TEMP         BLOB,
+  NOME_PDF_COMUNICAZ_POP_TEMP    VARCHAR2(80 BYTE),
+  ID_RESIDENZA_PROVENIENZA       NUMBER,
+  NUMERO_PRATICA_ANPR            VARCHAR2(10 BYTE)
+)
+LOB (DICHIARAZIONE) STORE AS SECUREFILE (
+  TABLESPACE  ANAG_USR
+  ENABLE      STORAGE IN ROW
+  CHUNK       8192
+  NOCACHE
+  LOGGING
+      STORAGE    (
+                  INITIAL          104K
+                  NEXT             1M
+                  MINEXTENTS       1
+                  MAXEXTENTS       UNLIMITED
+                  PCTINCREASE      0
+                  BUFFER_POOL      DEFAULT
+                  FLASH_CACHE      DEFAULT
+                  CELL_FLASH_CACHE DEFAULT
+                 ))
+LOB (PDF_FINE_PROCEDIMENTO) STORE AS SECUREFILE (
+  TABLESPACE  ANAG_USR
+  ENABLE      STORAGE IN ROW
+  CHUNK       8192
+  NOCACHE
+  LOGGING
+      STORAGE    (
+                  INITIAL          104K
+                  NEXT             1M
+                  MINEXTENTS       1
+                  MAXEXTENTS       UNLIMITED
+                  PCTINCREASE      0
+                  BUFFER_POOL      DEFAULT
+                  FLASH_CACHE      DEFAULT
+                  CELL_FLASH_CACHE DEFAULT
+                 ))
+LOB (PDF_INIZIO_PROCEDIMENTO) STORE AS SECUREFILE (
+  TABLESPACE  ANAG_USR
+  ENABLE      STORAGE IN ROW
+  CHUNK       8192
+  NOCACHE
+  LOGGING
+      STORAGE    (
+                  INITIAL          104K
+                  NEXT             1M
+                  MINEXTENTS       1
+                  MAXEXTENTS       UNLIMITED
+                  PCTINCREASE      0
+                  BUFFER_POOL      DEFAULT
+                  FLASH_CACHE      DEFAULT
+                  CELL_FLASH_CACHE DEFAULT
+                 ))
+LOB (PDF_COMUNICAZ_POP_TEMP) STORE AS SECUREFILE (
+  TABLESPACE  ANAG_USR
+  ENABLE      STORAGE IN ROW
+  CHUNK       8192
+  NOCACHE
+  LOGGING
+      STORAGE    (
+                  INITIAL          104K
+                  NEXT             1M
+                  MINEXTENTS       1
+                  MAXEXTENTS       UNLIMITED
+                  PCTINCREASE      0
+                  BUFFER_POOL      DEFAULT
+                  FLASH_CACHE      DEFAULT
+                  CELL_FLASH_CACHE DEFAULT
+                 ))
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO IS 'La tabella contiene le pratiche di cambio di residenza o domicilio.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.ID_CAMBIO_RESIDENZA_DOMICILIO IS 'Campo che identifica univocamente un cambio di residenza o domicillio.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.CONTEGGIO IS 'Flag che indica se il cambio di residenza ha valenza ai fini del conteggio.
+
+valorizzato con S se vale per il conteggio, N  altrimenti.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.TIPO_ISTANZA IS 'Flag che descrive la tipologia di istanza del cambio di domicilio:
+- P istanza di parte;
+- U istanza d''ufficio.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.DATA_IMMIGRAZIONE IS 'Data in cui è stato effettuato il cambio di residenza o domicilio.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.NOTE IS 'Campo in cui è possibile salvare delle note relative al cambio di residenza o abitazione.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.ID_RESIDENZA IS 'Codice identificativo della residenza associata al cambio di residenza o domicilio.
+
+Identifica la residenza di immigrazione.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.ID_FAMIGLIA_CONVIVENZA IS 'Codice identificativo della famiglia o convivenza in cui intende entrare il soggetto immigrante relativo al cambio di residenza o domicilio.
+';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.CODICE_TIPO_PROTOCOLLO IS 'Codice che identifica univocamente l''ente protocollante associato al cambio di residenza o domicilio.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.ANNO_PROTOCOLLO IS 'Anno di riferimento del protocollo associato al cambio di residenza o domicilio.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.NUMERO_PROTOCOLLO IS 'Numero che identifica il protocollo associato al cambio di residenza o domicilio';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.ID_TIPO_RICHIESTA_CAMBIO IS 'Codice identificativo della tipologia di richiesta con il quale è pervenuto il relativo cambio di residenza o domicilio.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.ID_COMUNE_PROVENIENZA IS 'Codice identificativo del comune di provenienza del soggetto immigrante del relativo cambio di residenza o domicilio.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.ID_STATO_PRATICA IS 'Codice identificativo dello stato di avanzamento della pratica collegata al cambio di residenza o domicilio.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.NUMERO_PRATICA IS 'Numero associato alla pratica relativa cambio di residenza o domicilio.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.ANNO_PRATICA IS 'Anno in cui è stata lavorata la pratica associata al relativo cambio di residenza o domicilio.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.DATA_AGGIORNAMENTO IS 'Data in cui la pratica di cambio residenza domicilio ha subito l''ultima modifica.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.TIPOLOGIA_CAMBIO IS 'Flag che indica se la pratica è un cambio di residenza o un cambio di abitazione. R se cambio di residenza, A se cambio di abitazione';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.ID_RECAPITO IS 'Codice identificativo del recapito.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.ID_STATO_ESTERO IS 'In alternativa a Id_localita.Codice che identifica lo stato estero di provenienza';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.ID_CONTRATTO_ABITATIVO IS 'Campo che identifica il contratto abitativo';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.ID_LOCALITA IS 'Codice identificativo della Località estera di provenienza
+
+Da inserire in alternativa al comune di provenienza.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.CHK_PROVENIENZA IS 'Campo che indica se la pagina Provenienza è stata completata: 0 -> no, 1 -> si.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.CHK_DICHIARANTE IS 'Campo che indica se la pagina Dichiarante è stata completata: 0 -> no, 1 -> si.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.CHK_INDIRIZZO IS 'Campo che indica se la pagina Indirizzo è stata completata: 0 -> no, 1 -> si.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.CHK_FAMIGLIA_RES IS 'Campo che indica se la pagina Famiglia residente è stata completata: 0 -> no, 1 -> si.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.CHK_FAMILIARI IS 'Campo che indica se la pagina Familiari è stata completata: 0 -> no, 1 -> si.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.CHK_CONTRATTO_AB IS 'Campo che indica se la pagina Contratto abitativo è stata completata: 0 -> no, 1 -> si.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.CHK_RECAPITI IS 'Campo che indica se la pagina recapiti è stata completata: 0 -> no, 1 -> si.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.CHK_ALLEGATI IS 'Campo che indica se la pagina allegati è stata completata: 0 -> no, 1 -> si.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.FLAG_ENTRATA_FAMIGLIA IS 'Campo che indica se in dichiarante entra in una famiglia esistente 1 -> no, 2 -> si, 3-> senza fissa dimora.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.ID_SOGGETTO_RESIDENTE IS 'identificativo del soggetto residente alla residenza in cui il dichiarante vuole immigrare';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.ID_OPERAZIONE_ANPR IS 'identificativo dell''operazione effettuata per la notifica ad ANPR dell''avvenutoCRICA';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.FLG_ACCERTAMENTO IS 'Campo che indica se l''accertamento per il cambio di residenza è in corso. 1->In corso, 2 altrimenti';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.DICHIARAZIONE IS 'Campo che contiene il file della dichiarazione di residenza';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.NOME_DICHIARAZIONE IS 'Campo che contiene il nome della dichiarazione di residenza.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.FLAG_FAMIGLIA_COABITANTE IS 'Campo che indica se la pratica riguarda una famiglia coabitante.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.ID_CODICE_LEGAME IS 'Campo che indica il tipo di legame tra il dichiarante e il soggetto residente';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.PDF_FINE_PROCEDIMENTO IS 'Campo contenente il documento di fine procedimento iscrizione';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.NOME_PDF_FINE_PROC IS 'Campo che identifica il nome del file Fine procedimento';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.PDF_INIZIO_PROCEDIMENTO IS 'Campo contenente il documento di inizio procedimento per cambio d''bitazione o iscrizione';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.NOME_PDF_INIZIO_PROC IS 'Campo che identifica il nome del file inizio procedimento';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.CHK_FAMIGLIE IS 'Campo che indica se il flusso del cri ha settato le famiglie da sistemare: 0 -> no, 1 -> si.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.ID_UTENTE IS 'Campo che identifica l''utente che ha lavorato la pratica.';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.PDF_COMUNICAZ_POP_TEMP IS 'Campo contenente il pdf della comunicazione verso comune di provenienza per pratica popolazione temporanea';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.NOME_PDF_COMUNICAZ_POP_TEMP IS 'Campo contenente il nome della comunicazione verso comune di provenienza per pratica pop temporanea';
+
+COMMENT ON COLUMN ANAG_STORICO.CAMBIO_RESIDENZA_DOMICILIO.ID_RESIDENZA_PROVENIENZA IS 'Indirizzo di provenienza del dichiarante della pratica';
+CREATE TABLE ANAG_STORICO.R_SOGGETTO_CAMBIO_RESIDENZA
+(
+  ID_SOGGETTO                    NUMBER,
+  ID_CAMBIO_RESIDENZA_DOMICILIO  NUMBER,
+  FLG_DICHIARANTE                CHAR(1 BYTE),
+  ID_FAMIGLIA_PROVENIENZA        NUMBER,
+  CRITERIO_VALIDAZIONE_CF_ANPR   NUMBER,
+  SOG_MODIFICATO                 CHAR(1 BYTE),
+  ID_IRREPERIBILITA_CHIUSA       NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.R_SOGGETTO_CAMBIO_RESIDENZA IS 'Tabella di relazione che contiene l''indicazione dei soggetti associati ad una pratica di cambio di residenza/domicilio.';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTO_CAMBIO_RESIDENZA.ID_SOGGETTO IS 'Id del soggetto che ha richiesto il cambio di residenza/domicilio';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTO_CAMBIO_RESIDENZA.ID_CAMBIO_RESIDENZA_DOMICILIO IS 'Identificativo della pratica di cambio di residenza/domicilio';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTO_CAMBIO_RESIDENZA.FLG_DICHIARANTE IS 'Campo che indica se il soggetto è il dichirante. "D"  se dichiarante , "N" altrimenti.';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTO_CAMBIO_RESIDENZA.ID_FAMIGLIA_PROVENIENZA IS 'identificativo di una famigliaConvivenza di provenienza dei soggetti legati alla pratica di crica. non necessariamente quella del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTO_CAMBIO_RESIDENZA.ID_IRREPERIBILITA_CHIUSA IS 'Identifica la pratica di irreperibilità in corso chiusa dal CA';
+CREATE TABLE ANAG_STORICO.ESITO_ISCRIZIONE
+(
+  ID_ESITO                 NUMBER,
+  ID_ACCERTAMENTO          NUMBER,
+  DATA_SOPRALLUOGO         DATE,
+  CONFERMA_INDIRIZZO       CHAR(1 CHAR),
+  INDIRIZZO_ESATTO         VARCHAR2(50 CHAR),
+  ID_TIPO_ALLOGGIO         NUMBER,
+  ALTRO_ALLOGGIO           VARCHAR2(50 CHAR),
+  ID_TITOLO_POSSESSO       NUMBER,
+  ALTRO_TITOLO_POSSESSO    VARCHAR2(50 CHAR),
+  ESITO                    CHAR(1 CHAR),
+  NOTE                     VARCHAR2(200 CHAR),
+  ID_SOGGETTO              NUMBER,
+  ID_TRASFERIMENTO_DIMORA  NUMBER,
+  ID_PREAVVISO_RIGETTO     NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.ESITO_ISCRIZIONE IS 'Tabella contenente le informazioni inserite a sistema dai Gruppi di Polizia Locale relative all''ESITO di un accertamento per iscrizione.';
+
+COMMENT ON COLUMN ANAG_STORICO.ESITO_ISCRIZIONE.ID_ESITO IS 'Identificativo dell''esito di un accertamento per Iscrizione';
+
+COMMENT ON COLUMN ANAG_STORICO.ESITO_ISCRIZIONE.ID_ACCERTAMENTO IS 'FK rappresentante la richiesta di accertamento per la quale si sta impostando l''esito da parte del gruppo di polizia locale';
+
+COMMENT ON COLUMN ANAG_STORICO.ESITO_ISCRIZIONE.DATA_SOPRALLUOGO IS 'Data del sopralluogo';
+
+COMMENT ON COLUMN ANAG_STORICO.ESITO_ISCRIZIONE.CONFERMA_INDIRIZZO IS 'N -> NO
+S -> SI';
+
+COMMENT ON COLUMN ANAG_STORICO.ESITO_ISCRIZIONE.INDIRIZZO_ESATTO IS 'Descrizione dell''indirizzo esatto';
+
+COMMENT ON COLUMN ANAG_STORICO.ESITO_ISCRIZIONE.ID_TIPO_ALLOGGIO IS 'FK verso la tabella tipologica che rappresenta la tipologia dell''alloggio';
+
+COMMENT ON COLUMN ANAG_STORICO.ESITO_ISCRIZIONE.ALTRO_ALLOGGIO IS 'Ulteriore descrizione dell''alloggio';
+
+COMMENT ON COLUMN ANAG_STORICO.ESITO_ISCRIZIONE.ID_TITOLO_POSSESSO IS 'FK verso la tabella tipologica del titolo di possesso';
+
+COMMENT ON COLUMN ANAG_STORICO.ESITO_ISCRIZIONE.ALTRO_TITOLO_POSSESSO IS 'Ulteriore descrizione del titolo di possesso';
+
+COMMENT ON COLUMN ANAG_STORICO.ESITO_ISCRIZIONE.ESITO IS '1-> POSITIVO 0->NEGATIVO';
+
+COMMENT ON COLUMN ANAG_STORICO.ESITO_ISCRIZIONE.NOTE IS 'Note inseribili all''atto del caricamento dell''esito';
+CREATE TABLE ANAG_STORICO.NASCITA
+(
+  ID_NASCITA                 NUMBER             NOT NULL,
+  DATA_EVENTO                DATE,
+  FLG_SENZA_GIORNO           CHAR(1 CHAR),
+  FLG_SENZA_MESE             CHAR(1 CHAR),
+  LUOGO_ECCEZIONALE          VARCHAR2(120 CHAR),
+  ID_LOCALITA                NUMBER,
+  ID_COMUNE                  NUMBER,
+  ID_ATTO                    NUMBER,
+  NOMINATIVO_PATERNITA       VARCHAR2(200 CHAR),
+  NOMINATIVO_MATERNITA       VARCHAR2(200 CHAR),
+  COD_COMUNE_AGGIOR          VARCHAR2(20 BYTE),
+  NOMINATIVO_PADRE_ADOTTIVO  VARCHAR2(200 BYTE),
+  NOMINATIVO_MADRE_ADOTTIVA  VARCHAR2(200 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.NASCITA IS 'Tabella contenente le informazioni sulla nascita di un soggetto.';
+
+COMMENT ON COLUMN ANAG_STORICO.NASCITA.ID_NASCITA IS 'Identificato della nascita';
+
+COMMENT ON COLUMN ANAG_STORICO.NASCITA.DATA_EVENTO IS 'Data di nascita';
+
+COMMENT ON COLUMN ANAG_STORICO.NASCITA.FLG_SENZA_GIORNO IS 'S -> non è presente il giorno di nascita
+N -> è presente il giorno di nascita';
+
+COMMENT ON COLUMN ANAG_STORICO.NASCITA.FLG_SENZA_MESE IS 'S -> non è presente il mese di nascita
+N -> è presente il mese di nascita';
+
+COMMENT ON COLUMN ANAG_STORICO.NASCITA.LUOGO_ECCEZIONALE IS 'Luogo eccezionale di nascita';
+
+COMMENT ON COLUMN ANAG_STORICO.NASCITA.ID_LOCALITA IS 'Identificativo della località di nascita';
+
+COMMENT ON COLUMN ANAG_STORICO.NASCITA.ID_COMUNE IS 'Identificativo del comune di nascita';
+
+COMMENT ON COLUMN ANAG_STORICO.NASCITA.ID_ATTO IS 'FK all''atto di nascita';
+
+COMMENT ON COLUMN ANAG_STORICO.NASCITA.NOMINATIVO_PATERNITA IS 'Nominativo del padre qualora non sia un soggetto presente in banca dati all''interno della tabella soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.NASCITA.NOMINATIVO_MATERNITA IS 'Nominativo della madre qualora non sia un soggetto presente in banca dati all''interno della tabella soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.NASCITA.COD_COMUNE_AGGIOR IS 'identificativo aggior del comune salvato in LUOGO_ECCEZIONALE';
+CREATE TABLE ANAG_STORICO.PRATICA_AIRE
+(
+  ID_PRATICA_AIRE               NUMBER,
+  ID_STATO_PRATICA              NUMBER,
+  DATA_INVIO_MODELLO            DATE,
+  ID_CONSOLATO                  NUMBER,
+  CODICE_TIPO_PROTOCOLLO        VARCHAR2(10 CHAR),
+  ANNO_PROTOCOLLO               NUMBER,
+  NUMERO_PROTOCOLLO             NUMBER,
+  NUMERO_PRATICA                VARCHAR2(200 BYTE),
+  ANNO_PRATICA                  NUMBER,
+  ID_RESIDENZA                  NUMBER,
+  ID_OGGETTO_PRATICA_AIRE       NUMBER,
+  ID_MOTIVO_CAMBIO_PRATICAAIRE  NUMBER,
+  ID_SOGGETTO_RESIDENTE         NUMBER,
+  DATA_DECORRENZA               DATE,
+  UTENTE_PROTOCOLLAZIONE        VARCHAR2(100 BYTE),
+  UTENTE_LAVORAZIONE            VARCHAR2(100 BYTE),
+  DATA_LAVORAZIONE              DATE,
+  FLAG_SELEZIONE_FAMIGLIA       VARCHAR2(1 BYTE),
+  DATA_CREAZIONE_PRATICA        DATE,
+  ID_FAMIGLIA                   NUMBER,
+  NUMERO_PRATICA_CRE            VARCHAR2(20 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.PRATICA_AIRE IS 'Tabella contenente le informazioni sulle pratiche di iscrizione o cancellazione dalle liste dell''AIRE.';
+
+COMMENT ON COLUMN ANAG_STORICO.PRATICA_AIRE.ID_PRATICA_AIRE IS 'Identificativo pratica aire';
+
+COMMENT ON COLUMN ANAG_STORICO.PRATICA_AIRE.ID_STATO_PRATICA IS 'Stato della pratica AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.PRATICA_AIRE.DATA_INVIO_MODELLO IS 'Data di invio del modello consolare';
+
+COMMENT ON COLUMN ANAG_STORICO.PRATICA_AIRE.ID_CONSOLATO IS 'FK alla tabella dei consolati di riferimento per la pratica aire';
+
+COMMENT ON COLUMN ANAG_STORICO.PRATICA_AIRE.CODICE_TIPO_PROTOCOLLO IS 'Codice del protocollo acquisito per la richiesta di Iscrizione o Cancellazione AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.PRATICA_AIRE.ANNO_PROTOCOLLO IS 'Anno del protocollo acquisito per la richiesta di Iscrizione o Cancellazione AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.PRATICA_AIRE.NUMERO_PROTOCOLLO IS 'Numero del protocollo acquisito per la richiesta di Iscrizione o Cancellazione AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.PRATICA_AIRE.NUMERO_PRATICA IS 'Numero della pratica';
+
+COMMENT ON COLUMN ANAG_STORICO.PRATICA_AIRE.ANNO_PRATICA IS 'Anno della pratica';
+
+COMMENT ON COLUMN ANAG_STORICO.PRATICA_AIRE.ID_RESIDENZA IS 'Identificato della residenza associata alla pratica AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.PRATICA_AIRE.ID_OGGETTO_PRATICA_AIRE IS 'Identificativo dell''oggetto della pratica AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.PRATICA_AIRE.ID_MOTIVO_CAMBIO_PRATICAAIRE IS 'Identificativo del motivo del cambio di pratica AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.PRATICA_AIRE.ID_SOGGETTO_RESIDENTE IS 'Identificativo del soggetto residente';
+
+COMMENT ON COLUMN ANAG_STORICO.PRATICA_AIRE.DATA_DECORRENZA IS 'Data di decorrenza dalla pratica AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.PRATICA_AIRE.UTENTE_PROTOCOLLAZIONE IS 'Nome dell''utente che protocolla la pratica';
+
+COMMENT ON COLUMN ANAG_STORICO.PRATICA_AIRE.UTENTE_LAVORAZIONE IS 'Nome dell''utente che lavora la pratica';
+
+COMMENT ON COLUMN ANAG_STORICO.PRATICA_AIRE.DATA_LAVORAZIONE IS 'Data dell''avvenuta lavorazione della pratica AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.PRATICA_AIRE.FLAG_SELEZIONE_FAMIGLIA IS 'Flag che tiene conto se nella pratica AIRE è sta selezionata una nuova famiglia o una già esistente. In caso affermativo il campo è selezionato, altrimenti rimane vuoto';
+
+COMMENT ON COLUMN ANAG_STORICO.PRATICA_AIRE.ID_FAMIGLIA IS 'Identificativo della famiglia AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.PRATICA_AIRE.NUMERO_PRATICA_CRE IS 'Numero pratica emigrazione se almeno uno dei soggetti è iscritto per espatrio';
+CREATE TABLE ANAG_STORICO.R_SOGGETTI_AIRE
+(
+  ID_SOGGETTO                   NUMBER,
+  ID_PRATICA_AIRE               NUMBER,
+  FLG_LAVORATO                  CHAR(1 CHAR),
+  ID_TIPO_PRATICA_AIRE          NUMBER,
+  ID_MOTIVO_PERDITA_CITTADIN    NUMBER,
+  ID_MOTIVO_ACQUISIZ_CITTADIN   NUMBER,
+  NOTE                          VARCHAR2(1000 BYTE),
+  ID_COMUNE_DUP_ISCR            NUMBER,
+  DATA_DUPLICE_ISCRIZIONE       DATE,
+  ID_COMUNE_IRREPERIBILITA      NUMBER,
+  DATA_IRREPERIBILITA           DATE,
+  ID_COMUNE_TRASFERIMENTO_AIRE  NUMBER,
+  DATA_TRASFERIMENTO_AIRE       DATE,
+  ID_NUOVA_CITTADINANZA         NUMBER,
+  ID_INDIVIDUAZIONE_COMUNE      NUMBER,
+  ID_INIZIATIVA_ISCRIZIONE      NUMBER,
+  DATA_EMIGRAZIONE              DATE,
+  CRITERIO_VALIDAZIONE_CF_ANPR  NUMBER,
+  FLG_LAVORATO_ANPR             CHAR(1 BYTE),
+  ID_VECCHIO_CODICE_LEGAME      NUMBER,
+  ID_FAMIGLIA_PROVENIENZA       NUMBER,
+  ID_RESIDENZA_PROVENIENZA      NUMBER,
+  FLAG_SOGGETTO_NUOVO           VARCHAR2(1 BYTE),
+  FLAG_PREC_AIRE                VARCHAR2(1 BYTE),
+  ID_NUOVO_CODICE_LEGAME        NUMBER,
+  ID_IRREPERIBILITA_CHIUSA      NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.R_SOGGETTI_AIRE IS 'Tabella di relazione che contiene l''indicazione dei soggetti afferenti ad una determinata pratica AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.ID_SOGGETTO IS 'Id dell''individuo che ha avviato una pratica AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.ID_PRATICA_AIRE IS 'Identificativo della pratica dell''AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.FLG_LAVORATO IS 'S -> Soggetto Lavorato
+N -> Soggetto da lavorare';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.ID_TIPO_PRATICA_AIRE IS 'Identificativo alla tipologia di pratica AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.ID_MOTIVO_PERDITA_CITTADIN IS 'Identificativo delmotivo di perdità della cittadinanza';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.ID_MOTIVO_ACQUISIZ_CITTADIN IS 'Identificativo delmotivo di acquisizione della cittadinanza';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.NOTE IS 'Note sul motivo di perdita o acquisizione della cittadinanza';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.ID_COMUNE_DUP_ISCR IS 'Identificativo del comune di duplice iscrizione';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.DATA_DUPLICE_ISCRIZIONE IS 'Data di decorrenza per duplice iscrizione';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.ID_COMUNE_IRREPERIBILITA IS 'Identificativo del comunedi irreperibilità';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.DATA_IRREPERIBILITA IS 'Data di irreperibilità';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.ID_COMUNE_TRASFERIMENTO_AIRE IS 'Identificativo del comune di precedente iscrizione per trasferimento da altra AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.DATA_TRASFERIMENTO_AIRE IS 'Data di decorrenza per trasferimento da altra AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.ID_NUOVA_CITTADINANZA IS 'Identificativo della nuova cittadinanza';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.ID_INDIVIDUAZIONE_COMUNE IS 'Identificativo dell''individuazione del comune di iscrizione AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.ID_INIZIATIVA_ISCRIZIONE IS 'Identificativo dell''iniziativa di iscrizione AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.DATA_EMIGRAZIONE IS 'Data dell''effettiva emigrazione del soggetto AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.FLG_LAVORATO_ANPR IS 'Campo che identifica se il soggetto è stato già lavorato su ANPR o meno';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.ID_VECCHIO_CODICE_LEGAME IS 'Identificativo del vecchio legame di parentela del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.ID_FAMIGLIA_PROVENIENZA IS 'Identificativo della famiglia di provenienza';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.ID_RESIDENZA_PROVENIENZA IS 'Identificativo della residenza di provenienza';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.FLAG_SOGGETTO_NUOVO IS 'S -> Soggetto nuovo, R -> Soggetto esistente residente, A -> Soggetto AIRE, N -> Soggetto esistente non residente';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.FLAG_PREC_AIRE IS 'S -> Soggetto già stato AIRE in precedenza, N -> Soggetto mai stato AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.ID_NUOVO_CODICE_LEGAME IS 'Identificativo del nuovo legame di parentela del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.R_SOGGETTI_AIRE.ID_IRREPERIBILITA_CHIUSA IS 'Identificativo dell''irrepribilità chiusa con l''iscrizione AIRE';
+CREATE TABLE ANAG_STORICO.RESIDENZA
+(
+  ID_RESIDENZA               NUMBER,
+  TIPO_INDIRIZZO             NUMBER(2),
+  NOTE_INDIRIZZO             VARCHAR2(250 BYTE),
+  CAP                        VARCHAR2(20 BYTE),
+  FRAZIONE                   VARCHAR2(80 BYTE),
+  ID_LOCALITA                NUMBER,
+  ID_COMUNE                  NUMBER,
+  ID_TOPONIMO                NUMBER,
+  ID_CIVICO                  NUMBER,
+  LUOGO_ECCEZIONALE          VARCHAR2(250 BYTE),
+  ID_MUNICIPIO               NUMBER,
+  DATA_DECORRENZA_RESIDENZA  DATE,
+  ID_ESTREMI_CATASTALI       NUMBER,
+  ID_CIVICO_INTERNO          NUMBER,
+  COD_COMUNE_AGGIOR          VARCHAR2(20 BYTE),
+  ID_CONSOLATO               NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.RESIDENZA IS 'Tabella contenente gli estremi della residenza di un soggetto.';
+
+COMMENT ON COLUMN ANAG_STORICO.RESIDENZA.ID_RESIDENZA IS 'Campo che indica l''id della residenza.';
+
+COMMENT ON COLUMN ANAG_STORICO.RESIDENZA.TIPO_INDIRIZZO IS 'Tipologia dell''indirizzo';
+
+COMMENT ON COLUMN ANAG_STORICO.RESIDENZA.NOTE_INDIRIZZO IS 'Campo che indica le note sull''idirizzo.';
+
+COMMENT ON COLUMN ANAG_STORICO.RESIDENZA.CAP IS 'Campo che indica il cap dell''idirizzo.';
+
+COMMENT ON COLUMN ANAG_STORICO.RESIDENZA.FRAZIONE IS 'Campo che indica la frazione del comune.';
+
+COMMENT ON COLUMN ANAG_STORICO.RESIDENZA.ID_LOCALITA IS 'Codice identificativo della licalità estera in cui è collocata la residenza.
+
+Da inserire in alternativa al comune di residenza.';
+
+COMMENT ON COLUMN ANAG_STORICO.RESIDENZA.ID_COMUNE IS 'Campo che indica il codice identificatvo del comune.
+
+Da inserire in alternativa alla località estera di residenza.';
+
+COMMENT ON COLUMN ANAG_STORICO.RESIDENZA.ID_TOPONIMO IS 'Campo che indica il codice identificatIvo del toponimo.';
+
+COMMENT ON COLUMN ANAG_STORICO.RESIDENZA.ID_CIVICO IS 'Campo che indica il codice identificatvo del civico.';
+
+COMMENT ON COLUMN ANAG_STORICO.RESIDENZA.LUOGO_ECCEZIONALE IS 'Campo che indica il luogo eccezionale dell''idirizzo.';
+
+COMMENT ON COLUMN ANAG_STORICO.RESIDENZA.ID_MUNICIPIO IS 'Identificativo del municipio della residenza';
+
+COMMENT ON COLUMN ANAG_STORICO.RESIDENZA.DATA_DECORRENZA_RESIDENZA IS 'Data in cui la residenza è stata creata e associata al soggetto e/o al cambioResidenzaDomicilio';
+
+COMMENT ON COLUMN ANAG_STORICO.RESIDENZA.ID_ESTREMI_CATASTALI IS 'Campo che indica gli estremi catastali dell''abitazione';
+
+COMMENT ON COLUMN ANAG_STORICO.RESIDENZA.ID_CIVICO_INTERNO IS 'FK verso la tabella che contiene i civici interni';
+
+COMMENT ON COLUMN ANAG_STORICO.RESIDENZA.COD_COMUNE_AGGIOR IS 'identificativo aggior del comune salvato in LUOGO_ECCEZIONALE';
+
+COMMENT ON COLUMN ANAG_STORICO.RESIDENZA.ID_CONSOLATO IS 'Identificativo relativo al consolato di appartenenza AIRE';
+CREATE TABLE ANAG_STORICO.TOPONIMO
+(
+  ID_TOPONIMO              NUMBER,
+  COD_SPECIE               NUMBER(4),
+  SPECIE                   VARCHAR2(30 BYTE),
+  SPECIE_FONTE             NUMBER(1),
+  COD_TOPONIMO             VARCHAR2(6 BYTE),
+  DENOMINAZIONE_TOPONIMO   VARCHAR2(50 BYTE),
+  TOPONIMO_FONTE           NUMBER(1),
+  ID_TIPO_SPECIE_TOPONIMO  NUMBER,
+  DENOMINAZIONE_BREVE      VARCHAR2(40 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.TOPONIMO IS 'Tabella contenente l''elenco dei toponimi di Roma Capitale.';
+
+COMMENT ON COLUMN ANAG_STORICO.TOPONIMO.ID_TOPONIMO IS 'Campo che indica il codice identificativo del toponimo.';
+
+COMMENT ON COLUMN ANAG_STORICO.TOPONIMO.COD_SPECIE IS 'Campo che indica il codice per la DUG (denominazione urbana generica) dell''indirizzo.';
+
+COMMENT ON COLUMN ANAG_STORICO.TOPONIMO.SPECIE IS 'campo che indica la specie del toponimo.';
+
+COMMENT ON COLUMN ANAG_STORICO.TOPONIMO.SPECIE_FONTE IS 'Campo che indica la fonte della specie.
+Valorizzato:
+1 se COD_SPECIE è ricavato dalla tabella ANPR
+2 se COD_SPECIE è ricavato dalla tabella del comune.';
+
+COMMENT ON COLUMN ANAG_STORICO.TOPONIMO.COD_TOPONIMO IS 'Campo che indica il codice assegnato dal comune al toponimo.';
+
+COMMENT ON COLUMN ANAG_STORICO.TOPONIMO.DENOMINAZIONE_TOPONIMO IS 'Campo che indica la denominazione del toponimo.';
+
+COMMENT ON COLUMN ANAG_STORICO.TOPONIMO.TOPONIMO_FONTE IS 'Campo che indica la fonte del toponimo. 
+Valorizzato con:
+- 1 se COD_TOPONIMO è ricavato dalla tabella ISTAT
+-  2 se COD_TOPONIMO è ricavato dalla tabella del comune.';
+
+COMMENT ON COLUMN ANAG_STORICO.TOPONIMO.ID_TIPO_SPECIE_TOPONIMO IS 'Identificativo della specie';
+
+COMMENT ON COLUMN ANAG_STORICO.TOPONIMO.DENOMINAZIONE_BREVE IS 'Campo che identifica la denominazione breve del toponimo';
+CREATE TABLE ANAG_STORICO.CIVICO
+(
+  ID_CIVICO      NUMBER,
+  CODICE_CIVICO  VARCHAR2(10 BYTE),
+  CIVICO_FONTE   NUMBER(1),
+  NUMERO         NUMBER(20),
+  METRICO        NUMBER(6),
+  PROG_SNC       NUMBER(5),
+  LETTERA        VARCHAR2(10 BYTE),
+  ESPONENTE      VARCHAR2(20 BYTE),
+  COLORE         NUMBER(1),
+  COD_TOPONIMO   VARCHAR2(6 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.CIVICO IS 'La tabella contiene le informazioni relative ai numeri civici.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO.ID_CIVICO IS 'Campo che indica il codice identificatvo del civico.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO.CODICE_CIVICO IS 'Campo che indica il codice identificatvo attribuito al numero civico nella banca dati comunale/nazionale.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO.CIVICO_FONTE IS 'Campo che indica il la provenienza del codice civico.
+Vale 1 se ricavato dalla tabella nazionale, 2 se ricavato dalla tabella comunale.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO.NUMERO IS 'Campo che indica il numero del civico.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO.METRICO IS 'Campo che indica la distanza tra l''accesso e il punto di riferimento prestabilito, espresso in metri.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO.PROG_SNC IS 'Campo che indica il progressivo dopo l''ultimo civico presente.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO.LETTERA IS 'Campo che indica la lettera del civico.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO.ESPONENTE IS 'Campo che indica l''esponente del civico.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO.COLORE IS 'Campo che indica il colore del civico.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO.COD_TOPONIMO IS 'Identificativo che indica il toponimo al quale il civico è associato';
+CREATE TABLE ANAG_STORICO.CIVICO_INTERNO
+(
+  ID_CIVICO_INTERNO    NUMBER,
+  CORTE                VARCHAR2(4 BYTE),
+  SCALA                VARCHAR2(4 BYTE),
+  INTENRO1             VARCHAR2(4 BYTE),
+  ESP_INTERNO1         VARCHAR2(20 BYTE),
+  INTERNO2             VARCHAR2(4 BYTE),
+  ESP_INTERNO2         VARCHAR2(20 BYTE),
+  SCALA_ESTERNA        VARCHAR2(10 BYTE),
+  SECONDARIO           CHAR(1 BYTE),
+  PIANO                VARCHAR2(5 BYTE),
+  NUI                  VARCHAR2(3 BYTE),
+  ISOLATO              VARCHAR2(10 BYTE),
+  FLG_PALAZZINA_UNICA  VARCHAR2(1 BYTE),
+  LOTTO                VARCHAR2(20 BYTE),
+  PALAZZINA            VARCHAR2(20 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.CIVICO_INTERNO IS 'La tabella contiene le informazioni relative ai numeri civici interni.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO_INTERNO.ID_CIVICO_INTERNO IS 'Campo che indica il codice identificatvo del civico interno.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO_INTERNO.CORTE IS 'Campo che indica la corte del civico interno.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO_INTERNO.SCALA IS 'Campo che indica la scala del civico interno.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO_INTERNO.INTENRO1 IS 'Campo che indica l''interno del civico interno.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO_INTERNO.ESP_INTERNO1 IS 'Campo che indica l''esponente del civico interno.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO_INTERNO.INTERNO2 IS 'Campo che indica il secondo interno del civico interno.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO_INTERNO.ESP_INTERNO2 IS 'Campo che indica l''esponente del secondo interno del civico interno.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO_INTERNO.SCALA_ESTERNA IS 'Campo che indica la scala esterna del civico interno.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO_INTERNO.SECONDARIO IS 'Lettera che indica il numero secondario del civico interno.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO_INTERNO.PIANO IS 'Campo che indica il piano del civico interno.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO_INTERNO.NUI IS 'Campo che indica il numero dell''unità immobiliare del civico interno.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO_INTERNO.ISOLATO IS 'Campo che indica il numero dell''isolato del civico interno.';
+
+COMMENT ON COLUMN ANAG_STORICO.CIVICO_INTERNO.FLG_PALAZZINA_UNICA IS 'S - Palazzina Unica; N o null altrimenti
+';
+CREATE TABLE ANAG_STORICO.ATTO
+(
+  ID_ATTO                 NUMBER,
+  ID_COMUNE_ISCRIZIONE    NUMBER,
+  NUMERO_ATTO             VARCHAR2(20 BYTE),
+  ANNO                    NUMBER(4),
+  PARTE                   VARCHAR2(5 BYTE),
+  SERIE                   VARCHAR2(10 BYTE),
+  VOLUME                  VARCHAR2(5 BYTE),
+  UFFICIO                 VARCHAR2(50 BYTE),
+  DATA_FORMAZIONE         DATE,
+  TRASCRITTO              NUMBER,
+  TIPO_PROTOCOLLO         VARCHAR2(10 BYTE),
+  NUMERO_PROTOCOLLO       NUMBER,
+  ANNO_PROTOCOLLO         NUMBER(4),
+  NUMERO_PRATICA          NUMBER,
+  ANNO_PRATICA            NUMBER(4),
+  ID_STATO_PRATICA        NUMBER,
+  ID_TIPO_ATTO            NUMBER(2),
+  CODICE_TIPO_PROTOCOLLO  VARCHAR2(10 BYTE),
+  ID_COMUNE_TRASCRIZIONE  NUMBER,
+  ESPONENTE               VARCHAR2(20 BYTE),
+  ATTO_AGGIOR             VARCHAR2(20 BYTE),
+  ID_TAB_ATTO_ANSC        NUMBER,
+  ID_ATTO_ANSC            VARCHAR2(100 BYTE),
+  ANNO_ANSC               VARCHAR2(4 BYTE),
+  ID_COMUNE               NUMBER,
+  NUMERO_NAZIONALE        VARCHAR2(30 BYTE),
+  NUMERO_COMUNALE         VARCHAR2(30 BYTE),
+  DATA_ANSC               DATE
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.ATTO IS 'La tabella contiene le informazioni rilevanti (es. anno, parte, serie, volume, ecc.) relative ad un atto di stato civile.';
+
+COMMENT ON COLUMN ANAG_STORICO.ATTO.ID_ATTO IS 'Campo che indica l''id dell''atto.';
+
+COMMENT ON COLUMN ANAG_STORICO.ATTO.ID_COMUNE_ISCRIZIONE IS 'Indica il comune in cui si registra l''atto. ';
+
+COMMENT ON COLUMN ANAG_STORICO.ATTO.NUMERO_ATTO IS 'Campo che indica il numero dell''atto.';
+
+COMMENT ON COLUMN ANAG_STORICO.ATTO.ANNO IS 'Campo che indica l''anno in cui si registra l''atto.';
+
+COMMENT ON COLUMN ANAG_STORICO.ATTO.PARTE IS 'Campo che indica il numero della parte dell''atto.';
+
+COMMENT ON COLUMN ANAG_STORICO.ATTO.SERIE IS 'Campo che indica la serie dell''atto.';
+
+COMMENT ON COLUMN ANAG_STORICO.ATTO.VOLUME IS 'Campo che indica il volume dove si trova l''atto.';
+
+COMMENT ON COLUMN ANAG_STORICO.ATTO.UFFICIO IS 'Campo che indica l''ufficio in cui si registra l''atto.';
+
+COMMENT ON COLUMN ANAG_STORICO.ATTO.DATA_FORMAZIONE IS 'Campo che indica la data di formazione dell''atto.';
+
+COMMENT ON COLUMN ANAG_STORICO.ATTO.TRASCRITTO IS 'Flag che indica se l''atto è iscritto o trascritto.
+0 se iscritto (originale), 1 se trascritto.';
+
+COMMENT ON COLUMN ANAG_STORICO.ATTO.TIPO_PROTOCOLLO IS 'Codice che identific univocamente l''ente protocollante dell''atto';
+
+COMMENT ON COLUMN ANAG_STORICO.ATTO.NUMERO_PROTOCOLLO IS 'Campo che indica il numero del protocollo.';
+
+COMMENT ON COLUMN ANAG_STORICO.ATTO.ANNO_PROTOCOLLO IS 'Campo che indica l''anno del protocollo.';
+
+COMMENT ON COLUMN ANAG_STORICO.ATTO.NUMERO_PRATICA IS 'Campo che indica il numero della pratica.';
+
+COMMENT ON COLUMN ANAG_STORICO.ATTO.ANNO_PRATICA IS 'Campo che indica il l''anno della pratica.';
+
+COMMENT ON COLUMN ANAG_STORICO.ATTO.ID_STATO_PRATICA IS 'Campo che indica lo stato della pratica.';
+
+COMMENT ON COLUMN ANAG_STORICO.ATTO.ID_TIPO_ATTO IS 'Codice identificativo della tipologia di atto.';
+
+COMMENT ON COLUMN ANAG_STORICO.ATTO.CODICE_TIPO_PROTOCOLLO IS 'Codice identificativo dell''ente protocollante dell''atto.';
+
+COMMENT ON COLUMN ANAG_STORICO.ATTO.ESPONENTE IS 'Campo che indica l''esponente dell''atto';
+
+COMMENT ON COLUMN ANAG_STORICO.ATTO.ID_TAB_ATTO_ANSC IS 'Identificativo di relazione alla tabella dell''atto ANSC';
+CREATE TABLE ANAG_STORICO.DICHIARAZIONE
+(
+  ID_DICHIARAZIONE          NUMBER,
+  CODICE_TIPO_PROTOCOLLO    VARCHAR2(10 CHAR),
+  ANNO_PROTOCOLLO           NUMBER,
+  NUMERO_PROTOCOLLO         NUMBER,
+  DATA_DICHIARAZIONE        DATE,
+  ID_SOGGETTO_PRIMO         NUMBER,
+  ID_SOGGETTO_SECONDO       NUMBER,
+  C_COD_TIPO_PROTOCOLLO     VARCHAR2(10 CHAR),
+  C_ANNO_PROTOCOLLO         NUMBER,
+  C_NUMERO_PROTOCOLLO       NUMBER,
+  C_DATA_DICHIARAZIONE      DATE,
+  ID_STATO                  NUMBER,
+  ID_ESITO_ACCERTAMENTO     NUMBER,
+  ID_MOTIV_CHIUSURA         NUMBER,
+  E_COD_TIPO_PROTOCOLLO     VARCHAR2(10 CHAR),
+  E_ANNO_PROTOCOLLO         NUMBER,
+  E_NUMERO_PROTOCOLLO       NUMBER,
+  E_DATA_DICHIARAZIONE      DATE,
+  MOTIVAZIONE_ELIMINAZIONE  VARCHAR2(200 CHAR),
+  NUMERO_DICHIARAZIONE      NUMBER,
+  DATA_PROTOCOLLO           DATE,
+  C_DATA_PROTOCOLLO         DATE,
+  E_DATA_PROTOCOLLO         DATE
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.DICHIARAZIONE IS 'Tabella contenente le informazioni sulle dichiarazioni di convivenza.';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.ID_DICHIARAZIONE IS 'Identificativo della dichiarazione di convivenza';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.CODICE_TIPO_PROTOCOLLO IS 'Codice del protocollo della dichiarazione di convivenza';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.ANNO_PROTOCOLLO IS 'Anno del protocollo della dichiarazione di convivenza';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.NUMERO_PROTOCOLLO IS 'Numero del protocollo della dichiarazione di convivenza';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.DATA_DICHIARAZIONE IS 'Data della dichiarazione di convivenza.';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.ID_SOGGETTO_PRIMO IS 'Id del primo soggetto facente parte della convivenza';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.ID_SOGGETTO_SECONDO IS 'Id del secondo soggetto facente parte della convivenza.';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.C_COD_TIPO_PROTOCOLLO IS 'Codice del protocollo per la chiusura della dichiarazione di convivenza';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.C_ANNO_PROTOCOLLO IS 'Anno del protocollo per la chiusura della dichiarazione di convivenza';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.C_NUMERO_PROTOCOLLO IS 'Numero del protocollo per la chiusura della dichiarazione di convivenza';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.C_DATA_DICHIARAZIONE IS 'Data di chiusura della dichiarazione di convivenza';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.ID_STATO IS 'Identificativo dello stato del procedimento di dichiarazione di convivenza.';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.ID_ESITO_ACCERTAMENTO IS 'Identificativo rappresentante l''esito dell''accertamento';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.ID_MOTIV_CHIUSURA IS 'FK verso la tabella tipologica di motivazione della chiusura della dichiarazione di convivenza.';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.E_COD_TIPO_PROTOCOLLO IS 'Codice del protocollo per l''eliminazione della dichiarazione di convivenza';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.E_ANNO_PROTOCOLLO IS 'Anno del protocollo per l''eliminazione della dichiarazione di convivenza';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.E_NUMERO_PROTOCOLLO IS 'Numero del protocollo per l''eliminazione della dichiarazione di convivenza';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.E_DATA_DICHIARAZIONE IS 'Data dell''eliminazione della dichiarazione di convivenza';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.MOTIVAZIONE_ELIMINAZIONE IS 'Motivazione dell''eliminazione della dichiarazione di convivenza.';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.NUMERO_DICHIARAZIONE IS 'Numero della dichiarazione';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.DATA_PROTOCOLLO IS 'Data del protocollo di dichiarazione';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.C_DATA_PROTOCOLLO IS 'Data del protocollo della pratica di chiusura';
+
+COMMENT ON COLUMN ANAG_STORICO.DICHIARAZIONE.E_DATA_PROTOCOLLO IS 'Data del protocollo della pratica di eliminazione';
+CREATE TABLE ANAG_STORICO.CONTRATTO
+(
+  ID_CONTRATTO                NUMBER,
+  DATA_INIZIO                 DATE,
+  DATA_NOTIFICA               DATE,
+  DATA_DOCUMENTO              DATE,
+  DOCUMENTO                   CLOB,
+  CHECK_DOCUMENTO             CHAR(1 CHAR),
+  FLG_NOTAIO_AVVOCATO         CHAR(1 CHAR),
+  COGNOME_PROF                VARCHAR2(50 CHAR),
+  NOME_PROF                   VARCHAR2(50 CHAR),
+  EMAIL_PROF                  VARCHAR2(50 CHAR),
+  TELEFONO_PROF               VARCHAR2(50 CHAR),
+  STUDIO_PROF                 VARCHAR2(50 CHAR),
+  COMUNE_STUDIO_PROF          VARCHAR2(50 CHAR),
+  LUOGO_ECCEZIONALE           VARCHAR2(120 BYTE),
+  LOCALITA_ID                 NUMBER,
+  ID_COMUNE_REGISTRAZIONE     NUMBER,
+  ID_COMUNE_EVENTO            NUMBER,
+  CODICE_TIPO_PROTOCOLLO      VARCHAR2(10 BYTE),
+  NUMERO_PROTOCOLLO           NUMBER,
+  ANNO_PROTOCOLLO             NUMBER(4),
+  NUMERO_PRATICA              NUMBER,
+  ANNO_PRATICA                NUMBER(4),
+  ID_STATO_PRATICA            NUMBER,
+  MOTIVO_ELIMINAZIONE         VARCHAR2(50 CHAR),
+  ID_DICHIARAZIONE            NUMBER,
+  ID_CONTRATTO_ANNULLATO      NUMBER,
+  DATA_PROTOCOLLO             DATE,
+  ID_MOTIV_CHIUSURA           NUMBER,
+  FLAG_TIPO_CONTRATTO         VARCHAR2(1 BYTE),
+  NUMERO_REPERTORIO_NOTARILE  NUMBER,
+  COD_COMUNE_AGGIOR           VARCHAR2(20 BYTE)
+)
+LOB (DOCUMENTO) STORE AS (
+  TABLESPACE  ANAG_USR
+  ENABLE      STORAGE IN ROW
+  CHUNK       8192
+  RETENTION
+  NOCACHE
+  LOGGING
+      STORAGE    (
+                  INITIAL          64K
+                  NEXT             1M
+                  MINEXTENTS       1
+                  MAXEXTENTS       UNLIMITED
+                  PCTINCREASE      0
+                  BUFFER_POOL      DEFAULT
+                  FLASH_CACHE      DEFAULT
+                  CELL_FLASH_CACHE DEFAULT
+                 ))
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.CONTRATTO IS 'Tabella contenente le informazioni sui contratti stipulati presso un notaio o avvocato.';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.ID_CONTRATTO IS 'identificativo del contratto';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.DATA_INIZIO IS 'Indica la data di costituzione della convivenza; oppure indica la data di cessazione. 
+';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.DATA_NOTIFICA IS 'indica la data di notifica del contratto o della risoluzione al comune
+';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.DATA_DOCUMENTO IS 'Indica la data di sottoscrizione del contratto se si tratta di una stipula; oppure indica la data di risoluzione del contratto se si tratta di una risoluzione
+';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.DOCUMENTO IS 'documento del contratto.';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.CHECK_DOCUMENTO IS ' indica se è stato processato tramite verifica antivirus il documento inviato
+';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.FLG_NOTAIO_AVVOCATO IS 'N - NOTAIO
+A - AVVOCATO';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.COGNOME_PROF IS 'Cognome del professionista che ha redatto il contratto';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.NOME_PROF IS 'Nome del professionista che ha redatto il contratto';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.EMAIL_PROF IS 'Email del professionista che ha redatto il contratto';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.TELEFONO_PROF IS 'Telefono del professionista che ha redatto il contratto';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.STUDIO_PROF IS 'Studio del professionista che ha redatto il contratto';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.COMUNE_STUDIO_PROF IS 'Comune di residenza dello studio  del professionista che ha redatto il contratto';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.LUOGO_ECCEZIONALE IS 'Descrizione del luogo eccezionale (luogo diverso da comune o località) in cui si è svolto l''evento. ';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.LOCALITA_ID IS 'località estera  in cui si è svolto l''evento. ';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.ID_COMUNE_REGISTRAZIONE IS 'indica il comune che protocolla il contratto o la sua risoluzione.
+';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.ID_COMUNE_EVENTO IS 'identificativo del comune in cui si è svolto l''evento.';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.CODICE_TIPO_PROTOCOLLO IS 'identificativo dell''ente protocollante';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.NUMERO_PROTOCOLLO IS 'Campo che indica il numero del protocollo.';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.ANNO_PROTOCOLLO IS 'Campo che indica l''anno del protocollo.';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.NUMERO_PRATICA IS 'Campo che indica il numero della pratica.';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.ANNO_PRATICA IS 'Campo che indica il l''anno della pratica.';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.ID_STATO_PRATICA IS 'identificativo dello stato della pratica';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.DATA_PROTOCOLLO IS 'Data del protocollo del contratto';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.FLAG_TIPO_CONTRATTO IS 'A -> APERTURA, C -> CHIUSURA; identifica la tipologia di contratto';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.NUMERO_REPERTORIO_NOTARILE IS 'Numero del repertorio notarile';
+
+COMMENT ON COLUMN ANAG_STORICO.CONTRATTO.COD_COMUNE_AGGIOR IS 'identificativo aggior del comune salvato in LUOGO_ECCEZIONALE';
+CREATE TABLE ANAG_STORICO.OPERAZIONE_ANPR
+(
+  ID_OPERAZIONE_ANPR      NUMBER,
+  TIPO_OPERAZIONE_ANPR    VARCHAR2(20 BYTE),
+  DATA_OPERAZIONE_ANPR    DATE,
+  MOTIVO_OPERAZIONE_ANPR  VARCHAR2(250 BYTE),
+  ID_OPERAZIONE_COMUNE    VARCHAR2(20 BYTE),
+  NOTE                    VARCHAR2(100 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ANAG_STORICO.OPERAZIONE_ANPR.ID_OPERAZIONE_ANPR IS 'Identificativo operazione ANPR';
+
+COMMENT ON COLUMN ANAG_STORICO.OPERAZIONE_ANPR.TIPO_OPERAZIONE_ANPR IS 'Servizio utilizzato ';
+
+COMMENT ON COLUMN ANAG_STORICO.OPERAZIONE_ANPR.DATA_OPERAZIONE_ANPR IS 'Data in cui il servizio è stato richiamato';
+
+COMMENT ON COLUMN ANAG_STORICO.OPERAZIONE_ANPR.MOTIVO_OPERAZIONE_ANPR IS 'Descrizione servizio utilizzato';
+
+COMMENT ON COLUMN ANAG_STORICO.OPERAZIONE_ANPR.ID_OPERAZIONE_COMUNE IS 'Identificativo operazione comune';
+
+COMMENT ON COLUMN ANAG_STORICO.OPERAZIONE_ANPR.NOTE IS 'Campo per eventuali note sulle operazioni Anpr';
+CREATE TABLE ANAG_STORICO.ELENCO_PREPARATORIO_LEVA
+(
+  ID_ELENCO_PREPARATORIO  NUMBER,
+  DATA_CREAZIONE          DATE,
+  STATO_ELENCO            CHAR(1 BYTE),
+  ANNO_PRATICA            INTEGER,
+  NUMERO_PRATICA          NUMBER,
+  CLASSE_LEVA             NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ANAG_STORICO.ELENCO_PREPARATORIO_LEVA.ID_ELENCO_PREPARATORIO IS 'identificativo dell'' elenco preparatorio di leva';
+
+COMMENT ON COLUMN ANAG_STORICO.ELENCO_PREPARATORIO_LEVA.DATA_CREAZIONE IS 'data di creazione dell''elenco';
+
+COMMENT ON COLUMN ANAG_STORICO.ELENCO_PREPARATORIO_LEVA.STATO_ELENCO IS 'G -> GENERATO L -> LAVORATO';
+
+COMMENT ON COLUMN ANAG_STORICO.ELENCO_PREPARATORIO_LEVA.ANNO_PRATICA IS 'anno pratica relativo all'''' elenco preparatorio';
+
+COMMENT ON COLUMN ANAG_STORICO.ELENCO_PREPARATORIO_LEVA.NUMERO_PRATICA IS 'numero pratica relativo all''elenco preparatorio';
+
+COMMENT ON COLUMN ANAG_STORICO.ELENCO_PREPARATORIO_LEVA.CLASSE_LEVA IS 'anno classe di leva di riferimento';
+CREATE TABLE ANAG_STORICO.LISTE_LEVA
+(
+  ID_LISTA_LEVA      NUMBER,
+  DATA_GENERAZIONE   DATE,
+  DATA_CHIUSURA      DATE,
+  NUMERO_PRATICA     NUMBER,
+  ANNO_PRATICA       NUMBER,
+  NUMERO_PROTOCOLLO  NUMBER,
+  ANNO_PROTOCOLLO    NUMBER,
+  STATO_ELENCO       CHAR(1 BYTE),
+  CLASSE_LEVA        NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ANAG_STORICO.LISTE_LEVA.DATA_GENERAZIONE IS 'data generazione lista di leva';
+
+COMMENT ON COLUMN ANAG_STORICO.LISTE_LEVA.STATO_ELENCO IS 'G->Generato L->Lavorato';
+
+COMMENT ON COLUMN ANAG_STORICO.LISTE_LEVA.CLASSE_LEVA IS 'anno classe di leva di riferimento';
+CREATE TABLE ANAG_STORICO.ASSOCIAZ_SENZA_FISSA_DIMORA
+(
+  ID_ASSOCIAZIONE    NUMBER(4),
+  NOME_ASSOCIAZIONE  VARCHAR2(250 BYTE),
+  ID_TOPONIMO        NUMBER,
+  ID_CIVICO          NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.ASSOCIAZ_SENZA_FISSA_DIMORA IS 'La tabella contiene le anagrafiche delle associazioni dei senza fissa dimora.';
+
+COMMENT ON COLUMN ANAG_STORICO.ASSOCIAZ_SENZA_FISSA_DIMORA.ID_ASSOCIAZIONE IS 'Identificativo dell''associazione ';
+
+COMMENT ON COLUMN ANAG_STORICO.ASSOCIAZ_SENZA_FISSA_DIMORA.NOME_ASSOCIAZIONE IS 'nome dell''associazione';
+
+COMMENT ON COLUMN ANAG_STORICO.ASSOCIAZ_SENZA_FISSA_DIMORA.ID_TOPONIMO IS 'Toponimo dell''indirizzo dell''associazione';
+
+COMMENT ON COLUMN ANAG_STORICO.ASSOCIAZ_SENZA_FISSA_DIMORA.ID_CIVICO IS 'civico dell''indirizzo dell''associazione.';
+CREATE TABLE ANAG_STORICO.LISTE_AIRE
+(
+  ID_LISTE_AIRE               NUMBER,
+  ID_SOGGETTO                 NUMBER,
+  EMAIL                       CHAR(1 BYTE),
+  TIPO_LISTA                  CHAR(1 BYTE),
+  DATA_SCARTO_CENTENARIO      DATE,
+  DATA_ENTRATA_CANCELLANDI    DATE,
+  DATA_CANCELLAZIONE          DATE,
+  DATA_RIPRISTINO_CENTENARIO  DATE,
+  NUMERO_LISTA_CANCELLATI     NUMBER,
+  DATA_INVIO_EMAIL            DATE,
+  NUMERO_PROTOCOLLO           NUMBER,
+  ANNO_PROTOCOLLO             NUMBER,
+  TIPO_PROTOCOLLO             VARCHAR2(20 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ANAG_STORICO.LISTE_AIRE.ID_LISTE_AIRE IS 'Identificativo delle liste aire';
+
+COMMENT ON COLUMN ANAG_STORICO.LISTE_AIRE.ID_SOGGETTO IS 'Identificativo del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.LISTE_AIRE.EMAIL IS '1- Inviata, 2- Risposta Positiva, 3- Risposta Negativa';
+
+COMMENT ON COLUMN ANAG_STORICO.LISTE_AIRE.TIPO_LISTA IS '1- Centenario, 2- Cancellando, 3- Cancellato, 4- Scartato';
+
+COMMENT ON COLUMN ANAG_STORICO.LISTE_AIRE.DATA_SCARTO_CENTENARIO IS 'Data di scarto del centenario';
+
+COMMENT ON COLUMN ANAG_STORICO.LISTE_AIRE.DATA_ENTRATA_CANCELLANDI IS 'Data di entrata nei cancellandi';
+
+COMMENT ON COLUMN ANAG_STORICO.LISTE_AIRE.DATA_CANCELLAZIONE IS 'Data di cancellazione';
+
+COMMENT ON COLUMN ANAG_STORICO.LISTE_AIRE.DATA_RIPRISTINO_CENTENARIO IS 'Data di ripristino del centenario';
+
+COMMENT ON COLUMN ANAG_STORICO.LISTE_AIRE.NUMERO_LISTA_CANCELLATI IS 'Numero identificativo della lista di cancellati';
+
+COMMENT ON COLUMN ANAG_STORICO.LISTE_AIRE.DATA_INVIO_EMAIL IS 'Data di invio email';
+CREATE TABLE ANAG_STORICO.IRREPERIBILITA
+(
+  ID_IRREPERIBILITA           NUMBER,
+  ID_PROCEDIMENTO_ANPR        NUMBER,
+  ID_SOGGETTO                 NUMBER,
+  CODICE_TIPO_PROTOCOLLO      VARCHAR2(10 CHAR),
+  ANNO_PROTOCOLLO             NUMBER,
+  NUMERO_PROTOCOLLO           NUMBER,
+  ANNO_PRATICA                NUMBER,
+  NUMERO_PRATICA              NUMBER,
+  ID_STATO_PRATICA            NUMBER,
+  DATA_INIZIO                 DATE,
+  DATA_FINE                   DATE,
+  DATA_PUBBLICAZIONE_PRIMA    DATE,
+  DATA_PUBBLICAZIONE_SECONDA  DATE,
+  MOTIVAZIONE                 VARCHAR2(500 CHAR),
+  FLG_COMUNE                  CHAR(1 CHAR),
+  DATA_AGGIORNAMENTO          DATE,
+  ID_MUNICIPIO                NUMBER,
+  TIPO_ISTANZA                CHAR(1 BYTE),
+  NOME_PARTE                  VARCHAR2(20 BYTE),
+  COGNOME_PARTE               VARCHAR2(20 BYTE),
+  SESSO_PARTE                 CHAR(1 BYTE),
+  DATA_NASCITA_PARTE          DATE,
+  NOTE_PARTE                  VARCHAR2(500 BYTE),
+  ID_ELENCO_CANCELLATI        NUMBER,
+  ID_ELENCO_AVVIO             NUMBER,
+  NOTE                        VARCHAR2(500 BYTE),
+  ID_GRUPPO_PL                NUMBER,
+  FLG_SOSPESA                 VARCHAR2(1 BYTE),
+  ID_UTENTE                   NUMBER,
+  ID_RESIDENZA                NUMBER,
+  ID_TOPONIMO                 NUMBER,
+  ID_CIVICO                   NUMBER,
+  CIVICO_INTERNO              VARCHAR2(500 BYTE),
+  ALTRO_INDIRIZZO             VARCHAR2(1000 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.IRREPERIBILITA IS 'Tabella contenente le informazioni sul procedimento di Irreperibilità avviato a sistema.';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.ID_IRREPERIBILITA IS 'Identificativo della pratica di irreperibilità';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.ID_PROCEDIMENTO_ANPR IS 'Identificativo rilasciato da ANPR all''atto dell''apertura di un procedimento';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.ID_SOGGETTO IS 'Identificativo del soggetto per il quale è stata aperta una pratica di irreperibilità';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.CODICE_TIPO_PROTOCOLLO IS 'Codice di protocollo rappresentante la richiesta di irreperibilità';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.ANNO_PROTOCOLLO IS 'Anno di protocollo rappresentante la richiesta di irreperibilità';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.NUMERO_PROTOCOLLO IS 'Numero di protocollo rappresentante la richiesta di irreperibilità';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.ANNO_PRATICA IS 'Anno pratica';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.NUMERO_PRATICA IS 'Numero Pratica';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.ID_STATO_PRATICA IS 'FK verso la tabella tipologica contenente i vari stati attribuibili ad una pratica';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.DATA_INIZIO IS 'Data di inizio del procedimento di irreperibilità';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.DATA_FINE IS 'Data di conclusione del procedimento di irreperibilità';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.DATA_PUBBLICAZIONE_PRIMA IS 'Prima data di pubblicazione sull''albo pretorio.';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.DATA_PUBBLICAZIONE_SECONDA IS 'Seconda  data di pubblicazione sull''albo pretorio.';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.MOTIVAZIONE IS 'Motivazione di apertura del procedimento di irreperibilità';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.FLG_COMUNE IS 'S - > SI 
+N -> NO';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.DATA_AGGIORNAMENTO IS 'Data ultima modifica';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.ID_MUNICIPIO IS 'Municipio di riferimento della pratica';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.TIPO_ISTANZA IS 'P - > ISTANZA DI PARTE  U - > ISTANZA D''UFFICIO';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.NOME_PARTE IS 'Nome soggetto che denuncia l''irreperibilità';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.COGNOME_PARTE IS 'Cognome soggetto che denuncia l''irreperibilità';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.SESSO_PARTE IS 'M -> UOMO  F -> DONNA sesso soggetto che denuncia l''irreperibilità';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.DATA_NASCITA_PARTE IS 'data di nascita soggetto che denuncia l''irreperibilità';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.NOTE_PARTE IS 'Note soggetto che denuncia l''irreperibilità';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.ID_ELENCO_CANCELLATI IS 'Campo che identifica l''elenco di cancellati che identifica la pratica';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.ID_ELENCO_AVVIO IS 'Campo che identifica l''elenco di avvio procedimento che identifica la pratica';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.NOTE IS 'Note procedimento';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.ID_GRUPPO_PL IS 'identificativo gruppo vigili';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.FLG_SOSPESA IS 'B->BLOCCATA S->SOSPESA';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.ID_RESIDENZA IS 'Identificativo della residenza';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.ID_TOPONIMO IS 'Identificativo del toponimo';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.ID_CIVICO IS 'Identificativo del civico';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.CIVICO_INTERNO IS 'Civico intento';
+
+COMMENT ON COLUMN ANAG_STORICO.IRREPERIBILITA.ALTRO_INDIRIZZO IS 'Descrizione indirizzo ignorasi o AIRE per irreperibilità precedenti a SIPO';
+CREATE TABLE ANAG_STORICO.ACCERTAMENTO_CANCELLAZIONE
+(
+  ID_ACCERTAMENTO_CANC      NUMBER,
+  ID_IRREPERIBILITA         NUMBER,
+  CODICE_TIPO_PROTOCOLLO    VARCHAR2(20 BYTE),
+  ANNO_PROTOCOLLO           NUMBER,
+  NUMERO_PROTOCOLLO         NUMBER,
+  NUMERO_ACCERTAMENTO       NUMBER,
+  ANNO_PRATICA              NUMBER,
+  NUMERO_PRATICA            NUMBER,
+  ID_GRUPPO_PL              NUMBER,
+  DATA_PREVISTA             DATE,
+  ID_STATO_PRATICA          NUMBER,
+  DATA_RICHIESTA            DATE,
+  DATA_SOPRALLUOGO          DATE,
+  ESITO                     VARCHAR2(20 BYTE),
+  ID_STATO_ESTERO           NUMBER,
+  ID_COMUNE                 NUMBER,
+  NOTE                      VARCHAR2(20 BYTE),
+  ID_LOCALITA               NUMBER,
+  ANNO_PROTOCOLLO_VIGILE    NUMBER,
+  NUMERO_PROTOCOLLO_VIGILE  NUMBER,
+  TIPO_PROTOCOLLO_VIGILE    VARCHAR2(20 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ANAG_STORICO.ACCERTAMENTO_CANCELLAZIONE.ID_ACCERTAMENTO_CANC IS 'Identificativo dell''accertamento';
+
+COMMENT ON COLUMN ANAG_STORICO.ACCERTAMENTO_CANCELLAZIONE.ESITO IS '1-> POSITIVO 0-> NEGATIVO';
+
+COMMENT ON COLUMN ANAG_STORICO.ACCERTAMENTO_CANCELLAZIONE.ID_STATO_ESTERO IS 'Stato In cui il soggetto si è trasferito';
+
+COMMENT ON COLUMN ANAG_STORICO.ACCERTAMENTO_CANCELLAZIONE.ID_COMUNE IS 'Comune Italiano  in cui il soggetto si è trasferito';
+
+COMMENT ON COLUMN ANAG_STORICO.ACCERTAMENTO_CANCELLAZIONE.ID_LOCALITA IS 'Comune Estero in cui il soggetto si è trasferito';
+CREATE TABLE ANAG_STORICO.ACCERTAMENTO_ISCRIZIONE
+(
+  ID_ACCERTAMENTO_ISCRIZIONE  NUMBER,
+  ID_CAMBIO_DOMICILIO         NUMBER,
+  CODICE_TIPO_PROTOCOLLO      VARCHAR2(10 CHAR),
+  ANNO_PROTOCOLLO             NUMBER,
+  NUMERO_PROTOCOLLO           NUMBER,
+  NUMERO_ACCERTAMENTO         NUMBER,
+  ANNO_PRATICA                NUMBER,
+  NUMERO_PRATICA              NUMBER,
+  ID_GRUPPO_PL                NUMBER,
+  DATA_PREVISTA               DATE,
+  DATA_EFFETTIVA              DATE,
+  ID_STATO_PRATICA            NUMBER,
+  DATA_RICHIESTA              DATE,
+  ID_POP_TEMP                 NUMBER,
+  ANNO_PROTOCOLLO_VIGILE      NUMBER,
+  NUMERO_PROTOCOLLO_VIGILE    NUMBER,
+  TIPO_PROTOCOLLO_VIGILE      VARCHAR2(20 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.ACCERTAMENTO_ISCRIZIONE IS 'La tabella contiene le richieste di accertamento inviate ai Gruppi di Polizia Locale relative ad un procedimento di cambio di residenza/domicilio o ad un procedimento di irreperibilità.';
+
+COMMENT ON COLUMN ANAG_STORICO.ACCERTAMENTO_ISCRIZIONE.ID_ACCERTAMENTO_ISCRIZIONE IS 'Identificativo dell''accertamento';
+
+COMMENT ON COLUMN ANAG_STORICO.ACCERTAMENTO_ISCRIZIONE.ID_CAMBIO_DOMICILIO IS 'FK che relazione l''accertamento ad un cambio di domicilio';
+
+COMMENT ON COLUMN ANAG_STORICO.ACCERTAMENTO_ISCRIZIONE.CODICE_TIPO_PROTOCOLLO IS 'Codice identificativo del protocollo di richiesta di accertamento';
+
+COMMENT ON COLUMN ANAG_STORICO.ACCERTAMENTO_ISCRIZIONE.ANNO_PROTOCOLLO IS 'Anno del protocollo di richiesta di accertamento';
+
+COMMENT ON COLUMN ANAG_STORICO.ACCERTAMENTO_ISCRIZIONE.NUMERO_PROTOCOLLO IS 'Numero del protocollo di richiesta di accertamento';
+
+COMMENT ON COLUMN ANAG_STORICO.ACCERTAMENTO_ISCRIZIONE.NUMERO_ACCERTAMENTO IS 'Numero di accertamento';
+
+COMMENT ON COLUMN ANAG_STORICO.ACCERTAMENTO_ISCRIZIONE.ANNO_PRATICA IS 'Anno della pratica';
+
+COMMENT ON COLUMN ANAG_STORICO.ACCERTAMENTO_ISCRIZIONE.NUMERO_PRATICA IS 'Numero Pratica';
+
+COMMENT ON COLUMN ANAG_STORICO.ACCERTAMENTO_ISCRIZIONE.ID_GRUPPO_PL IS 'Identificativo del gruppo di polizia locale a cui è stata inoltrata la richiesta di accertamento';
+
+COMMENT ON COLUMN ANAG_STORICO.ACCERTAMENTO_ISCRIZIONE.DATA_PREVISTA IS 'Data prevista per l''accertamento';
+
+COMMENT ON COLUMN ANAG_STORICO.ACCERTAMENTO_ISCRIZIONE.DATA_EFFETTIVA IS 'Data effettiva dell''accertamento';
+
+COMMENT ON COLUMN ANAG_STORICO.ACCERTAMENTO_ISCRIZIONE.ID_STATO_PRATICA IS 'Id che identifica lo stato della pratica';
+
+COMMENT ON COLUMN ANAG_STORICO.ACCERTAMENTO_ISCRIZIONE.DATA_RICHIESTA IS 'Data in cui è stata effettuata la richiesta di accertamento';
+
+COMMENT ON COLUMN ANAG_STORICO.ACCERTAMENTO_ISCRIZIONE.ID_POP_TEMP IS 'Identificativo della pratica per la popolazione temporanea come chiave esterna';
+CREATE TABLE ANAG_STORICO.ELENCO_IRREPERIBILITA
+(
+  ID_ELENCO_IRREPERIBILITA  NUMBER,
+  TIPO_ELENCO               CHAR(1 BYTE),
+  DATA_GENERAZIONE          DATE,
+  DATA_PUBBLICAZIONE        DATE,
+  STATO_ELENCO              CHAR(1 BYTE),
+  NUMERO_PERSONE            NUMBER,
+  DATA_CANCELLAZIONE        DATE,
+  ANNO_PROTOCOLLO           NUMBER,
+  NUMERO_PROTOCOLLO         NUMBER,
+  CODICE_TIPO_PROTOCOLLO    VARCHAR2(10 BYTE),
+  ID_MUNICIPIO              NUMBER,
+  PDF_DOCUMENTO             BLOB,
+  NOME_DOCUMENTO            VARCHAR2(50 BYTE),
+  NUMERO_ALLEGATO           NUMBER
+)
+LOB (PDF_DOCUMENTO) STORE AS SECUREFILE (
+  TABLESPACE  ANAG_USR
+  ENABLE      STORAGE IN ROW
+  CHUNK       8192
+  NOCACHE
+  LOGGING
+      STORAGE    (
+                  INITIAL          104K
+                  NEXT             1M
+                  MINEXTENTS       1
+                  MAXEXTENTS       UNLIMITED
+                  PCTINCREASE      0
+                  BUFFER_POOL      DEFAULT
+                  FLASH_CACHE      DEFAULT
+                  CELL_FLASH_CACHE DEFAULT
+                 ))
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ANAG_STORICO.ELENCO_IRREPERIBILITA.ID_ELENCO_IRREPERIBILITA IS 'Identificativo dell''elenco.';
+
+COMMENT ON COLUMN ANAG_STORICO.ELENCO_IRREPERIBILITA.TIPO_ELENCO IS 'A-> Elenco avvio procedimento, C -> elenco cancellati.';
+
+COMMENT ON COLUMN ANAG_STORICO.ELENCO_IRREPERIBILITA.DATA_GENERAZIONE IS 'Campo che identifica la data di generazione di un elenco.';
+
+COMMENT ON COLUMN ANAG_STORICO.ELENCO_IRREPERIBILITA.DATA_PUBBLICAZIONE IS 'Campo che identifica la data di pubblicazione di un elenco.';
+
+COMMENT ON COLUMN ANAG_STORICO.ELENCO_IRREPERIBILITA.STATO_ELENCO IS 'P -> pubblicato, C-> Lavorato,   I-> Generato';
+
+COMMENT ON COLUMN ANAG_STORICO.ELENCO_IRREPERIBILITA.NUMERO_PERSONE IS 'Campo che identifica il numero delle persone presenti nell''elenco';
+
+COMMENT ON COLUMN ANAG_STORICO.ELENCO_IRREPERIBILITA.DATA_CANCELLAZIONE IS 'Campo che identifica la data di cancellazione di un elenco.';
+
+COMMENT ON COLUMN ANAG_STORICO.ELENCO_IRREPERIBILITA.ID_MUNICIPIO IS 'Campo che identifica il municipio che ha creato l''elenco';
+CREATE TABLE ANAG_STORICO.SOGGIORNO
+(
+  ID_SOGGIORNO                    NUMBER,
+  NUMERO_PERMESSO_SOGG            VARCHAR2(20 BYTE),
+  NOTE                            VARCHAR2(250 BYTE),
+  DATA_RILASCIO                   DATE,
+  QUESTURE_RILASCIO               NUMBER,
+  NUMERO_DOCUMENTO                VARCHAR2(30 BYTE),
+  ID_COMUNE_RILASCIO              NUMBER,
+  ID_TIPO_SOGGIORNO               NUMBER(2),
+  FLG_TIPO_SOGGIORNO              CHAR(1 CHAR),
+  FLG_RUOLO_SOGGIORNO             VARCHAR2(1 BYTE),
+  DATA_SCADENZA                   DATE,
+  DATA_RINNOVO                    DATE,
+  DATA_RICHIESTA_RINNOVO          DATE,
+  TIPO_ATTESTATO                  CHAR(1 BYTE),
+  FLG_CANCELLATO                  CHAR(1 BYTE),
+  DATA_CANCELLAZIONE              DATE,
+  BLOB                            BLOB,
+  ID_MOTIVO_ANNULLAMENTO          NUMBER,
+  FILENAME_DOC                    VARCHAR2(250 BYTE),
+  NUMERO_ATTESTATO_SOGG           VARCHAR2(20 BYTE),
+  ID_DOCUMENTO                    VARCHAR2(1 BYTE),
+  ALTRE_MOTIVAZIONI_ANNULLAMENTO  VARCHAR2(200 BYTE),
+  DATA_ULTIMO_AGGIORNAMENTO       DATE,
+  ID_UTENTE                       NUMBER,
+  ID_STRUTTURA                    NUMBER,
+  ID_SOGGIORNO_PRESENTE           NUMBER
+)
+LOB (BLOB) STORE AS SECUREFILE (
+  TABLESPACE  ANAG_USR
+  ENABLE      STORAGE IN ROW
+  CHUNK       8192
+  NOCACHE
+  LOGGING
+      STORAGE    (
+                  INITIAL          104K
+                  NEXT             1M
+                  MINEXTENTS       1
+                  MAXEXTENTS       UNLIMITED
+                  PCTINCREASE      0
+                  BUFFER_POOL      DEFAULT
+                  FLASH_CACHE      DEFAULT
+                  CELL_FLASH_CACHE DEFAULT
+                 ))
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.SOGGIORNO IS 'Tabella che contiene le informazioni sul rilascio di un Permesso di Soggiorno per i cittadini Extra UE o di un Attestato di Soggiorno per i cittadini UE.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.ID_SOGGIORNO IS 'Identificativo del permesso o attestato di soggiorno.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.NUMERO_PERMESSO_SOGG IS 'Numero del permesso di soggiorno.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.DATA_RILASCIO IS 'Data in cui è stato rilasciato il permesso di soggiorno.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.QUESTURE_RILASCIO IS 'Questura che ha rilasciato il permesso di soggiorno';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.NUMERO_DOCUMENTO IS 'Numero del documento
+ del soggetto possessore del permesso di soggiorno.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.ID_COMUNE_RILASCIO IS 'Identificativo del comune di rilascio del permesso di soggiorno.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.ID_TIPO_SOGGIORNO IS 'Codice identificativo della tipologia del permesso di soggiorno.';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.FLG_TIPO_SOGGIORNO IS 'P -> Permesso di soggiorno
+A -> Attestato di soggiorno';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.FLG_RUOLO_SOGGIORNO IS 'flag che identifica il ruolo del soggetto sul permesso o attestato di soggiorno T->TITOLARE; F->FAMILIARE; A->ALTRO COMUNE';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.DATA_SCADENZA IS 'Data di scadenza';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.DATA_RINNOVO IS 'Date di rinnovo';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.DATA_RICHIESTA_RINNOVO IS 'Data di richiesta del rinnovo';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.TIPO_ATTESTATO IS 'P--> PERMANENTE - T --> TEMPORANEO';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.FLG_CANCELLATO IS 'S --> SI - N --> NO';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.DATA_CANCELLAZIONE IS 'Data di cancellazione del permesso o attestato di soggiorno';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.BLOB IS 'Documento del permesso/attestato di soggiorno';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.ID_MOTIVO_ANNULLAMENTO IS 'Identificativo del motivo di annullamento dell''attestato';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.FILENAME_DOC IS 'Nome del file blob salvato';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.NUMERO_ATTESTATO_SOGG IS 'Numero dell''attestato di soggiorno';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.ID_DOCUMENTO IS 'Identificativo del documento posseduto
+';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.ALTRE_MOTIVAZIONI_ANNULLAMENTO IS 'Motivazione dell''annullamento di un attestato di soggiorno nel caso venga selezionata la voce ''altro'' tra le motivazioni disponibili';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.DATA_ULTIMO_AGGIORNAMENTO IS 'Data ultimo aggiornamento';
+
+COMMENT ON COLUMN ANAG_STORICO.SOGGIORNO.ID_UTENTE IS 'Identificativo dell''utente che ha effettuato l''ultima operazione';
+CREATE TABLE ANAG_STORICO.FAMIGLIA_CONVIVENZA
+(
+  ID_FAMIGLIA_CONV               NUMBER,
+  ID_FAMIGLIA_CONV_ANPR          VARCHAR2(20 BYTE),
+  AIRE                           CHAR(1 BYTE),
+  DATA_ORIGINE_FAMIGLIA          DATE,
+  MOTIVO_COSTITUZIONE            NUMBER(2),
+  DENOMINAZIONE_CONVIVENZA       VARCHAR2(100 BYTE),
+  SPECIE_CONVIVENZA              NUMBER(2),
+  DATA_INTESTATARIO_CONVIVENZA   DATE,
+  ID_FAMIGLIA_COABITANTE         NUMBER,
+  ID_TIPO_MOVIMENTAZIONE         NUMBER(2),
+  ID_TIPO_LEGAME                 NUMBER(2),
+  CODICE_ISTAT_COMUNE            VARCHAR2(20 BYTE) DEFAULT '058091',
+  FLAG_ATTIVO                    CHAR(1 BYTE)   DEFAULT 'S',
+  DATA_CANCELLAZIONE             DATE,
+  FLAG_INTERA_FAMIGLIA           VARCHAR2(1 BYTE),
+  ID_TIPO_MUTAZIONE_FAMIGLIA     VARCHAR2(1 BYTE),
+  ID_SOGGETTO_RESPONSABILE_COLL  NUMBER,
+  CODICE_FAMIGLIA                VARCHAR2(20 CHAR),
+  ID_RESIDENZA                   NUMBER,
+  ID_RESIDENZA_PREC              NUMBER,
+  ID_FAM_PREC                    NUMBER,
+  ID_OPERAZIONE_ANPR             NUMBER,
+  ID_TUTORE_FAMIGLIA             NUMBER
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.FAMIGLIA_CONVIVENZA IS 'Tabella contenente le informazioni su Famiglia o Convivenza che si genera tra più soggetti.';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLIA_CONVIVENZA.ID_FAMIGLIA_CONV IS 'identificativo della famiglia o convivenza in APR';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLIA_CONVIVENZA.ID_FAMIGLIA_CONV_ANPR IS 'identificativo della famiglia o convivenza in ANPR';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLIA_CONVIVENZA.AIRE IS 'flag S/N che indica se una famiglia è di tipo AIRE.';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLIA_CONVIVENZA.DATA_ORIGINE_FAMIGLIA IS 'data in cui la famigia si è creata	';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLIA_CONVIVENZA.MOTIVO_COSTITUZIONE IS '
+conf_motivo_costituzione';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLIA_CONVIVENZA.DENOMINAZIONE_CONVIVENZA IS 'nome che identifica la convivenza (collettività)';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLIA_CONVIVENZA.SPECIE_CONVIVENZA IS 'codice che identifica il motivo della costituzione di una convivenza
+
+conf_specie_convivenza';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLIA_CONVIVENZA.DATA_INTESTATARIO_CONVIVENZA IS 'data in cui l''intestatario scheda attuale è diventato intestatario scheda';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLIA_CONVIVENZA.ID_FAMIGLIA_COABITANTE IS 'Identificativo della famiglia coabitante';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLIA_CONVIVENZA.ID_TIPO_LEGAME IS 'tipo di famiglia/convivenza';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLIA_CONVIVENZA.CODICE_ISTAT_COMUNE IS 'codice istat che identifica il comune in cui la famiglia è iscritta. default ROMA';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLIA_CONVIVENZA.FLAG_ATTIVO IS 'flag che indica se una famiglia convivenza è attiva(S) o disattiva(N) ';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLIA_CONVIVENZA.DATA_CANCELLAZIONE IS 'data in cui una famiglia/convivenza è stata cancellata/disattivata';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLIA_CONVIVENZA.FLAG_INTERA_FAMIGLIA IS 'S se la migrazione comprende l''intera famiglia N altrimenti';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLIA_CONVIVENZA.ID_SOGGETTO_RESPONSABILE_COLL IS 'Id del soggetto responsabile della collettività';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLIA_CONVIVENZA.CODICE_FAMIGLIA IS 'Codice identificativo della famiglia';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLIA_CONVIVENZA.ID_RESIDENZA IS 'Identifica la residenza attuale della famiglia/collettività';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLIA_CONVIVENZA.ID_RESIDENZA_PREC IS 'Rappresenta l''id della residenza di ANAG_USR';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLIA_CONVIVENZA.ID_FAM_PREC IS 'Rappresenta l''id della famiglia di ANAG_USR';
+
+COMMENT ON COLUMN ANAG_STORICO.FAMIGLIA_CONVIVENZA.ID_OPERAZIONE_ANPR IS 'Identificativo operazione Anpr';
+CREATE TABLE ANAG_STORICO.CENSIMENTO
+(
+  ID_CENSIMENTO          NUMBER,
+  ANNO_CENSIMENTO        NUMBER(4),
+  SEZIONE_CENSIMENTO     VARCHAR2(30 BYTE),
+  FOGLIO_CENSIMENTO      VARCHAR2(30 BYTE),
+  DATA_REGOLARIZZAZIONE  DATE,
+  MOTIVO_COMPILAZIONE    VARCHAR2(240 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.CENSIMENTO IS 'La tabella contiene gli estremi di un censimento.';
+
+COMMENT ON COLUMN ANAG_STORICO.CENSIMENTO.ID_CENSIMENTO IS 'Identificativo del censimento associato al soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.CENSIMENTO.ANNO_CENSIMENTO IS 'Anno in cui è avvenuto il censimento.';
+
+COMMENT ON COLUMN ANAG_STORICO.CENSIMENTO.SEZIONE_CENSIMENTO IS 'Sezione del censimento';
+
+COMMENT ON COLUMN ANAG_STORICO.CENSIMENTO.FOGLIO_CENSIMENTO IS 'Numero del foglio di censimento.';
+
+COMMENT ON COLUMN ANAG_STORICO.CENSIMENTO.DATA_REGOLARIZZAZIONE IS 'Data nella quale il cittadino regolarizza la propria posizione in caso di mancata compilazione del questionario.';
+
+COMMENT ON COLUMN ANAG_STORICO.CENSIMENTO.MOTIVO_COMPILAZIONE IS 'Motivo della mancata compilazione in formato di testo.';
+CREATE TABLE ANAG_STORICO.SENZA_FISSA_DIMORA
+(
+  ID_SENZA_FISSA_DIMORA   NUMBER,
+  ANNO_NULLA_OSTA         NUMBER(4),
+  NUMERO_NULLA_OSTA       VARCHAR2(4000 BYTE),
+  DATA_EMISSIONE          DATE,
+  CODICE_TIPO_PROTOCOLLO  VARCHAR2(10 BYTE),
+  NUMERO_PROTOCOLLO       INTEGER,
+  ANNO_PROTOCOLLO         INTEGER,
+  ID_RESIDENZA            NUMBER,
+  ID_ASSOCIAZIONE         NUMBER(4)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.SENZA_FISSA_DIMORA IS 'Tabella contenente gli estremi di un procedimento che identifica un soggetto come un Senza Fissa Dimora.';
+
+COMMENT ON COLUMN ANAG_STORICO.SENZA_FISSA_DIMORA.ID_SENZA_FISSA_DIMORA IS 'Codice identificativo dello stato di senza fissa dimora associato ad un soggetto.';
+
+COMMENT ON COLUMN ANAG_STORICO.SENZA_FISSA_DIMORA.ANNO_NULLA_OSTA IS 'Anno di emissione del nulla osta.';
+
+COMMENT ON COLUMN ANAG_STORICO.SENZA_FISSA_DIMORA.NUMERO_NULLA_OSTA IS 'Numero associato al nulla osta.';
+
+COMMENT ON COLUMN ANAG_STORICO.SENZA_FISSA_DIMORA.DATA_EMISSIONE IS 'Data in cui è stato emesso il nulla osta';
+
+COMMENT ON COLUMN ANAG_STORICO.SENZA_FISSA_DIMORA.CODICE_TIPO_PROTOCOLLO IS 'Codice che identifica univocamente l''ente protocollante associato all''iscrizione del senza fissa dimora';
+
+COMMENT ON COLUMN ANAG_STORICO.SENZA_FISSA_DIMORA.NUMERO_PROTOCOLLO IS 'Numero che identifica il protocollo associato alla pratica del senza fissa dimora';
+
+COMMENT ON COLUMN ANAG_STORICO.SENZA_FISSA_DIMORA.ANNO_PROTOCOLLO IS 'Anno di riferimento del protocollo assoiato al senza fissa dimora.';
+
+COMMENT ON COLUMN ANAG_STORICO.SENZA_FISSA_DIMORA.ID_RESIDENZA IS 'Residenza fisica dichiarata dal soggetto senza fissa dimora';
+
+COMMENT ON COLUMN ANAG_STORICO.SENZA_FISSA_DIMORA.ID_ASSOCIAZIONE IS 'identificativo dell''associazione in cui è iscritto il soggeto senza fissa dimora';
+CREATE TABLE ANAG_STORICO.MORTE
+(
+  ID_MORTE                      NUMBER,
+  ORDINE_MATRIMONIO_PRECEDENTE  NUMBER,
+  DATA_EVENTO                   DATE,
+  FLG_SENZA_GIORNO              CHAR(1 CHAR),
+  FLG_SENZA_MESE                CHAR(1 CHAR),
+  LUOGO_ECCEZIONALE             VARCHAR2(120 CHAR),
+  ID_LOCALITA                   NUMBER,
+  ID_COMUNE                     NUMBER,
+  ID_ATTO                       NUMBER,
+  CAUSA_DECESSO                 VARCHAR2(500 BYTE),
+  COD_COMUNE_AGGIOR             VARCHAR2(20 BYTE),
+  ID_TIPO_MORTE                 NUMBER,
+  ID_SENTENZA                   NUMBER,
+  MOTIVAZIONE_ANNULLAMENTO      VARCHAR2(500 BYTE),
+  DATA_ANNULLAMENTO             DATE,
+  ID_COMUNE_RESIDENZA           NUMBER,
+  ID_LOCALITA_RESIDENZA         NUMBER,
+  LUOGO_ECCEZIONALE_RESIDENZA   VARCHAR2(200 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.MORTE IS 'Tabella contenente le informazioni sull''atto di morte di un soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.MORTE.ID_MORTE IS 'Identificativo del decesso';
+
+COMMENT ON COLUMN ANAG_STORICO.MORTE.ORDINE_MATRIMONIO_PRECEDENTE IS 'Ordine del precedente matrimonio';
+
+COMMENT ON COLUMN ANAG_STORICO.MORTE.DATA_EVENTO IS 'Data del decesso';
+
+COMMENT ON COLUMN ANAG_STORICO.MORTE.FLG_SENZA_GIORNO IS 'S -> Non è presente il giorno del decesso
+N -> E'' presente il giorno del decesso';
+
+COMMENT ON COLUMN ANAG_STORICO.MORTE.FLG_SENZA_MESE IS 'S -> non è presente il mese del decesso
+N -> è presente il mese del decesso';
+
+COMMENT ON COLUMN ANAG_STORICO.MORTE.LUOGO_ECCEZIONALE IS 'Luogo eccezionale';
+
+COMMENT ON COLUMN ANAG_STORICO.MORTE.ID_LOCALITA IS 'Identificativo della località relativa al decesso';
+
+COMMENT ON COLUMN ANAG_STORICO.MORTE.ID_COMUNE IS 'Identificativo del comune relativo al decesso';
+
+COMMENT ON COLUMN ANAG_STORICO.MORTE.ID_ATTO IS 'FK relativa all''atto di decesso';
+
+COMMENT ON COLUMN ANAG_STORICO.MORTE.COD_COMUNE_AGGIOR IS 'identificativo aggior del comune salvato in LUOGO_ECCEZIONALE';
+
+COMMENT ON COLUMN ANAG_STORICO.MORTE.MOTIVAZIONE_ANNULLAMENTO IS 'Motivo per cui è stata annullata la morte.';
+
+COMMENT ON COLUMN ANAG_STORICO.MORTE.DATA_ANNULLAMENTO IS 'Data in cui è stata annullata la morte.';
+
+COMMENT ON COLUMN ANAG_STORICO.MORTE.ID_COMUNE_RESIDENZA IS 'Identificato del comune di residenza al decesso. Valorizzato per i soggetti che non sono vivi residenti o vivi AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.MORTE.ID_LOCALITA_RESIDENZA IS 'Identificativo località estera di residenza';
+
+COMMENT ON COLUMN ANAG_STORICO.MORTE.LUOGO_ECCEZIONALE_RESIDENZA IS 'Luogo eccezionale di residenza';
+CREATE TABLE ANAG_STORICO.RESPONSABILE_MINORE
+(
+  ID_RESPONSABILE       NUMBER,
+  COGNOME_RESPONSABILE  VARCHAR2(80 BYTE),
+  NOME_RESPONSABILE     VARCHAR2(80 BYTE),
+  TIPO_RESPONSABILE     VARCHAR2(40 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+CREATE TABLE ANAG_STORICO.PATENTE
+(
+  NUMERO_PATENTE            VARCHAR2(40 CHAR),
+  ID_STATO_VALIDITA         NUMBER(1),
+  DATA_RILASCIO             DATE,
+  ID_COMUNE                 NUMBER,
+  ID_ENTE_RILASCIO_PATENTE  NUMBER(2)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON TABLE ANAG_STORICO.PATENTE IS 'Tabella contenente le informazioni sulle patenti possedute da un soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.PATENTE.NUMERO_PATENTE IS 'Numero identificativo di una patente di guida.';
+
+COMMENT ON COLUMN ANAG_STORICO.PATENTE.ID_STATO_VALIDITA IS 'Stato di validità della patemte di guida.';
+
+COMMENT ON COLUMN ANAG_STORICO.PATENTE.DATA_RILASCIO IS 'Data in cui è stata rilasciata la partente di guida.';
+
+COMMENT ON COLUMN ANAG_STORICO.PATENTE.ID_COMUNE IS 'Comune dell''ente di rilascio della patente di guida.';
+
+COMMENT ON COLUMN ANAG_STORICO.PATENTE.ID_ENTE_RILASCIO_PATENTE IS 'identificativo dell''ente di rilascio della patente di guida';
+CREATE TABLE ANAG_STORICO.OSTATIVA
+(
+  ID_OSTATIVA         NUMBER,
+  TIPO_OSTATIVA       NUMBER,
+  DATA_INSERIMENTO    DATE,
+  DATA_ANNULLAMENTO   DATE,
+  TIPO_COMUNICAZIONE  VARCHAR2(80 BYTE),
+  NOTE                VARCHAR2(80 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ANAG_STORICO.OSTATIVA.ID_OSTATIVA IS 'Campo che identifica l''id dell''ostativa.';
+
+COMMENT ON COLUMN ANAG_STORICO.OSTATIVA.TIPO_OSTATIVA IS 'Campo che identifica il tipo di ostativa';
+
+COMMENT ON COLUMN ANAG_STORICO.OSTATIVA.DATA_INSERIMENTO IS 'Campo che identifica la data di inserimento dell''ostativa';
+
+COMMENT ON COLUMN ANAG_STORICO.OSTATIVA.DATA_ANNULLAMENTO IS 'Campo che identifica la data di annullamento dell''ostativa';
+
+COMMENT ON COLUMN ANAG_STORICO.OSTATIVA.NOTE IS 'Campo che identifica le note inserite in fase di annullamento.';
+CREATE TABLE ANAG_STORICO.CIE_PAGAMENTI_ANT
+(
+  ID                       NUMBER               NOT NULL,
+  CF_RICHIEDENTE           VARCHAR2(16 CHAR)    NOT NULL,
+  CF_BENEFICIARIO          VARCHAR2(16 CHAR)    NOT NULL,
+  DATA_RICHIESTA           DATE,
+  DATA_VERIFICA_PAG_FO     DATE,
+  DATA_VERIFICA_PAG_BO     DATE,
+  DATA_BOLLETTINO          DATE,
+  IUV                      VARCHAR2(200 CHAR),
+  XML_POSIZIONE_FO         CLOB,
+  XML_POSIZIONE_BO         CLOB,
+  ID_STRUTTURA_INTERNA_RC  NUMBER,
+  ID_TIPO_EMISSIONE        NUMBER
+)
+LOB (XML_POSIZIONE_FO) STORE AS SECUREFILE (
+  TABLESPACE  ANAG_USR
+  ENABLE      STORAGE IN ROW
+  CHUNK       8192
+  NOCACHE
+  LOGGING
+      STORAGE    (
+                  INITIAL          104K
+                  NEXT             1M
+                  MINEXTENTS       1
+                  MAXEXTENTS       UNLIMITED
+                  PCTINCREASE      0
+                  BUFFER_POOL      DEFAULT
+                  FLASH_CACHE      DEFAULT
+                  CELL_FLASH_CACHE DEFAULT
+                 ))
+LOB (XML_POSIZIONE_BO) STORE AS SECUREFILE (
+  TABLESPACE  ANAG_USR
+  ENABLE      STORAGE IN ROW
+  CHUNK       8192
+  NOCACHE
+  LOGGING
+      STORAGE    (
+                  INITIAL          104K
+                  NEXT             1M
+                  MINEXTENTS       1
+                  MAXEXTENTS       UNLIMITED
+                  PCTINCREASE      0
+                  BUFFER_POOL      DEFAULT
+                  FLASH_CACHE      DEFAULT
+                  CELL_FLASH_CACHE DEFAULT
+                 ))
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+CREATE TABLE ANAG_STORICO.R_CARTA_IDENTITA_IMPORTO
+(
+  ID               NUMBER                       NOT NULL,
+  ID_POSIZIONE     NUMBER,
+  NUMERO_CARTA     VARCHAR2(20 BYTE),
+  IUV              VARCHAR2(200 BYTE),
+  DATA_RICHIESTA   DATE,
+  DATA_PAGAMENTO   DATE,
+  OPE_RIC_IUV      VARCHAR2(200 BYTE),
+  DATA_BOLLETTINO  DATE,
+  OPE_BOLLETTINO   VARCHAR2(200 BYTE),
+  OPE_PAGAMENTO    VARCHAR2(200 BYTE),
+  XML_POSIZIONE    CLOB,
+  ID_USR           NUMBER
+)
+LOB (XML_POSIZIONE) STORE AS SECUREFILE (
+  TABLESPACE  ANAG_USR
+  ENABLE      STORAGE IN ROW
+  CHUNK       8192
+  NOCACHE
+  LOGGING
+      STORAGE    (
+                  INITIAL          104K
+                  NEXT             1M
+                  MINEXTENTS       1
+                  MAXEXTENTS       UNLIMITED
+                  PCTINCREASE      0
+                  BUFFER_POOL      DEFAULT
+                  FLASH_CACHE      DEFAULT
+                  CELL_FLASH_CACHE DEFAULT
+                 ))
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+
+CREATE UNIQUE INDEX ANAG_STORICO.R_CARTA_IDENTITA_IMPORTO_PK ON ANAG_STORICO.R_CARTA_IDENTITA_IMPORTO
+(ID)
+LOGGING
+TABLESPACE ANAG_USR
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+NOPARALLEL;
+
+
+ALTER TABLE ANAG_STORICO.R_CARTA_IDENTITA_IMPORTO ADD (
+  CONSTRAINT R_CARTA_IDENTITA_IMPORTO_PK
+  PRIMARY KEY
+  (ID)
+  USING INDEX ANAG_STORICO.R_CARTA_IDENTITA_IMPORTO_PK
+  ENABLE VALIDATE);
+CREATE TABLE ANAG_STORICO.UTENTI
+(
+  ID_STORICO             NUMBER                 NOT NULL,
+  ID                     NUMBER,
+  NOME_UTENTE            VARCHAR2(200 BYTE),
+  NOME                   VARCHAR2(200 BYTE),
+  COGNOME                VARCHAR2(200 BYTE),
+  FLG_ATTIVO             VARCHAR2(1 BYTE),
+  FLG_CANCELLATO         VARCHAR2(1 BYTE),
+  DATA_CREAZIONE_UTENZA  DATE,
+  DATA_CANCELLAZIONE     DATE,
+  ID_ORGANIZZAZIONE      NUMBER,
+  ID_STRUTTURA_CONV      NUMBER,
+  CODICE_FISCALE         VARCHAR2(50 BYTE),
+  NOME_UTENTE_AGGIOR     VARCHAR2(11 BYTE),
+  ID_SEDE_MUNICIPIO      NUMBER,
+  ID_UTENTE_OPERAZIONE   NUMBER,
+  FLG_TIPO_OPERAZIONE    VARCHAR2(1 BYTE),
+  DATA_OPERAZIONE        DATE
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ANAG_STORICO.UTENTI.ID_STORICO IS 'Identificativo record storico';
+
+COMMENT ON COLUMN ANAG_STORICO.UTENTI.ID IS 'Identificativo dell''utente';
+
+COMMENT ON COLUMN ANAG_STORICO.UTENTI.NOME_UTENTE IS 'Nome utente utilizzato per l''accesso al sistema. Potrà essere o <nome.cognome> o <codice fiscale> per identificare univocamente o un dipendente id Roma Capitale o un Cittadino.';
+
+COMMENT ON COLUMN ANAG_STORICO.UTENTI.NOME IS 'E'' il nome dell''utente profilato a sistema.';
+
+COMMENT ON COLUMN ANAG_STORICO.UTENTI.COGNOME IS 'E'' il Cognome dell''utente profilato a sistema.';
+
+COMMENT ON COLUMN ANAG_STORICO.UTENTI.FLG_ATTIVO IS 'S -> Se l''utente è attivo a sistema
+N -> Se l''utente è disattivato';
+
+COMMENT ON COLUMN ANAG_STORICO.UTENTI.FLG_CANCELLATO IS 'S-> Se l''utente è stato cancellato dal sistema (Cancellazione Logica)
+N-> Altrimenti';
+
+COMMENT ON COLUMN ANAG_STORICO.UTENTI.DATA_CREAZIONE_UTENZA IS 'Rappresenta la data in cui l''utenza è stata creata';
+
+COMMENT ON COLUMN ANAG_STORICO.UTENTI.DATA_CANCELLAZIONE IS 'Rappresenta la data in cui l''utenza è stata cancellata logicamente dal sistema.';
+
+COMMENT ON COLUMN ANAG_STORICO.UTENTI.ID_ORGANIZZAZIONE IS 'Rappresenta l''unità organizzativa di cui l''utente fa parte se dipendente di Roma Capitale.';
+
+COMMENT ON COLUMN ANAG_STORICO.UTENTI.ID_STRUTTURA_CONV IS 'Nel caso di cittadini laddove si possa accedere come struttura convenzionata con Roma Capitale, il campo rappresenta la struttura di riferimento per l''utente.';
+
+COMMENT ON COLUMN ANAG_STORICO.UTENTI.CODICE_FISCALE IS 'Codice fiscale del dipendente';
+
+COMMENT ON COLUMN ANAG_STORICO.UTENTI.NOME_UTENTE_AGGIOR IS 'Nome utente su AGGIOR';
+
+COMMENT ON COLUMN ANAG_STORICO.UTENTI.ID_SEDE_MUNICIPIO IS 'Indica la sede del municipio di appartenenza';
+
+COMMENT ON COLUMN ANAG_STORICO.UTENTI.ID_UTENTE_OPERAZIONE IS 'Identificativo dell''utenza che ha effettuato un''operazione sul record presente';
+
+COMMENT ON COLUMN ANAG_STORICO.UTENTI.FLG_TIPO_OPERAZIONE IS 'I -> Inserimento, M -> Modifica, C -> Cancellazione, A -> Attivazione, D -> Disattivazione';
+
+COMMENT ON COLUMN ANAG_STORICO.UTENTI.DATA_OPERAZIONE IS 'Data in cui è stata effettuata l''operazione sul record';
+
+
+
+CREATE UNIQUE INDEX ANAG_STORICO.UTENTI_PK ON ANAG_STORICO.UTENTI
+(ID_STORICO)
+LOGGING
+TABLESPACE ANAG_USR
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+NOPARALLEL;
+
+
+ALTER TABLE ANAG_STORICO.UTENTI ADD (
+  CONSTRAINT UTENTI_PK
+  PRIMARY KEY
+  (ID_STORICO)
+  USING INDEX ANAG_STORICO.UTENTI_PK
+  ENABLE VALIDATE);
+CREATE TABLE ANAG_STORICO.ANAGRAFICA_AIRE
+(
+  ID_ANAGRAFICA_AIRE  NUMBER                    NOT NULL,
+  ID_SOGGETTO         NUMBER,
+  CODICE_ANAGAIRE     VARCHAR2(30 BYTE),
+  FLAG_CANCELLATO     VARCHAR2(1 BYTE),
+  ID_TIPO_AIRE        NUMBER,
+  DATA_ISCRIZIONE     DATE,
+  ID_COMUNE_RIENTRO   NUMBER,
+  DATA_RIENTRO        DATE,
+  DATA_FINE_AIRE      DATE,
+  NUMERO_PRATICA      VARCHAR2(20 BYTE),
+  DATA_PRATICA        DATE,
+  DATA_INVIO_MODELLO  DATE,
+  ANNO_PROTOCOLLO     NUMBER(4),
+  NUMERO_PROTOCOLLO   VARCHAR2(20 BYTE),
+  ID_PRATICA_AIRE     NUMBER,
+  FLAG_SUBENTRO       VARCHAR2(1 BYTE),
+  FLAG_ATTIVO         VARCHAR2(1 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ANAG_STORICO.ANAGRAFICA_AIRE.ID_ANAGRAFICA_AIRE IS 'Identificativo di tabella';
+
+COMMENT ON COLUMN ANAG_STORICO.ANAGRAFICA_AIRE.ID_SOGGETTO IS 'Identificativo del soggetto';
+
+COMMENT ON COLUMN ANAG_STORICO.ANAGRAFICA_AIRE.CODICE_ANAGAIRE IS 'Codice anagaire';
+
+COMMENT ON COLUMN ANAG_STORICO.ANAGRAFICA_AIRE.FLAG_CANCELLATO IS 'N -> AIRE, -> Cancellato AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.ANAGRAFICA_AIRE.ID_TIPO_AIRE IS 'Identificativo della tipologia di iscrizione o cancellazione AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.ANAGRAFICA_AIRE.DATA_ISCRIZIONE IS 'Data di iscrizione AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.ANAGRAFICA_AIRE.ID_COMUNE_RIENTRO IS 'Identificativo del comune di rientro in Italia';
+
+COMMENT ON COLUMN ANAG_STORICO.ANAGRAFICA_AIRE.DATA_RIENTRO IS 'Data del rientro in Italia';
+
+COMMENT ON COLUMN ANAG_STORICO.ANAGRAFICA_AIRE.DATA_FINE_AIRE IS 'Data di cancellazione AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.ANAGRAFICA_AIRE.NUMERO_PRATICA IS 'Numero pratica';
+
+COMMENT ON COLUMN ANAG_STORICO.ANAGRAFICA_AIRE.DATA_PRATICA IS 'Data definizione pratica';
+
+COMMENT ON COLUMN ANAG_STORICO.ANAGRAFICA_AIRE.DATA_INVIO_MODELLO IS 'Data di invio modello consolare';
+
+COMMENT ON COLUMN ANAG_STORICO.ANAGRAFICA_AIRE.ANNO_PROTOCOLLO IS 'Anno del protocollo';
+
+COMMENT ON COLUMN ANAG_STORICO.ANAGRAFICA_AIRE.NUMERO_PROTOCOLLO IS 'Numero del protocollo';
+
+COMMENT ON COLUMN ANAG_STORICO.ANAGRAFICA_AIRE.ID_PRATICA_AIRE IS 'Identificativo della pratica AIRE';
+
+COMMENT ON COLUMN ANAG_STORICO.ANAGRAFICA_AIRE.FLAG_SUBENTRO IS 'N -> Aggior, S -> SIPO';
+
+COMMENT ON COLUMN ANAG_STORICO.ANAGRAFICA_AIRE.FLAG_ATTIVO IS 'N -> No, S -> Sì';
+
+
+
+CREATE UNIQUE INDEX ANAG_STORICO.ANAGRAFICA_AIRE_PK ON ANAG_STORICO.ANAGRAFICA_AIRE
+(ID_ANAGRAFICA_AIRE)
+LOGGING
+TABLESPACE ANAG_USR
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+NOPARALLEL;
+
+
+ALTER TABLE ANAG_STORICO.ANAGRAFICA_AIRE ADD (
+  CONSTRAINT ANAGRAFICA_AIRE_PK
+  PRIMARY KEY
+  (ID_ANAGRAFICA_AIRE)
+  USING INDEX ANAG_STORICO.ANAGRAFICA_AIRE_PK
+  ENABLE VALIDATE);
+CREATE TABLE ANAG_STORICO.BS_RICHIESTE_OLD
+(
+  NUM_PROGRESSIVO         NUMBER                NOT NULL,
+  NOME                    VARCHAR2(45 BYTE),
+  COGNOME                 VARCHAR2(45 BYTE),
+  COD_FISCALE             VARCHAR2(45 BYTE),
+  NUMERO_CARTA            VARCHAR2(50 BYTE),
+  DTA_EMISSIONE           DATE,
+  DTA_INSERIMENTO         TIMESTAMP(6),
+  ELEGIBILE               VARCHAR2(2 BYTE),
+  NUM_COMP_NUCLEO         NUMBER,
+  MOTIVO_NON_ELIGIBILITA  VARCHAR2(200 BYTE),
+  COD_FAMIGLIA            VARCHAR2(20 BYTE),
+  IMPORTO_RICARICA        NUMBER,
+  ID_HEADER               NUMBER                NOT NULL,
+  DATA_RIFERIMENTO        DATE
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+
+CREATE INDEX ANAG_STORICO.IDX_EL_BS_RICHIESTE_OLD ON ANAG_STORICO.BS_RICHIESTE_OLD
+(ELEGIBILE, COD_FISCALE)
+LOGGING
+TABLESPACE ANAG_USR
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+NOPARALLEL;
+CREATE TABLE ANAG_STORICO.LOG_EVENTI_STATO_CIVILE
+(
+  ID_LOG_STORICO      NUMBER                    NOT NULL,
+  TIP_EVENTO          VARCHAR2(10 BYTE),
+  DESCRIZIONE_ERRORE  VARCHAR2(2000 BYTE),
+  CODICE_INDIVIDUALE  VARCHAR2(7 BYTE),
+  ID_OPERAZIONE_ANPR  NUMBER,
+  DATA_ERRORE         DATE,
+  ID_LOG_EVENTI       NUMBER,
+  DATA_RISOLUZIONE    DATE,
+  TIPO_ERRORE         VARCHAR2(1 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ANAG_STORICO.LOG_EVENTI_STATO_CIVILE.ID_LOG_STORICO IS 'Identificato storico del log evento di stato civile';
+
+COMMENT ON COLUMN ANAG_STORICO.LOG_EVENTI_STATO_CIVILE.TIP_EVENTO IS 'Codice evento INASAIA';
+
+COMMENT ON COLUMN ANAG_STORICO.LOG_EVENTI_STATO_CIVILE.DESCRIZIONE_ERRORE IS 'Descrizione dell''errore';
+
+COMMENT ON COLUMN ANAG_STORICO.LOG_EVENTI_STATO_CIVILE.CODICE_INDIVIDUALE IS 'Codice individuale';
+
+COMMENT ON COLUMN ANAG_STORICO.LOG_EVENTI_STATO_CIVILE.ID_OPERAZIONE_ANPR IS 'Identificativo ANPR dell''operazione';
+
+COMMENT ON COLUMN ANAG_STORICO.LOG_EVENTI_STATO_CIVILE.DATA_ERRORE IS 'Data e ora dell''errore';
+
+COMMENT ON COLUMN ANAG_STORICO.LOG_EVENTI_STATO_CIVILE.ID_LOG_EVENTI IS 'Identificativo della tabella omonima in ANAG_USR';
+
+COMMENT ON COLUMN ANAG_STORICO.LOG_EVENTI_STATO_CIVILE.DATA_RISOLUZIONE IS 'Data e ora della risoluzione dell''errore';
+
+COMMENT ON COLUMN ANAG_STORICO.LOG_EVENTI_STATO_CIVILE.TIPO_ERRORE IS 'A -> ANPR, S -> SIPO';
+
+
+
+CREATE UNIQUE INDEX ANAG_STORICO.TABLE1_PK ON ANAG_STORICO.LOG_EVENTI_STATO_CIVILE
+(ID_LOG_STORICO)
+LOGGING
+TABLESPACE ANAG_USR
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+NOPARALLEL;
+
+
+ALTER TABLE ANAG_STORICO.LOG_EVENTI_STATO_CIVILE ADD (
+  CONSTRAINT TABLE1_PK
+  PRIMARY KEY
+  (ID_LOG_STORICO)
+  USING INDEX ANAG_STORICO.TABLE1_PK
+  ENABLE VALIDATE);
+CREATE TABLE ANAG_STORICO.TFISCOD
+(
+  CODICE_INDIVIDUALE  VARCHAR2(20 BYTE),
+  CODICE_FISCALE      VARCHAR2(20 BYTE),
+  DATA_OPERAZIONE     DATE
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+CREATE TABLE ANAG_STORICO.R_CONVENZIONE_MATRIMONIO
+(
+  ID_MATRIMONIO_PRESENTE        NUMBER          NOT NULL,
+  ID_SENTENZA_PRESENTE          NUMBER,
+  ID_SENTENZA_STORICO           NUMBER,
+  ID_UTENTE                     NUMBER,
+  ID_ORGANIZZAZIONE             NUMBER,
+  DATA_INSERIMENTO              DATE,
+  ID_UTENTE_VARIAZIONE          NUMBER,
+  ID_ORGANIZZAZIONE_VARIAZIONE  NUMBER,
+  DATA_VARIAZIONE               DATE,
+  FLAG_MIGRAZIONE               VARCHAR2(1 BYTE),
+  TESTO_MIGRAZIONE              VARCHAR2(3999 BYTE)
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            INITIAL          64K
+            NEXT             1M
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ANAG_STORICO.R_CONVENZIONE_MATRIMONIO.ID_MATRIMONIO_PRESENTE IS 'Identificativo del matrimonio in ANAG_USR';
+
+COMMENT ON COLUMN ANAG_STORICO.R_CONVENZIONE_MATRIMONIO.ID_SENTENZA_PRESENTE IS 'Identificativo della convenzione patrimoniale in ANAG_USR';
+
+COMMENT ON COLUMN ANAG_STORICO.R_CONVENZIONE_MATRIMONIO.ID_SENTENZA_STORICO IS 'Identificativo della convenzione patrimoniale in ANAG_STORICO';
+
+COMMENT ON COLUMN ANAG_STORICO.R_CONVENZIONE_MATRIMONIO.ID_UTENTE IS 'Utente che ha inserito la convenzione';
+
+COMMENT ON COLUMN ANAG_STORICO.R_CONVENZIONE_MATRIMONIO.ID_ORGANIZZAZIONE IS 'Organizazzione dell''utente che ha inserito la convenzione';
+
+COMMENT ON COLUMN ANAG_STORICO.R_CONVENZIONE_MATRIMONIO.DATA_INSERIMENTO IS 'Data di inserimento a sistema della convenzione';
+
+COMMENT ON COLUMN ANAG_STORICO.R_CONVENZIONE_MATRIMONIO.ID_UTENTE_VARIAZIONE IS 'Utente che ha modificato la convenzione';
+
+COMMENT ON COLUMN ANAG_STORICO.R_CONVENZIONE_MATRIMONIO.ID_ORGANIZZAZIONE_VARIAZIONE IS 'Organizazzione dell''utente che ha modificato la convenzione';
+
+COMMENT ON COLUMN ANAG_STORICO.R_CONVENZIONE_MATRIMONIO.DATA_VARIAZIONE IS 'Data di modifica della convenzione';
+
+COMMENT ON COLUMN ANAG_STORICO.R_CONVENZIONE_MATRIMONIO.FLAG_MIGRAZIONE IS 'S -> Migrazione Stato Civile, N -> No';
+
+COMMENT ON COLUMN ANAG_STORICO.R_CONVENZIONE_MATRIMONIO.TESTO_MIGRAZIONE IS 'Testo convenzione per record migrati stato civile';
+CREATE TABLE ANAG_STORICO.LOG_EVENTI_CRI_ANPR
+(
+  ID                  NUMBER                    NOT NULL,
+  CODICE_RICHIESTA    VARCHAR2(200 BYTE),
+  DATA_OPERAZIONE     DATE,
+  TIPO_ERRORE         VARCHAR2(1 BYTE),
+  DESCRIZIONE_ERRORE  VARCHAR2(2000 BYTE),
+  DATA_RISOLUZIONE    DATE
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ANAG_STORICO.LOG_EVENTI_CRI_ANPR.ID IS 'Identificativo primario della tabella';
+
+COMMENT ON COLUMN ANAG_STORICO.LOG_EVENTI_CRI_ANPR.CODICE_RICHIESTA IS 'Codice della richiesta ANPR';
+
+COMMENT ON COLUMN ANAG_STORICO.LOG_EVENTI_CRI_ANPR.DATA_OPERAZIONE IS 'Data dell''operazione';
+
+COMMENT ON COLUMN ANAG_STORICO.LOG_EVENTI_CRI_ANPR.TIPO_ERRORE IS 'T -> Toponomastica, A -> ANPR';
+
+COMMENT ON COLUMN ANAG_STORICO.LOG_EVENTI_CRI_ANPR.DESCRIZIONE_ERRORE IS 'Descrizione dell''errore';
+
+COMMENT ON COLUMN ANAG_STORICO.LOG_EVENTI_CRI_ANPR.DATA_RISOLUZIONE IS 'Data risoluzione dell''errore';
+
+
+
+CREATE UNIQUE INDEX ANAG_STORICO.LOG_EVENTI_CRI_ANPR_PK ON ANAG_STORICO.LOG_EVENTI_CRI_ANPR
+(ID)
+LOGGING
+TABLESPACE ANAG_USR
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+NOPARALLEL;
+
+
+ALTER TABLE ANAG_STORICO.LOG_EVENTI_CRI_ANPR ADD (
+  CONSTRAINT LOG_EVENTI_CRI_ANPR_PK
+  PRIMARY KEY
+  (ID)
+  USING INDEX ANAG_STORICO.LOG_EVENTI_CRI_ANPR_PK
+  ENABLE VALIDATE);
+CREATE TABLE ANAG_STORICO.ESTRAZIONE_CITTADINANZA_18
+(
+  ID_ESTRAZIONE         NUMBER                  NOT NULL,
+  PROGRESSIVO           VARCHAR2(20 BYTE),
+  ANNO                  NUMBER,
+  MESE                  NUMBER,
+  TOTALE_SOGGETTI       NUMBER,
+  ID_STATUS_ESTRAZIONE  NUMBER,
+  ID_UTENTE             NUMBER,
+  ID_ORGANIZZAZIONE     NUMBER,
+  DATA_OPERAZIONE       DATE
+)
+TABLESPACE ANAG_USR
+RESULT_CACHE (MODE DEFAULT)
+PCTUSED    0
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE
+NOPARALLEL
+MONITORING;
+
+COMMENT ON COLUMN ANAG_STORICO.ESTRAZIONE_CITTADINANZA_18.ID_ESTRAZIONE IS 'Identificativo estrazione';
+
+COMMENT ON COLUMN ANAG_STORICO.ESTRAZIONE_CITTADINANZA_18.PROGRESSIVO IS 'Codice progressivo dell''estrazione da mostrare all''utente';
+
+COMMENT ON COLUMN ANAG_STORICO.ESTRAZIONE_CITTADINANZA_18.ANNO IS 'Anno di nascita dei soggetti estratti';
+
+COMMENT ON COLUMN ANAG_STORICO.ESTRAZIONE_CITTADINANZA_18.MESE IS 'Mese di nascita dei soggetti estratti';
+
+COMMENT ON COLUMN ANAG_STORICO.ESTRAZIONE_CITTADINANZA_18.TOTALE_SOGGETTI IS 'Totale dei soggetti estratti per anno e mese';
+
+COMMENT ON COLUMN ANAG_STORICO.ESTRAZIONE_CITTADINANZA_18.ID_STATUS_ESTRAZIONE IS 'Status dell''estrazione';
+
+COMMENT ON COLUMN ANAG_STORICO.ESTRAZIONE_CITTADINANZA_18.ID_UTENTE IS 'Identificativo dell''utente';
+
+COMMENT ON COLUMN ANAG_STORICO.ESTRAZIONE_CITTADINANZA_18.ID_ORGANIZZAZIONE IS 'Identificativo dell''organizzazione dell''utente';
+
+COMMENT ON COLUMN ANAG_STORICO.ESTRAZIONE_CITTADINANZA_18.DATA_OPERAZIONE IS 'Data in cui è stata effettuata l''ultima operazione';
+
+
+
+CREATE UNIQUE INDEX ANAG_STORICO.ESTRAZIONE_CITTADINANZA_18_PK ON ANAG_STORICO.ESTRAZIONE_CITTADINANZA_18
+(ID_ESTRAZIONE)
+LOGGING
+TABLESPACE ANAG_USR
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+            FLASH_CACHE      DEFAULT
+            CELL_FLASH_CACHE DEFAULT
+           )
+NOPARALLEL;
+
+
+ALTER TABLE ANAG_STORICO.ESTRAZIONE_CITTADINANZA_18 ADD (
+  CONSTRAINT ESTRAZIONE_CITTADINANZA_18_PK
+  PRIMARY KEY
+  (ID_ESTRAZIONE)
+  USING INDEX ANAG_STORICO.ESTRAZIONE_CITTADINANZA_18_PK
+  ENABLE VALIDATE);

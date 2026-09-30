@@ -1,0 +1,61 @@
+
+<div class="mb-3">
+  <app-rc-card-wrapper *ngIf="cardWrapper" width="full">
+    <div class="row">
+      <!-- Colonna per searchComponent e filterComponent -->
+      <div class="col-12 col-md-12 col-lg-8 d-flex align-items-center mb-3 mb-md-0 m-0 m-0">
+        <div class="row w-100 d-flex align-items-center justify-content-between">
+          <div class="col-8" *ngIf="searchComponent">
+        <div class="cursor">
+          <ng-container>
+            <ng-container *ngComponentOutlet="searchComponent; injector: searchInjector"></ng-container>
+          </ng-container>
+        </div>
+      </div>
+        <div class="col-4 p-0" *ngIf="filterComponent">
+          <div >
+            <ng-container>
+              <ng-container *ngComponentOutlet="filterComponent; injector: filterInjector"></ng-container>
+            </ng-container>
+          </div>
+        </div>
+        </div>
+     
+      </div>
+      <!-- Colonna per buttonComponent -->
+      <div *ngIf="buttonComponent" class="col-12 col-md-12 col-lg-4 mt-2 mt-lg-0 d-flex justify-content-start justify-content-lg-end">
+        <ng-container>
+          <ng-container *ngComponentOutlet="buttonComponent; injector: buttonAddInjector" ></ng-container>
+        </ng-container>
+      </div>
+    </div>
+  </app-rc-card-wrapper>
+  <div *ngIf="!cardWrapper" class="row">
+    <!-- Colonna per searchComponent e filterComponent -->
+    <div class="col-12 col-md-12 col-lg-8 d-flex align-items-center mb-3 mb-md-0 m-0 m-0">
+      <div class="row w-100 d-flex align-items-center justify-content-between">
+        <div class="col-8">
+      <div class="cursor">
+        <ng-container>
+          <ng-container *ngComponentOutlet="searchComponent; injector: searchInjector"></ng-container>
+        </ng-container>
+      </div>
+    </div>
+      <div class="col-4 p-0">
+        <div *ngIf="filterComponent">
+          <ng-container>
+            <ng-container *ngComponentOutlet="filterComponent; injector: filterInjector"></ng-container>
+          </ng-container>
+        </div>
+      </div>
+      </div>
+   
+    </div>
+    <!-- Colonna per buttonComponent -->
+    <div *ngIf="buttonComponent" class="col-12 col-md-12 col-lg-4 mt-2 mt-lg-0 d-flex justify-content-start justify-content-lg-end">
+      <ng-container>
+        <ng-container *ngComponentOutlet="buttonComponent; injector: buttonAddInjector" ></ng-container>
+      </ng-container>
+    </div>
+  </div>
+</div>

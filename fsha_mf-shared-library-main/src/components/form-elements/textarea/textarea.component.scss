@@ -1,0 +1,52 @@
+.textarea-disabled {
+    background-color: #e9ecef;
+    color: #6c757d;
+  }
+  
+  .resize-none {
+    resize: none;
+  }
+  
+  .resize-both {
+    resize: both;
+  }
+  
+  .resize-horizontal {
+    resize: horizontal;
+  }
+  
+  .resize-vertical {
+    resize: vertical;
+  }
+
+  .error-message {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+  /* wrapper posizionato */
+.textarea-container {
+  position: relative;
+  display: block;     /* o inline-block */
+  width: 100%;
+}
+
+/* evita che l’indicatore copra il testo */
+.with-indicator-padding {
+  padding-bottom: 28px;  /* spazio per l’indicatore */
+  padding-right: 48px;   /* spazio per l’indicatore */
+  box-sizing: border-box;
+}
+
+/* indicatore in basso a destra */
+.char-indicator {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  font-size: 0.85rem;
+  color: #777;
+  pointer-events: none;
+  z-index: 1;
+  background: transparent;
+}
+  

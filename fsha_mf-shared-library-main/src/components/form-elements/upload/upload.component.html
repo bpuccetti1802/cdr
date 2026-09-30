@@ -1,0 +1,29 @@
+<div>
+  <div *ngIf="label" class="pb-1">
+    <label [for]="id">{{label}}</label>
+  </div>
+  <input type="file" [attr.disabled]="disabled ? true : null" name="upload1" [id]="id" class="upload" [accept]="accept" [multiple]="multiple"
+    (change)="onFileSelected($event)" />
+  <label [for]="id">
+    <app-rc-icon name="fa-upload" [color]="color"></app-rc-icon>
+    <span>{{placeholder}}</span>
+  </label>
+  <ul class="upload-file-list">
+    <ng-container *ngFor="let file of filesList; trackBy: trackByFile">
+      <li class="upload-file success">
+        <app-rc-icon color="primary" name="it-file"></app-rc-icon>
+        <p>
+          <span class="visually-hidden">File caricato:</span>
+          <a [download]="file.name"  [href]="'data:' + file?.type + ';base64,' + file?.raw" class="upload-file-name">{{file.name}}</a>
+          <span class="upload-file-weight ml-2">{{file.size | filesize}}</span>
+
+        </p>
+        <button type="button" disabled>
+          <span class="visually-hidden">Caricamento ultimato</span>
+          <app-rc-button-icon *ngIf="!multiple" name="it-close" [disabled]="disabled" (click)="onRemove()"></app-rc-button-icon>
+          <app-rc-button-icon *ngIf="multiple" name="it-close" [disabled]="disabled" (click)="onRemove(file)"></app-rc-button-icon>
+        </button>
+      </li>
+    </ng-container>
+  </ul>
+</div>

@@ -1,0 +1,9 @@
+{
+    "/mfSharedLibrary": {
+      "target": "http://localhost:4201", 
+      "pathRewrite": { "^/mfSharedLibrary": "" }, 
+      "secure": false,
+      "changeOrigin": true,
+      "logLevel": "debug"
+    }
+  }

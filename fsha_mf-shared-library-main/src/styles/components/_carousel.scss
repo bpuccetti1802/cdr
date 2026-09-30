@@ -1,0 +1,11 @@
+.it-carousel-wrapper .it-carousel-landscape-abstract-three-cols-arrow-visible .splide__arrows .splide__arrow svg {
+    fill: white !important;
+}
+
+.splide__pagination__page.is-active {
+    background: map-get($colors, "primary", "main") !important;
+}
+
+.splide__pagination__page {
+    background: map-get($colors, "grey", "500") !important;
+}

@@ -1,0 +1,22 @@
+.progress-bar {
+  height: 5px;
+  transition: width 0.2s linear;
+}
+
+.notification-wrapper {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border-radius: 5px;
+  background: transparent;
+  padding: 0;
+  margin: 1rem;
+  display: block;
+  overflow: visible;
+}
+
+.notification {
+  cursor: pointer;
+  background-color: #fff;
+  border-radius: 5px;
+  overflow: hidden;
+  position: relative;
+}

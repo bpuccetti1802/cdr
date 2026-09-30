@@ -1,0 +1,12 @@
+<div *ngIf="currentRouteHasChildren" class="row">
+    <div *ngIf="shouldShowSearchInput" class="mb-3">
+        <app-rc-input type="text" placeholder="Cerca..." [formControl]="formControl" id="search" />
+    </div>
+    <ng-container *ngFor="let dataCard of dataCards; trackBy: trackByDataCard">
+        <div class="col-12 col-md-4 my-2" *ngIf="!dataCard.authenticated || (!!dataCard.authenticated && hasToken)">
+            <app-mf-navigation-button [iconName]="dataCard.iconName" [label]="dataCard.label"
+                (action)="dataCard.action()"></app-mf-navigation-button>
+        </div>
+    </ng-container>
+</div>
+<router-outlet *ngIf="!currentRouteHasChildren"></router-outlet>

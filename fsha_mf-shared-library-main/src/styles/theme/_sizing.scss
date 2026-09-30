@@ -1,0 +1,38 @@
+
+@import './breakpoints';
+
+$sizes: (10: 10%, 15: 15%, 20: 20%, 25: 25%, 30: 30%, 35: 35%, 40: 40%, 45: 45%, 50: 50%, 55: 55%, 60: 60%, 65: 65%, 70: 70%, 75: 75%, 80: 80%, 85: 85%, 90: 90%, 95: 95%, 100: 100%);
+
+@each $key, $value in $sizes {
+  .mf-w-#{$key} {
+    width: $value;
+  }
+}
+
+// With media query (higher priority since declared after the above ones).
+@each $breakpoint in map-keys(map_remove($grid-breakpoints, xs)) {
+  @include media-breakpoint-up($breakpoint) {
+    @each $key, $value in $sizes {
+      .mf-w-#{$breakpoint}-#{$key} {
+        width: $value;
+      }
+    }
+  }
+}
+
+@each $key, $value in $sizes {
+  .mf-h-#{$key} {
+    height: $value;
+  }
+}
+
+// With media query (higher priority since declared after the above ones).
+@each $breakpoint in map-keys(map_remove($grid-breakpoints, xs)) {
+  @include media-breakpoint-up($breakpoint) {
+    @each $key, $value in $sizes {
+      .mf-h-#{$breakpoint}-#{$key} {
+        height: $value;
+      }
+    }
+  }
+}

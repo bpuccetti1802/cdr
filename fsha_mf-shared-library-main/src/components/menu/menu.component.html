@@ -1,0 +1,25 @@
+<div class="accordion position-relative" id="sidebarAccordion">
+  <div class="accordion-item">
+    <h6 class="accordion-header" id="headingOne">
+      <button class="accordion-button collapsed d-flex justify-content-between" type="button" data-bs-toggle="collapse"
+        data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+        {{label}}
+        <app-rc-icon [attr]="{ role: 'img' }" class="icon-sm icon ms-1 d-flex align-items-center rotate-icon-custom"
+          name="it-expand" color="primary" />
+      </button>
+    </h6>
+    <div id="collapseOne" class="position-absolute accordion-collapse collapse w-100" aria-labelledby="headingOne"
+      data-bs-parent="#sidebarAccordion">
+      <div class="p-0">
+        <nav class="navbar it-navscroll-wrapper navbar-expand-lg it-left-side" data-bs-navscroll>
+          <div class="link-list-wrapper w-100">
+            <ul class="link-list w-100">
+              <app-recursive-sidebar [items]="items" [parentPath]="parentPath"
+                [level]="level + 1"></app-recursive-sidebar>
+            </ul>
+          </div>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>

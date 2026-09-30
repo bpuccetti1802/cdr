@@ -1,0 +1,274 @@
+@import '../../styles/theme/palette';
+
+.list-item:hover {
+  background-color: map-get($colors, 'grey', '200');
+}
+
+.rc-wrapper-container {
+  min-height: 0px;
+  max-height: 500px;
+}
+
+.form-check {
+  margin-bottom: 0;
+}
+
+.toggles label {
+  margin-bottom: 0;
+}
+
+.scrollable {
+  position: relative;
+  max-height: 390px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: auto;
+}
+
+.scrollable tr:focus {
+  outline: none;
+}
+
+.scrollable table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.scrollable thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: map-get($colors, primary, main);
+  color: white;
+}
+
+.icon-style {
+  cursor: pointer;
+  color: map-get($colors, 'grey', '600') !important;
+}
+
+.dropdown-li {
+  cursor: pointer;
+}
+
+.no-data {
+  height: 300px;
+}
+
+.t-container {
+  min-height: 0px;
+  max-height: 500px;
+}
+
+/* Tabella full width */
+.rc-table-full-width {
+  width: 100%;
+}
+
+/* Dropdown menu */
+.rc-dropdown {
+  position: absolute;
+  background-color: white;
+  border-radius: 4px;
+  z-index: 9999;
+}
+
+/* Posizionamento dinamico del dropdown */
+.rc-dropdown-position {
+  top: var(--rc-dropdown-top);
+  left: var(--rc-dropdown-left);
+}
+
+/* Lista link nel dropdown */
+.rc-link-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Singolo elemento della lista */
+.rc-dropdown-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: block;
+
+  &:hover {
+    background-color: map-get($colors, 'grey', '200');
+  }
+}
+
+.rc-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  transition:
+    box-shadow 0.3s ease-in-out,
+    transform 0.2s ease-in-out;
+
+  &:hover,
+  &:focus {
+    transform: scale(1.07);
+    background-color: rgba(map-get($colors, secondary, darker), 0.05);
+  }
+
+  &:active {
+    transform: scale(1.03);
+  }
+}
+
+.col-width-max_content {
+  width: max-content;
+}
+
+.table td {
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+}
+
+/* Righe più compatte */
+.table.table-compact td {
+  padding-top: 0rem;
+  padding-bottom: 0rem;
+  line-height: 1.3;
+}
+
+.rc-dropdown-item.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rc-columns-gear-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.5rem;
+}
+
+.rc-gear-btn {
+  background-color: map-get($colors, secondary, main);
+  padding: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rc-columns-tooltip {
+  position: absolute;
+  z-index: 9999;
+  margin-top: 0.5rem;
+  right: 0;
+  background: #fff;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  min-width: 220px;
+}
+
+.rc-columns-list {
+  max-height: 240px;
+  overflow: auto;
+}
+
+.rc-colums-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  transition:
+    box-shadow 0.3s ease-in-out,
+    transform 0.2s ease-in-out;
+
+  &:hover,
+  &:focus {
+    transform: scale(1.07);
+  }
+
+  &:active {
+    transform: scale(1.03);
+  }
+}
+
+.rc-columns-popover {
+  // dimensioni e look
+  min-width: 280px;
+  max-width: 340px;
+  border-radius: 12px;
+  background: #fff;
+
+  // padding interno coerente
+  padding: 14px 14px 12px 14px;
+}
+
+.rc-columns-popover__header {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  // lascia spazio alla X senza spostare il titolo
+  padding-right: 32px;
+  margin-bottom: 10px;
+}
+
+.rc-columns-popover__title {
+  line-height: 1.2;
+  margin: 0;
+}
+
+.rc-columns-popover__close {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+
+  width: 28px;
+  height: 28px;
+  padding: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 999px;
+
+  // opzionale: hover più “button-like”
+  &:hover {
+    background: rgba(0, 0, 0, 0.06);
+  }
+}
+
+.rc-columns-popover__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  max-height: 280px;
+  overflow: auto;
+
+  // per evitare scrollbar che “mangia” spazio
+  padding-right: 4px;
+}
+
+.rc-columns-popover__item {
+  display: block;
+}
+
+.rc-columns-popover__close app-rc-icon {
+  opacity: 0.8;
+}
+
+.rc-columns-popover__close:hover app-rc-icon {
+  opacity: 1;
+}
+
+.rc-table-full-width td[rowspan] {
+  vertical-align: middle !important;
+}

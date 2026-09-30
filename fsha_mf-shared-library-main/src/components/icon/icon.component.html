@@ -1,0 +1,19 @@
+<ng-container *ngIf="isBootstrapIcon">
+  <svg
+    #iconBootstrapRef
+    [attr.role]="attr && attr.role"
+    [attr.aria-hidden]="attr && attr['aria-hidden']"
+  >
+    <use [attr.xlink:href]="icon"></use>
+  </svg>
+</ng-container>
+
+<ng-container *ngIf="!isBootstrapIcon && !isFontAwesomeIcon">
+  <div #iconSvgRef class="svg-container" [innerHTML]="svgIcon"></div>
+</ng-container>
+
+<ng-container *ngIf="isFontAwesomeIcon">
+  <fa-icon  #iconFontAwesomeRef [icon]="iconMap[name]" ></fa-icon>
+</ng-container>
+
+

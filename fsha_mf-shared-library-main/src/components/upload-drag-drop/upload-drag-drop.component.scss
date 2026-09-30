@@ -1,0 +1,143 @@
+.rc-upload {
+  width: 100%;
+  display: block;
+
+  &__dropzone {
+    position: relative;
+    width: 100%;
+    min-height: 180px;
+    border: 2px dashed var(--bs-border-color, #ced4da);
+    border-radius: 1rem;
+    background: var(--bs-body-bg, #fff);
+    padding: 1.25rem;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "icon texts donut"
+      "details details donut";
+    gap: 1rem;
+    align-items: center;
+    cursor: pointer;
+    transition: border-color .2s ease, background-color .2s ease, box-shadow .2s ease;
+
+    &:hover {
+      border-color: var(--bs-primary);
+      box-shadow: 0 0 0 .25rem rgba(var(--bs-primary-rgb, 13,110,253), .1);
+    }
+
+    &--dragover {
+      background: rgba(var(--bs-primary-rgb, 13,110,253), .05);
+      border-color: var(--bs-primary);
+    }
+
+    &--loading {
+      cursor: progress;
+    }
+
+    &--success {
+      border-color: var(--bs-success);
+    }
+  }
+
+  &__icon {
+    grid-area: icon;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+  }
+
+  &__texts {
+    grid-area: texts;
+    min-width: 0; // evita overflow
+  }
+
+  &__title {
+    font-weight: 600;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  &__subtitle {
+    color: var(--bs-secondary-color, #6c757d);
+    margin-top: .25rem;
+
+    .rc-upload__browse {
+      text-decoration: underline;
+      color: var(--bs-primary);
+    }
+  }
+
+  &__accept {
+    margin-top: .25rem;
+  }
+
+  &__donut {
+    grid-area: donut;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 64px;
+
+    .progress-donut {
+      width: 64px;
+      height: 64px;
+    }
+  }
+
+  &__details {
+    grid-area: details;
+    min-width: 0;
+  }
+
+  &__filename {
+    font-size: .95rem;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__meta {
+    font-size: .85rem;
+  }
+
+  &__success {
+    position: absolute;
+    right: .75rem;
+    bottom: .75rem;
+  }
+
+  &__input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none; // click delegato al container
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .rc-upload__dropzone {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "texts donut"
+      "details donut"
+      "icon donut";
+    min-height: 200px;
+  }
+
+  .rc-upload__icon {
+    justify-content: flex-start;
+  }
+}
+
+.disabled {
+  pointer-events: auto;
+  opacity: 0.5;
+  cursor: not-allowed;
+  label {
+    pointer-events: none;
+  }
+}
+
