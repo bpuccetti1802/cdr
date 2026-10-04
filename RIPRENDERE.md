@@ -43,6 +43,45 @@ chiavetta con i documenti di progetto.
 
 ---
 
+## 1-bis. Lavorare su due postazioni senza perdere niente
+
+Il repository è già scaricato? Allora non si riclona, si aggiorna:
+
+```bash
+cd "Comune di Roma"
+git pull --ff-only
+```
+
+⚠️ **`--ff-only` non è un vezzo.** Se le due postazioni hanno divergito, rifiuta invece di
+fondere: te ne accorgi subito, con il repository intatto. Il motivo è che **163 dei 743
+file tracciati sono binari** — i `.docx`, gli `.xlsx`, i PNG — e git non sa fondere un
+`.docx`. Se la stessa versione è stata toccata di qua e di là, non esiste una fusione:
+esiste solo scegliere quale copia buttare, e con essa le modifiche a mano e i commenti di
+Word che portava.
+
+**La disciplina, in due righe:**
+
+| Quando | Comando |
+|---|---|
+| prima di lasciare una postazione | `git push` |
+| prima di cominciare sull'altra | `git pull --ff-only` |
+
+Se il pull rifiuta, da qualche parte è rimasta una spinta non fatta: è il momento di
+guardare `git log --oneline origin/main..main` sull'altra macchina, non di forzare.
+
+Per non doverci pensare, si può renderlo il comportamento predefinito **di questo
+repository**:
+
+```bash
+git config pull.ff only
+```
+
+⚠️ Chiudere Word prima di aggiornare. Un documento aperto lascia un file `~$…docx` e,
+soprattutto, Word riscrive il `.docx` al salvataggio: un `pull` che arriva nel mezzo
+produce esattamente il conflitto che si vuole evitare.
+
+---
+
 ## 2. Prerequisiti dell'ambiente
 
 ```bash
