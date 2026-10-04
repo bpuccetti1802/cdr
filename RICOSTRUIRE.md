@@ -14,27 +14,33 @@ cd "Comune di Roma"
 
 ## 2. Rimettere i sorgenti applicativi
 
-Dal GitLab interno del Comune (serve la VPN):
+Lo fa uno script, generato dai remoti reali dei 129 moduli:
 
 ```bash
-# esempio: ciascun modulo è un repository a sé
-git clone https://gitlab.ecaas.datacenter.comune.roma/sipo/cross/Signps.git  cross/Signps
-git clone https://gitlab.ecaas.datacenter.comune.roma/sipo/sql.git           sipo-root/sql
-# … e così per gli altri moduli di common/, cross/, back-end/, front-end/, sipo-root/
+bash ripristina-sorgenti.sh          # tutto
+bash ripristina-sorgenti.sh ansc     # solo ANSC, pubblico, senza VPN
+bash ripristina-sorgenti.sh sipo     # solo i 129 moduli SIPO, con la VPN
 ```
 
-Il repository di ANSC è pubblico:
+È idempotente: ciò che è già presente lo salta senza toccarlo, quindi si può rilanciare.
 
-```bash
-git clone https://github.com/italia/ansc.git ansc
-```
+Che cosa prende, e da dove:
 
-La documentazione ANPR (`anpr-9.2.9/`) proviene dal pacchetto Sogei già in uso.
+| Cartella | Moduli | Origine |
+|---|---:|---|
+| `ansc/` | 1 | `github.com/italia/ansc` — **pubblico, nessuna VPN** |
+| `back-end/` | 53 | GitLab interno, **serve la VPN** |
+| `front-end/` | 35 | GitLab interno |
+| `common/` | 26 | GitLab interno |
+| `cross/` | 11 | GitLab interno |
+| `sipo-root/` | 4 | GitLab interno (questi quattro stanno alla radice di `sipo/`, non sotto `sipo-root/`) |
 
-⚠️ **Non copiare le cartelle dei sorgenti da una postazione all'altra con una chiavetta o
-con un servizio di sincronizzazione.** Contengono sette PKCS#12 di produzione, le password
-dei keystore in chiaro e codici fiscali reali di operatori: ogni copia è una copia di
-quelli. Il clone dal GitLab li porta comunque, ma resta dentro il perimetro dell'ente.
+`anpr-9.2.9/` non si clona: è il pacchetto di documentazione Sogei già in uso.
+
+⚠️ **Non copiare queste cartelle da una postazione all'altra con una chiavetta o con un
+servizio di sincronizzazione.** Contengono PKCS#12 di produzione, le password dei keystore
+in chiaro e codici fiscali reali di operatori: ogni copia è una copia di quelli. Il clone
+dal GitLab li porta comunque, ma resta dentro il perimetro dell'ente.
 
 ## 3. Che cosa manca e non si ricostruisce
 
