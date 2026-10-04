@@ -675,6 +675,36 @@ un refuso; `model_evento.yaml` referenzia **ANSC_134 in modo condizionato al cas
 1317). Perciò l'unicità del catalogo è su **`(COD_DECODIFICA_ANSC, NOME)`** e non sul solo codice,
 altrimenti il carico completo violerebbe il vincolo. Risoluzione per caso d'uso = **OP-28**.
 
+**⚠️ LA STRUTTURA DEI DATI DI R901 — verificata il 04/10/2026 su `ansc/docs/openapi/R901_config_decodifica.yaml`
+(v1.5.0) + `base_servizi.yaml` + il corpus. NON rifare la verifica, e NON cercarla nel contratto: per metà
+non c'è.** Entrambe le operazioni sono **POST** e portano `{version}` nel percorso.
+**`/config/decodifica/elenco/{version}`** — richiesta: **solo l'involucro**, nessun parametro proprio.
+Risposta: `elenco[]` di **`ModelSintesiDecodifica`**, **tre campi, tutti stringa**: `id` ("1", è l'ANSC_nn) ·
+`descrizione` ("dec_tipo_evento") · **`versione`** ("1.4.0", la versione della singola tabella — è l'appiglio
+dell'intercetto delle revisioni). `id`+`descrizione` compongono **esattamente** il nome del file nel
+repository: `1_dec_tipo_evento.csv`.
+**`/config/decodifica/dettaglio/{version}`** — richiesta: `idDecodifica` · `formato` (solo `'csv'`
+documentato, default csv) · `compressione` ('true'/'false', **default `true`**). Risposta: `idDecodifica`,
+`formato`, `compressione` e **`contenuto`: `type: string`, «Il contenuto binario, base64»**. ⚠️ **Il
+contratto si ferma qui: la struttura dei dati NON è dichiarata.** Si ricava solo dal corpus — ed è la
+ragione per cui non si trova.
+**Involucro comune** (`base_servizi.yaml`): `AnscRequest` = `testataRichiesta` (idComune,
+idOperazioneComune, dataOraRichiesta, nomeApplicativo, versioneApplicativo, fornitoreApplicativo) +
+`datiPaginazione`; `AnscResponse` = `testataRisposta` (idComune, idOperazioneComune, idOperazione,
+**idEsito**) + `datiPaginazione` + `errors[]`.
+**Il CSV dentro `contenuto`**: separato da **virgola**, prima riga di intestazione, **tutti i campi fra
+doppi apici**, date `YYYY-MM-DD HH:MM:SS.0`, fine validità aperta = `9999-12-31`. ⚠️ **Non è un tracciato,
+sono quattro** (vedi il blocco precedente): chi assume cinque colonne **fallisce su 5 file su 145**.
+⚠️ **Tre lacune da dichiarare a chi implementa**: (a) **l'algoritmo di compressione non è nominato in alcuna
+fonte** — cercato `gzip|zip|deflate` ovunque, zero riscontri — e il default è `true`, quindi è il caso
+ordinario, non l'eccezione; (b) **`id` non è una chiave**: 143 identificativi per 145 file, quindi chiedendo
+il dettaglio di `134` o `135` **non è determinato quale file si ottenga** (è OP-28, ma sta a monte, nel
+servizio, non solo nel nostro modello); (c) gli identificativi **non sono densi**: vanno da 1 a 183 con
+**40 buchi**, quindi non si può iterare da 1 a N — l'elenco è l'unica via per sapere che cosa esiste.
+⚠️ Il PDF in `Caratteristiche_servizi/` è il **rendering dello stesso contratto**: verificato estraendone il
+testo, non aggiunge nulla. **Da riportare** nella pagina «Dizionari ANSC» del disegno e nel capitolo dei
+dizionari dell'analisi, dove oggi il tracciato è citato ma non riportato per intero.
+
 **Prossimi passi (Open Point, 52 voci)** — ⚠️ **prima di aggiungerne uno, contare le righe della tabella
 OP nel .docx**: la numerazione è arrivata a OP-52 e non coincide più con quanto scritto qui in passato.
 **OP-01 CHIUSO** (firma USC richiesta, per atto, OTP, non
@@ -1134,12 +1164,38 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   vale solo dove la condizione tace. Su Morte_001: 38 campi con la vecchia lettura, **85** con questa.
   ⚠️ La semantica ufficiale **non è pubblicata in nessuna fonte ANSC**: da chiedere a Sogei (open point).
   ⚠️ Nei CSV c'è una **riga di intestazione ripetuta per file** (374 in tutto): 67.674 righe = 67.300 di dato.
-- **`ANALISI_Front-End-Angular_v0.3.docx`** (22/09/2026) — impostazione del front-end Angular 18 sulla
+- **`ANALISI_Front-End-Angular_v0.6.docx`** (04/10/2026, **corrente**) — impostazione del front-end Angular 18 sulla
   libreria condivisa `fsha_mf-shared-library-main/` (micro-frontend, shell che condivide la libreria,
   **caricamento differito oggi non adottato → RF-FE-11/OP-FE-12**). ⚠️ **Nessun riferimento a Keycloak**
   (non confermato: l'autenticazione è rinviata all'impianto di sicurezza e profilazione, OP-FE-11).
   v0.1/v0.2 generate da `strumenti/genera_frontend_angular.py`; **dalla v0.3 si modifica il file reale**
-  (`strumenti/fe_v0_3.py`) perché porta commenti dell'utente. Figure: `strumenti/diagrammi_frontend.py img`.
+  (`strumenti/fe_v0_3.py`). Figure: `strumenti/diagrammi_frontend.py img`.
+  **v0.5** (`strumenti/fe_v0_5.py`): certificati di postazione assegnati al remote **mfOperation**,
+  testata e piè di pagina sul nuovo `Footer cdr.jpeg`, sottocapitolo sulla **deroga del menu da ConfigMap**.
+  **v0.6** (`strumenti/fe_v0_6.py`): ⚠️ la mappa delle schermate copriva **undici** voci con il back-office
+  ridotto a tre righe aggregate; ora porta l'inventario delle **diciassette pagine** del back-office con i
+  loro componenti di libreria. Corretti i conteggi («venticinque schermate», «cinque funzioni da
+  costruire») e l'elenco dei micro-frontend, che non comprendeva mfOperation. 16 punti aperti.
+- **`DISEGNO_Back-Office_ANSC_v0.6.docx`** (04/10/2026, **corrente**) — il disegno del back-office pagina
+  per pagina: **16 pagine**, ciascuna con wireframe, scopo, **tabelle sottese** e **campi, colonne e
+  azioni**. Porta **6 commenti di Word** e **22 punti aperti (BO-1…BO-22)**. Capitoli propri: la cornice
+  (testata e piè di pagina), il **registro delle pagine e del menu** (4 tabelle `ANSC_CFG_APPLICAZIONE`/
+  `_PAGINA`/`_PAGINA_ABILITAZ`/`_TEMA`), la copertura del modello dati, le indicazioni per Kubernetes.
+  Wireframe: `strumenti/wireframe_bo.py` (primitive) + `pagine_bo.py` e `pagine_bo_v2.py` (le pagine).
+  ⚠️ **Figure e piè di pagina sono una coppia**: la v0.6 ha dovuto risostituire **tutte e 18 le figure**,
+  rimaste al piè di pagina a tre colonne dopo che la primitiva era stata riscritta — rigenerare i PNG non
+  aggiorna il `.docx`, serve riscriverne il blob. ⚠️ Si legge insieme all'analisi del front-end: qui le
+  pagine, lì i componenti ([R2] ↔ [F8]).
+- **`ANALISI_Identita-Profilazione-IAM_v0.3.docx`** (02/10/2026, **corrente**) — il documento unico su
+  identità, profilazione e IAM, che accorpa l'AS-IS e le due analisi del committente. Il TO-BE è una
+  **scala di soluzioni S0…S4** dalla più conservativa alla più coerente, con dentro S3 la variante del
+  **BFF**. ⚠️ **S0 non è un'alternativa: è il pavimento** — nessuna delle altre chiude i servizi che oggi
+  rispondono senza gettone. 19 punti aperti (PI-01…PI-19). Script `strumenti/genera_identita_iam.py`,
+  `v0_2_iam_soluzioni.py`, `v0_3_iam_bff.py`; figure `strumenti/diagrammi_iam.py img`.
+- **`ASIS_Autenticazione-Profilazione_SIPO_v0.2.docx`** — la ricognizione dello stato di fatto:
+  ⚠️ **due sicurezze che convivono**, quella delle **persone** debole (SIPO non autentica, si fida di
+  header di portale, permesso per utente e non per ruolo) e quella delle **macchine** matura
+  (PKI/keystore/SAML nel client ANPR, registro postazioni). 12 punti aperti + 21 rilievi.
 - **`PROCEDURA_Formazione-Atto_SIPO-ANSC_v0.1.docx`** (10/09/2026) — il percorso dell'operatore in
   **otto passi**, dal menu di SIPO all'atto firmato, generato da `strumenti/genera_formazione_atto.py`
   **a partire dal template DAD** (svuotamento del corpo dopo l'elemento 29, come `genera-spec-api.py`).

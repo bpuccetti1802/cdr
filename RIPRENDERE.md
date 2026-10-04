@@ -77,12 +77,18 @@ eccezione di `workbook_nascite_morte.py`.
 
 | Documento | Versione | Commenti di Word | Punti aperti |
 |---|---|---:|---|
-| `ANALISI_Integrazione-ANSC` | **v3.31** | 22 | 67 (OP-1…OP-67) |
-| `DISEGNO_Back-Office_ANSC` | **v0.5** | 6 | 17 (BO-1…BO-17) |
+| `ANALISI_Integrazione-ANSC` | **v3.31** | 22 | 67 (OP-01…OP-67) |
+| `DISEGNO_Back-Office_ANSC` | **v0.6** | 6 | 22 (BO-1…BO-22) |
+| `ANALISI_Front-End-Angular` | **v0.6** | — | 16 (OP-FE-1…OP-FE-16) |
+| `ANALISI_Identita-Profilazione-IAM` | **v0.3** | — | 19 (PI-01…PI-19) |
 | `ASIS_Autenticazione-Profilazione_SIPO` | **v0.2** | — | 12 (PA-1…PA-12) + 21 rilievi |
-| `ANALISI_Front-End-Angular` | **v0.4** | — | OP-FE |
 | `PROCEDURA_Formazione-Atto_SIPO-ANSC` | v0.1 | — | — |
 | `SPEC_API_Integrazione-ANSC` | v0.1 | — | PS-1…PS-7 |
+
+⚠️ **Due documenti si rimandano a vicenda e vanno letti insieme**: il disegno del
+back-office descrive le pagine (campi, bottoni, tabelle sottese), l'analisi del front-end
+le mappa sui componenti della libreria condivisa. Il primo cita il secondo come `[R2]`,
+il secondo cita il primo come `[F8]`.
 
 ⚠️ I `~$…docx` che compaiono nella cartella indicano solo documenti **aperti in Word**:
 vanno chiusi prima di rigenerare, altrimenti il salvataggio fallisce. Non sono versionati.
@@ -114,6 +120,13 @@ vanno chiusi prima di rigenerare, altrimenti il salvataggio fallisce. Non sono v
 
 ## 5. Che cosa è rimasto in sospeso
 
+**Pronto da riportare nei documenti, e sarebbe perso se non stesse qui.**
+
+- **La struttura dei dati di R901**, verificata il 04/10 sul contratto e sul corpus. Va
+  portata nella pagina «Dizionari ANSC» del disegno e nel capitolo dei dizionari
+  dell'analisi, dove oggi il tracciato è citato ma non riportato per intero. I numeri
+  sono in `CLAUDE.md`, sezione «La struttura dei dati di R901»: non rifare la verifica.
+
 **Da decidere, in ordine di peso.**
 
 - **OP-67 / BO-17 — corrispondenze molti-a-uno nella riconciliazione.** La chiave adottata
@@ -123,13 +136,30 @@ vanno chiusi prima di rigenerare, altrimenti il salvataggio fallisce. Non sono v
   si fa sulle tabelle `CONF_*` raccordate**, non sul contratto di ANSC: sono trenta
   decodifiche, per quattro la tabella di SIPO è già indicata nel foglio del Comune. Se il
   caso esiste, la chiave va allargata al valore di SIPO.
+- **BO-18 — su quale tabella poggi il registro delle postazioni**, e dove risieda il
+  contenitore PKCS#12. La funzione esiste già in SIPO come servizio, alimentata da un
+  programma a riga di comando: il registro è suo, e va accertato prima di realizzare
+  l'interfaccia disegnata nella pagina «Postazioni e certificati».
+- **BO-19 — data di caricamento, operatore e scadenza nel registro dei certificati.**
+  Le schermate fornite mostrano solo nome e sede. Senza la scadenza, un certificato
+  scaduto si manifesta come un guasto allo sportello invece che come un avviso.
+- **BO-22 — la collisione di nomi fra `mfe-operativa` e `mfOperation`.** Due remote
+  diversi con nomi quasi identici: il primo sono le pagine sugli atti, il secondo le
+  operazioni di postazione. Da rinominare prima che entrino nei manifesti.
+- **BO-21 / OP-FE-13 — quando si rientra dal menu su ConfigMap** al registro su base
+  dati. La deroga è dichiarata temporanea e vale per il primo rilascio: senza una data di
+  riesame diventa l'impianto.
+- **BO-20 — accessibilità e note legali nel piè di pagina istituzionale**, che il
+  `Footer cdr.jpeg` non porta. Non è nel nostro perimetro, ma va posto a chi governa il
+  design system.
 - **BO-16 — ambiente e versione nella cornice.** Il committente non intende modificare
-  l'interfaccia istituzionale; restano raccomandazioni nel testo. Da riprendere quando ci
-  sarà l'occasione di parlarne con il cliente.
+  l'interfaccia istituzionale; restano raccomandazioni nel testo.
 - **BO-15 — l'area dedicata sotto la testata**, che la shell sta predisponendo: quando
   sarà pronta, il distintivo della sessione OTP vi si trasferisce.
 - **BO-10 — se il registro delle pagine debba diventare un registro d'ente** e non solo
   del back-office ANSC.
+- **PI-19 — se le applicazioni Angular debbano adottare un BFF**, e con quale
+  granularità. Oggi conservano il gettone in `localStorage`.
 
 **Da fare, se si decide di farlo.**
 
@@ -139,9 +169,9 @@ vanno chiusi prima di rigenerare, altrimenti il salvataggio fallisce. Non sono v
 - Riformulare **OP-15 e OP-16** dell'analisi: danno il certificato server e il registro
   delle postazioni come cose da progettare, mentre un registro con certificati, firma e
   arruolamento **esiste già** in SIPO e alimenta il canale ANPR. Non li chiude, ma li
-  cambia di natura — da «costruire» a «estendere».
-- Completare la pubblicazione su GitHub: manca solo registrare la chiave pubblica
-  (`~/.ssh/id_ed25519_github.pub`) e creare il repository privato vuoto.
+  cambia di natura — da «costruire» a «estendere». ⚠️ Si lega a BO-18.
+- **La clausola di chiusura (`anyRequest()`)**: è l'unico rilievo dell'AS-IS realizzabile
+  in giorni e non in mesi, e finché resta aperto il resto conta poco.
 
 ---
 
