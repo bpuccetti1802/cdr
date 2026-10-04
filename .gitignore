@@ -30,3 +30,8 @@ __pycache__/
 #    nemmeno privato. Il QR FortiToken è il seme del secondo fattore.
 /accessi comune di Roma/
 Richiesta utenza Pitech.pdf
+
+# 6. L'archivio delle versioni superate dei documenti: 63,6 MB, cioè un terzo
+#    del repository, per materiale che le versioni correnti hanno già sostituito.
+#    Resta sul disco, non viene pubblicato.
+/Documenti finali/Archivio analisi *.zip
