@@ -173,6 +173,14 @@ def tabella(doc, prima, righe, modello, larghezze=None):
         for j, w in enumerate(larghezze):
             for riga in t.rows:
                 riga.cells[j].width = Inches(w)
+        # ⚠️ Le larghezze di cella (w:tcW) non aggiornano la griglia (w:tblGrid/w:gridCol),
+        # che `add_table` crea a colonne uguali: finché il documento non passa da Word —
+        # che la ricalcola — la tabella si impagina sulla griglia e non sulle celle.
+        # Va scritta anche quella, altrimenti la tabella nuova è l'unica a colonne uguali.
+        griglia = t._tbl.find(qn('w:tblGrid'))
+        if griglia is not None:
+            for col, w in zip(griglia.findall(qn('w:gridCol')), larghezze):
+                col.set(qn('w:w'), str(int(round(Inches(w).twips))))
     t._tbl.getparent().remove(t._tbl)
     prima.addprevious(t._tbl)
     return t

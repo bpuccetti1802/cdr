@@ -160,28 +160,40 @@ def pagina(larg, alt, briciole, titolo, distintivo=None, azioni_dx=(), sotto=Non
     return im, dr, y
 
 
-def pie_pagina(dr, larg, y, voci_menu=('Home', 'Supervisione atti', 'Dizionari')):
-    """Il piè di pagina istituzionale: tre colonne su fondo scuro, poi la riga legale."""
-    h = 210
+def pie_pagina(dr, larg, y, voci_menu=None):
+    """Il piè di pagina istituzionale di Roma Capitale.
+
+    ⚠️ Due colonne, non tre: la versione aggiornata del design system non prevede più la
+    colonna «MENU». Il parametro `voci_menu` resta per compatibilità ed è ignorato.
+    """
+    h = 214
     dr.rectangle([0, y, larg, y + h], fill='#3a3d42')
     dr.text((44, y + 22), 'ROMA', font=fnt(F_BLD, 26), fill='white')
     _stemma(dr, 148, y + 22, 28, 'white')
-    colonne = [
-        (44, 'CONTATTI', ['Piazza del Campidoglio 1 - 00186 (RM)', 'Partita IVA 01057861005',
-                          'Codice Fiscale 02438750586', '',
-                          'Ufficio Responsabile Protezione Dati (RPD)',
-                          'Chiama Roma 060606', 'Tutti i contatti']),
-        (430, 'MENU', list(voci_menu)),
-        (760, 'SEGUICI SU', ['f  X  in  ig  yt', '', 'INFORoMA']),
-    ]
-    for cx, tit, righe in colonne:
-        dr.text((cx, y + 76), tit, font=fnt(F_BLD, 13), fill='white')
-        dr.line([(cx, y + 96), (cx + 300, y + 96)], fill='#5a5d63')
-        yy = y + 106
-        for r in righe:
-            if r:
-                dr.text((cx, yy), r, font=fnt(F_BLD if r.isupper() else F_REG, 11), fill='white')
-            yy += 15
+
+    dr.text((44, y + 76), 'CONTATTI', font=fnt(F_BLD, 13), fill='white')
+    dr.line([(44, y + 96), (420, y + 96)], fill='#5a5d63')
+    yy = y + 106
+    for r, grassetto in (('Piazza del Campidoglio 1 - 00186 (RM)', True),
+                         ('Partita IVA 01057861005', False),
+                         ('Codice Fiscale 02438750586', False),
+                         ('', False),
+                         ('Ufficio Responsabile Protezione Dati (RPD)', True),
+                         ('Chiama Roma 060606', True),
+                         ('Tutti i contatti', True)):
+        if r:
+            dr.text((44, yy), r, font=fnt(F_BLD if grassetto else F_REG, 11), fill='white')
+        yy += 14
+
+    dr.text((470, y + 76), 'SEGUICI SU', font=fnt(F_BLD, 13), fill='white')
+    dr.line([(470, y + 96), (846, y + 96)], fill='#5a5d63')
+    cx = 470
+    for sigla in ('f', 'X', 'in', 'ig', 'yt', 'wa', 'tt'):
+        dr.ellipse([cx, y + 110, cx + 26, y + 136], fill='white')
+        centra(dr, sigla, fnt(F_BLD, 11), cx + 13, y + 117, '#3a3d42')
+        cx += 34
+    dr.text((470, y + 152), 'INFORoMA', font=fnt(F_BLD, 12), fill='white')
+
     dr.rectangle([0, y + h, larg, y + h + 40], fill='#2e3136')
     dr.text((44, y + h + 13), 'Privacy', font=fnt(F_REG, 12), fill='white')
     dr.text((140, y + h + 13), 'Cookie Policy', font=fnt(F_REG, 12), fill='white')
@@ -396,7 +408,7 @@ def salva(im, dest, nome, margine=26, pie=True, voci_menu=None):
                 break
     fine = min(alt, ultima + margine)
     if pie:
-        alto = fine + 250
+        alto = fine + 254
         nuova = Image.new('RGB', (larg, alto), 'white')
         nuova.paste(im.crop((0, 0, larg, fine)), (0, 0))
         dr = ImageDraw.Draw(nuova)

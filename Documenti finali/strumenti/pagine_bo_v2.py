@@ -249,10 +249,70 @@ def riconciliazione_dettaglio(dest):
     return W.salva(im, dest, 'bo_riconciliazione_dettaglio.png')
 
 
+# ───────────────────────── 5. postazioni e certificati (remote mfOperation)
+def certificati(dest):
+    """La gestione dei certificati di postazione, come da «screen-app-certificati».
+
+    ⚠️ Il disegno riprende le schermate reali fornite dal committente: ricerca per nome,
+    elenco con menu di riga, modulo di caricamento che sostituisce la riga di ricerca.
+    """
+    im, dr, y = W.pagina(L, 980,
+                         ['Home', 'Integrazione ANSC', 'Postazioni e certificati'],
+                         'Postazioni e certificati',
+                         sotto='Il registro dei certificati abilitati a dialogare con ANPR e '
+                               'con ANSC. Ogni riga è una postazione.')
+
+    dr.text((X, y), 'Modo ricerca', font=fnt(F_BLD, 12), fill=W.MUTED)
+    y += 20
+    W.campo(dr, X, y, 420, 'Nome Certificato', 'Inserisci il nome del certificato')
+    W.bottoni(dr, X + 440, y + 3, [('CERCA', W.ROSSO, True), ('ANNULLA', W.MUTED, True),
+                                   ('CARICA CERTIFICATO', W.BARRA, True)])
+    y += 64
+
+    dr.text((X, y), 'Modo inserimento — sostituisce la riga di ricerca',
+            font=fnt(F_BLD, 12), fill=W.MUTED)
+    y += 20
+    W.campo(dr, X, y, 300, 'Nome Certificato', '058091-PC-2611')
+    W.campo(dr, X + 316, y, 240, 'Password', '••••••••')
+    W.bottoni(dr, X + 572, y + 3, [('SELEZIONA CERTIFICATO', W.BARRA, True)])
+    dr.text((X + 790, y + 12), '058091-PC-2611.p12', font=fnt(F_REG, 12), fill=W.INK)
+    W.bottoni(dr, X + 980, y + 3, [('SALVA', W.ROSSO, True), ('ANNULLA', W.MUTED, True)])
+    y += 70
+
+    y = W.tabella(dr, X, y, C,
+                  ['Certificato', 'Sede', 'Caricato il', 'Caricato da', 'Stato', 'Azioni'],
+                  [260, 140, 150, 180, 180, 282], [
+                      ['058091-PC-2593', '058091', '12/03/2026', 'm.rossi',
+                       ('ATTIVO', W.VERDE), ['vedi', 'del']],
+                      ['058091-PC-0300', '058091', '12/03/2026', 'm.rossi',
+                       ('ATTIVO', W.VERDE), ['vedi', 'del']],
+                      ['058091-PC-0088', '058091', '04/09/2026', 'g.bianchi',
+                       ('ATTIVO', W.VERDE), ['vedi', 'del']],
+                      ['058091-PC-0304', '058091', '04/09/2026', 'g.bianchi',
+                       ('IN SCADENZA', W.GIALLO), ['vedi', 'del']],
+                      ['058091-PC-2611', '058091', '02/10/2026', 'm.rossi',
+                       ('ATTIVO', W.VERDE), ['vedi', 'del']],
+                  ])
+    y = W.paginazione(dr, X, y + 4, C, totale='7', pagine=2)
+
+    y = W.nota(dr, X, y, C,
+               'La cancellazione passa dal menu di riga e chiede conferma in una finestra '
+               'che nomina il certificato: «Sei sicuro di voler eliminare il certificato '
+               '058091-PC-2611?». L’esito del caricamento è una notifica in alto a destra, '
+               'non un cambio di pagina.')
+    W.nota(dr, X, y, C,
+           'La password del contenitore PKCS#12 non va mostrata in chiaro mentre si digita, '
+           'né conservata dopo il caricamento: serve solo ad aprire il file. Le colonne '
+           '«Caricato il», «Caricato da» e «Stato» non sono nelle schermate fornite e sono '
+           'una proposta: senza, il registro non dice quando un certificato scade né chi '
+           'l’ha messo.', W.ROSSO)
+    return W.salva(im, dest, 'bo_certificati.png')
+
+
 if __name__ == '__main__':
     dest = sys.argv[1] if len(sys.argv) > 1 else 'img'
     base = os.path.dirname(os.path.abspath(__file__))
     dest = dest if os.path.isabs(dest) else os.path.join(base, dest)
     os.makedirs(dest, exist_ok=True)
-    for f in (mfe, chrome, amministrazione, riconciliazione_dettaglio):
+    for f in (mfe, chrome, amministrazione, riconciliazione_dettaglio, certificati):
         print('  scritto', f(dest))

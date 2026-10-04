@@ -1,0 +1,1003 @@
+===============================================================================
+ SIPO - ROMA CAPITALE
+ ANALISI AS-IS DEL SISTEMA DI PROFILAZIONE / AUTENTICAZIONE / AUTORIZZAZIONE
+===============================================================================
+ Data analisi     : 30/09/2026
+ Base dell'analisi: sorgenti presenti in C:\Users\FabioGalliani\Desktop\roma-capitale
+                    (cartelle target/ escluse)
+ Perimetro        : - coppia FE/BE campione: DecessiWeb (front-end/decessi-web)
+                      e DecessiBE (back-end/decessi-be)
+                    - librerie comuni: ProfilazioneUtente (common/profilazione-utente),
+                      RestClient (common/rest-client), RestSecurity (common/rest-security)
+                      + entity di AnagrafeEntities usate dalla sicurezza
+                    - servizi BE chiamati da altri BE/FE: StatoCivileBE
+                      (back-end/statocivile-be) e All-Anpr (back-end/all-anpr-sipo)
+                    - database: tabelle di profilazione nello schema ANAG_USR
+                      (DDL in sipo-root/sql/SQL/collaudo/full/*.sql)
+
+ NOTA: nel documento NON sono riportati password, chiavi, secret o codici
+ fiscali presenti nei sorgenti: se ne segnala solo l'esistenza e la posizione.
+ Riferimenti nel formato  percorso/file:riga.
+
+-------------------------------------------------------------------------------
+ INDICE
+-------------------------------------------------------------------------------
+  1. Sintesi
+  2. Architettura logica e attori
+  3. Flusso end-to-end (dal portale fino ad ANPR)
+  4. Libreria ProfilazioneUtente (autenticazione e profilo lato FE)
+  5. Libreria RestClient (chiamate FE->BE e BE->BE)
+  6. Libreria RestSecurity (OAuth2/JWT lato BE)
+  7. DecessiWeb (FE)
+  8. DecessiBE (BE)
+  9. StatoCivileBE
+ 10. All-Anpr (AllineamentoAnprSipo)
+ 11. Database - tabelle di profilazione in ANAG_USR
+ 12. Catena di mappatura ruolo utente -> profilo BE -> utenza tecnica
+ 13. Criticita' e rischi rilevati (ordinati per gravita')
+ 14. Punti aperti / da verificare sugli ambienti
+ 15. Appendice - file di riferimento
+
+
+===============================================================================
+ 1. SINTESI
+===============================================================================
+
+ La profilazione SIPO oggi ha DUE LIVELLI DI IDENTITA' distinti e scollegati.
+
+ A) IDENTITA' DELL'OPERATORE (persona fisica) - solo nei front-end
+    - L'utente si autentica sul portale di Roma Capitale (SSO OAM/WebSEAL).
+    - Il reverse proxy inoltra al FE gli header HTTP "iv-user" (username o
+      codice fiscale), "sysgroup" (tipo utente), "iv-codfis", "iv-nome" ecc.
+    - La libreria ProfilazioneUtente (filtro CdRLoginFilter su /init/*) si fida
+      degli header. Carica il profilo dallo schema ANAG_USR (UTENTI,
+      R_UTENTI_RUOLI, CONF_RUOLI, CONF_AREE_TEMATICHE, CONF_FUNZIONALITA,
+      CONF_APP_ROLE, CONF_STRUTTURE_*) e lo salva in sessione HTTP
+      nell'attributo "LOGIN_USER" (oggetto model.User).
+    - Spring Security del FE usa un pre-authentication: ricarica i ruoli
+      dal DB e li espone come ROLE_<CONF_RUOLI.RUOLO>.
+
+ B) IDENTITA' TECNICA ("utenza applicativa di ruolo") - verso i back-end
+    - Il FE chiama i BE con la libreria RestClient. A OGNI chiamata ottiene un
+      token OAuth2 (grant "password") dal BE di destinazione usando:
+        * un client OAuth2 per "dominio" (es. decessiBE, statoCivileBE, allineamSC);
+        * un'utenza applicativa scelta in base al PROFILO_BE del PRIMO ruolo
+          dell'utente (es. ADMIN, AUTH_USER, CITTADINO...).
+      Le credenziali sono in clientConfig.properties, cifrate 3DES con una
+      chiave scritta nel codice.
+    - Ogni BE, tramite RestSecurity, e' insieme Authorization Server e Resource
+      Server. Autentica l'utenza tecnica su CONF_APP_USER/CONF_APP_ROLE ed
+      emette un JWT HMAC con authority ROLE_<PROFILO_BE>.
+    - L'operatore reale NON viaggia nel token. Passa come parametri del body
+      (idUser, idUtente, idOrganizzazione, cfUser, hostname, ruoloBe...) senza
+      alcuna verifica lato BE.
+
+ Conseguenze principali (dettaglio al cap. 13):
+  - I BE autorizzano solo per "ruolo tecnico" e con granularita' grossolana.
+    Aree tematiche e funzionalita' esistono solo nel FE, come menu.
+  - Nel FE Decessi non c'e' alcun controllo per funzione. La SecurityConfig
+    della libreria censisce solo URL di AnagrafeWeb e non ha anyRequest().
+  - Nei BE ResourceServerConfig non ha anyRequest(). Tutti gli endpoint non
+    elencati e senza @PreAuthorize (molti in DecessiBE e StatoCivileBE,
+    comprese operazioni di scrittura) rispondono senza token.
+  - Secret (DB, chiave di firma JWT uguale in tutti i BE, client secret,
+    chiave 3DES) sono in chiaro nei sorgenti.
+  - Verso ANPR operatore e postazione non sono attendibili: la postazione
+    e' cablata nel client ANPR e l'operatore e' fisso o non e' quello che
+    esegue l'operazione.
+
+
+===============================================================================
+ 2. ARCHITETTURA LOGICA E ATTORI
+===============================================================================
+
+   [Browser]
+      |  HTTPS
+      v
+   [Portale Roma Capitale - SSO OAM/WebSEAL + reverse proxy]
+      |  inietta header: iv-user, sysgroup, iv-codfis, iv-nome, iv-cognome,
+      |  iv-sex, iv-nascita-*, iv-res-*, iv-email, iv-tel, iv-fax,
+      |  x-real-ip, x-client-sn-sipo (serial number certificato postazione)
+      v
+   [Traefik (entrypoint http)]  Host: sipo.decweb.ecaas.datacenter.comune.roma
+      v
+   [DecessiWeb  :9202  /DecessiWeb]  (Spring Boot 2.1.2, Thymeleaf)
+      |  include: ProfilazioneUtente  --JPA nativo-->  DB schema ANAG_USR
+      |           CommonWeb (menu, gestione errori)
+      |           StatocivileWeb
+      |           RestClient
+      |
+      |  HTTP + OAuth2 password grant (utenza tecnica di ruolo)
+      +---------------------------------+
+      v                                 v
+   [DecessiBE :9912]                [StatoCivileBE :9199]
+    RestSecurity (AS+RS)             RestSecurity (AS+RS)
+    datasource MATR_USR              datasource MATR_USR
+                                        |  RestClient (dominio allineamSC,
+                                        |  profilo = ruoloBe dal FE)
+                                        v
+                                     [All-Anpr (AllineamentoAnprSipo) :9393]
+                                      RestSecurity (AS+RS)
+                                      datasource ANAG_USR
+                                        |  SOAP CXF + WS-Security X.509
+                                        |  (AnprClient, certificato postazione da
+                                        |   ANAG_USR.PKG_ANPR.get_postazione_cert_sign)
+                                        v
+                                     [ANPR - Ministero dell'Interno]
+
+ Altri chiamanti di All-Anpr: annotazioni-be, comunicazioni-be, commonsc-be,
+ i batch all-dec-be/all-nas-be/all-matr-be (profilo fisso "ADMIN") e la
+ libreria aggior-sipo/InfoStatoCivile.
+ Chiamanti di StatoCivileBE: quasi tutti i FE di stato civile (cittadinanza,
+ statocivile, matrim, unioni, nascita, divorzi, esponente, decessi, commonsc,
+ annotazioni, rich_online, agendasc).
+ DecessiBE NON chiama StatoCivileBE: e' DecessiWeb a chiamare direttamente
+ entrambi i BE.
+
+ Versioni: tutti i moduli analizzati usano Spring Boot 2.1.2 (CommonWeb e
+ StatocivileWeb 2.1.4), spring-security-oauth2 2.1.0 (legacy/EOL) e
+ spring-security-jwt 1.0.7, con Java 11. Le librerie comuni sono tutte in
+ versione 0.0.1 / 0.0.1-SNAPSHOT. La versione effettiva dipende dal branch
+ git clonato dai Dockerfile al momento della build (sviluppo/test/master).
+
+
+===============================================================================
+ 3. FLUSSO END-TO-END
+===============================================================================
+
+ 3.1 Login e costruzione del profilo (FE)
+ ----------------------------------------
+  1. L'utente entra dal portale su un link del tipo
+       /DecessiWeb/init/default?goUrl=<contesto>/<funzionalita'>
+     (i link del menu sono in common/commo-web/.../templates/fragments/header.html)
+  2. FilterConfig registra CdRLoginFilter su "/init/*"
+     (profilazione-utente/.../config/FilterConfig.java).
+  3. CdRLoginFilter.doFilter (portale/CdRLoginFilter.java):
+     - legge userId dall'header "iv-user" e groupId da "sysgroup" (nomi degli
+       header in properties/portale.properties). Con parametro "mode=local" li
+       legge dalla sessione.
+     - se userId e' un codice fiscale oppure sysgroup = "identificati", l'utente
+       e' un CITTADINO: userId in maiuscolo, dati anagrafici dagli header iv-*
+       (la chiamata alla servlet UserInfo e' commentata).
+     - altrimenti e' un DIPENDENTE: userId in minuscolo, groupId
+       "interniIdentificati".
+  4. newUserLoggedIn -> AuthenticationController:
+     - DIPENDENTE (getDipendenteUser):
+         UtentiDao.findRuoliUsername(username) -> id, nome, cognome, cf, ruoli
+         (id, descrizione, RUOLO, PROFILO_BE), organizzazione
+         (CONF_STRUTTURE_INTERNE_RC: id, descrizione, flg_gruppo_vigili)
+         UtentiDao.getAreeTematicheByUsername(username) -> aree + funzionalita'
+         abilitate (da R_UTENTI_RUOLI) + area 0 "Comuni" che da' il baseUrl.
+     - CITTADINO (getCittadinoUser):
+         UtentiDao.isProfessionista(cf) -> se esiste in UTENTI con struttura
+         convenzionata e' CITTADINO_PROF, con aree/funzionalita' da
+         R_UTENTI_RUOLI. Altrimenti gli viene assegnato un ruolo fittizio
+         id 9 CITTADINO_CRI_ON e riceve le funzionalita' con
+         CONF_FUNZIONALITA.CITTADINO = 1.
+  5. Imposta ipPostazione = header "x-real-ip" e hostname = header
+     "x-client-sn-sipo" (serial number del certificato di postazione) e salva
+     l'oggetto in sessione: session.setAttribute("LOGIN_USER", user).
+  6. Unico controllo funzionale: il goUrl richiesto deve essere contenuto
+     (String.contains) nell'URL di almeno una funzionalita' abilitata, oppure
+     essere help/faq, oppure mancare. Se il controllo fallisce si fa redirect
+     a accessDenied.htm. Se passa, redirect a goUrl o a /AnagrafeWeb/homePage.
+  7. Nelle richieste successive CustomAuthenticationProcessingFilter
+     (pre-authentication Spring Security) usa come principal
+     LOGIN_USER.username. MyUserDetailsService rilancia findRuoliUsername
+     e crea le authority "ROLE_" + CONF_RUOLI.RUOLO. Per un CF senza ruoli
+     crea ROLE_CITTADINO_CRI_ON.
+
+ 3.2 Autorizzazione nel FE
+ -------------------------
+  - SecurityConfig (profilazione-utente/.../config/SecurityConfig.java:97-352)
+    contiene un elenco di antMatchers(...).hasAnyRole(...) per le URL di
+    AnagrafeWeb, CRI/CRE, AIRE, CIE, Certificati, Elettorale e altre. NON c'e'
+    anyRequest(), quindi ogni URL non elencata e' libera a livello Spring
+    Security.
+  - Il menu (header.html di CommonWeb) itera LOGIN_USER.areeTematiche[].funzionalita:
+    e' solo visivo.
+  - Nei controller l'unica "barriera" e' @SessionAttribute("LOGIN_USER").
+    Senza utente in sessione si ottiene un errore 400 gestito dall'error
+    controller.
+
+ 3.3 Chiamata FE -> BE (RestClient)
+ ----------------------------------
+    callRestServicePost(URL_DECESSI_BE, "/servizio", "decessiBE",
+                        user.getRuoli().get(0).getRuoloBe(), ..., params)
+      1) URL effettivo = clientConfig[<target>.decessiBE.url] (se target != local)
+      2) POST <url>/oauth/token
+           Authorization: Basic base64(moduleuser.username/password.decessiBE)
+           body: username/password = appuser.<ruoloBe>, grant_type=password
+      3) POST <url>/servizio   Authorization: bearer <JWT>
+           body: parametri applicativi + (a volta) idUser, idOrganizzazione...
+    Il token viene richiesto di nuovo a ogni chiamata (nessuna cache) e
+    rappresenta l'utenza tecnica, non l'operatore.
+
+ 3.4 Autorizzazione nel BE (RestSecurity)
+ ----------------------------------------
+  - /oauth/token: il client viene verificato contro security.jwt.client-id e
+    client-secret (in-memory), l'utente contro CONF_APP_USER (password BCrypt).
+    Le authority emesse sono ROLE_<CONF_APP_ROLE.PROFILO_BE>. JWT HMAC con
+    security.signing-key, validita' di default 12 ore.
+  - Richieste alle API: ResourceServerConfig richiede solo "authenticated()"
+    su un elenco fisso di path (in prevalenza AnagrafeBE ed elettorale).
+    I metodi possono avere @PreAuthorize("hasAuthority('ROLE_...') or ...").
+  - L'identita' dell'operatore e' letta dai parametri della request
+    (nessuna lettura di Principal/SecurityContext nei BE analizzati).
+
+ 3.5 Catena BE -> BE -> ANPR (esempio: finalizzazione atto di decesso)
+ --------------------------------------------------------------------
+  - Il FE passa a StatoCivileBE ruoloBe, hostname (serial certificato) e cfUser.
+  - StatoCivileBE chiama All-Anpr (/allineamentoDecessoSC ecc.) via RestClient,
+    con dominio "allineamSC" e profilo = ruoloBe ricevuto nel body.
+    Nei flussi di finalizzazione (flow/context/ImplFlow.java) il cfUser
+    inviato e' quello di ATTO.ID_UTENTE, cioe' del creatore dell'atto e non
+    di chi lo finalizza.
+  - All-Anpr (endpoint *SC) usa cfUser e hostname del body, i batch usano un
+    operatore fisso da AnprSipoConfig.properties. La libreria AnprClient,
+    in ConfigHandler.java:67, SOVRASCRIVE hostname con un serial number
+    cablato e poi legge da ANAG_USR.PKG_ANPR.get_postazione_cert_sign
+    sede, postazione, certificato e password della postazione.
+
+
+===============================================================================
+ 4. LIBRERIA ProfilazioneUtente
+    common/profilazione-utente/ProfilazioneUtente  (jar, package
+    it.romaCapitale.profilazioneUtente)
+===============================================================================
+
+ Non e' un'applicazione: ProfilazioneUtenteApplication e' una classe vuota.
+ Si attiva nei FE tramite @ComponentScan("it.romaCapitale.profilazioneUtente").
+ Dipende da RestClient (per TripleDes) e da xbean (parsing XML del portale).
+
+ 4.1 Componenti
+  config/FilterConfig ............ registra CdRLoginFilter su /init/*
+  config/SecurityConfig .......... @EnableWebSecurity: pre-auth provider,
+                                   CustomAuthenticationProcessingFilter,
+                                   antMatchers per ruolo, logout su /logout
+                                   (invalidate session, cancella JSESSIONID,
+                                   redirect a UrlRedirectLogOut di
+                                   dynamicGeneric.properties = sso_logout.jsp
+                                   del portale), entry point custom
+  portale/CdRLoginFilter ......... login da header SSO (vedi 3.1)
+  portale/CallServlet ............ client HTTP verso le servlet del portale
+                                   /b2b/CheckPIN e /b2b/UserInfo (UserInfo
+                                   non piu' usata: chiamata commentata)
+  portale/CdrUser, ConvertXml .... DTO/parsing dei dati anagrafici del portale
+  controller/AuthenticationController  costruzione del model.User
+  dao/UtentiDao .................. singleton, EntityManagerFactory JPA su
+                                   persistence-unit "profilazioneUtente"
+                                   (META-INF/persistence.xml, utente ANAG_USR).
+                                   Tre query native (cap. 11.3)
+  dao/*VO ........................ UtenteVO, ConfRuoloVO (id, descrizione,
+                                   ruolo, ruoloBe), ConfAreaTematicaVO,
+                                   ConfFunzionalitaVO
+  model/User ..................... profilo in sessione (LOGIN_USER): idUser,
+                                   username, cf, dati anagrafici, ruoli,
+                                   areeTematiche, idOrganizzazione,
+                                   descrizioneOrganizzazione, idStrutturaConv,
+                                   isProfessionista, baseUrl, ipPostazione,
+                                   hostname (serial certificato),
+                                   flgGruppoVigili, flag funz*Presenti
+  security/MyUserDetailsService .. ruoli -> ROLE_<RUOLO>
+  security/CustomAuthenticationProcessingFilter  principal da LOGIN_USER
+  security/CustomSecurityEntryPoint  se c'e' LOGIN_USER -> accessDenied.htm,
+                                   altrimenti redirect a http://www.comune.roma.it
+  security/InvalidSessionHandlerInterceptor  redirect sessionInvalid.htm
+                                   (NON registrato in DecessiWeb)
+  security/TestJunctionFilter .... filtro di debug (log della sessione)
+
+ 4.2 Configurazione
+  - properties/portale.properties: nomi degli header SSO, URL delle servlet
+    del portale (IP interno, HTTP), timeout, pagina di errore.
+  - properties/dynamicGeneric.properties: ambiente attivo (ambiente=collaudo)
+    e URL di logout per ambiente.
+  - META-INF/persistence.xml: connessione JDBC ANAG_USR. Attivo il blocco
+    COLLAUDO; sviluppo e produzione sono commentati. Le password sono in
+    chiaro per tutti e tre gli ambienti.
+  - common/Constant.java: costanti ruoli (ADMIN=1, FUNZ_ANA=2, DIR=3,
+    CITTADINO=4, CITTADINO_PROF=5, UFF_CERT_CORR=6, UFF_CERT_ENTI_EST=7,
+    CITTADINO_CRI_ON=9), URL localhost dei BE (URL_DECESSI_BE :9912,
+    URL_STATO_CIVILE :9199 ecc.), domini RestClient (DOMINIO_DECESSI_BE =
+    "decessiBE", DOMINIO_STATO_CIVILE = "statoCivileBE") e una costante
+    password in chiaro (PSW_BASE).
+
+ 4.3 Osservazioni puntuali sul codice
+  - Il principal viene dagli header del proxy senza altre verifiche (niente
+    firma, IP whitelist o shared secret). Se il FE e' raggiungibile senza
+    passare dal portale, gli header possono essere falsificati (vedi 13).
+  - Utilities.isCodiceFiscale(null) restituisce TRUE: con header assente il
+    flusso va in eccezione (catturata e solo loggata) e l'utente resta
+    vuoto.
+  - Il controllo del goUrl usa "contains": un URL che contiene la stringa di
+    una funzionalita' abilitata passa.
+  - checkPoliziaLocale (vincolo di giunzione per la Polizia Locale) e'
+    definito ma non viene mai chiamato.
+  - UtentiDao e' un singleton con un campo EntityManager condiviso tra
+    thread (non thread-safe) e usa una propria connessione JDBC, separata
+    dal datasource dell'applicazione.
+  - findRuoliUsername non filtra FLG_CANCELLATO. Con le inner join un utente
+    senza ID_ORGANIZZAZIONE o senza riga in CONF_APP_ROLE risulta privo di
+    ruoli.
+  - doFilterHttp di CustomAuthenticationProcessingFilter, che salverebbe
+    "ruoli" in sessione, non viene mai invocato da Spring (metodo non in
+    override).
+  - Esiste una copia divergente per le elezioni:
+    sipo-root/sipo-elezioni/profilazione-utente-elezioni (utente ELET_USR),
+    con lo STESSO GAV. Vedi la memoria di build: sovrascrive in .m2 la
+    versione canonica.
+
+
+===============================================================================
+ 5. LIBRERIA RestClient
+    common/rest-client/RestClient  (it.romaCapitale.restClient)
+===============================================================================
+
+ Classi: client/RestClient, cypher/TripleDes, exception/UnauthorizedException,
+ exception/GenericClientHTTPException, model/RestPageImpl.
+
+ 5.1 Metodi pubblici (tutti POST)
+  - callRestServicePost(url, service, dominio, profilo, Class, params)
+    form-urlencoded
+  - callRestServicePost(url, service, dominio, List<profili>, ...)
+    prova i profili in sequenza fino al primo che non da' 401/403
+  - callRestServicePost(url, service, dominio, profilo,
+    ParameterizedTypeReference, ...)
+  - callRestServicePostWithParamObj(...)  body JSON
+  In tutti i metodi: 401/403 -> UnauthorizedException, altri errori ->
+  GenericClientHTTPException.
+
+ 5.2 Risoluzione URL
+  clientConfig.properties, chiave "target" (nella copia locale:
+  target=testDocker). Se target != local, l'URL passato dal chiamante viene
+  ignorato e si usa <target>.<dominio>.url. Target previsti: localDocker,
+  sviluppoDocker, testDocker, masterDocker. Esempi: decessiBE ->
+  decbe-*:9912, statoCivileBE -> stcivbe-*:9199, allineamSC ->
+  anprsipo-*:9393. Tutti su http.
+
+ 5.3 Credenziali (clientConfig.properties, valori cifrati 3DES)
+  - restclient.moduleuser.username/password.<dominio>: client OAuth2 del BE
+    di destinazione (Basic auth su /oauth/token). Circa 60 domini: anagrafeBE,
+    decessiBE, statoCivileBE, allineamSC, matrimonioBE, ...
+  - restclient.appuser.username/password.<PROFILO>: utenza applicativa per
+    profilo BE. Profili: ADMIN, AUTH_USER, CITTADINO, CITTADINO_PROF,
+    UFF_CERT_CORR, UFF_CERT_ENTI_EST, CITTADINO_CRI_ON, FUNZ_TERR, ELETT_DIGI,
+    ELETT_DIGI_SS, ELETT_DIGI_PREF, ELETT_DIGI_TRIBU, ELETT_GEST_PORT.
+  - restClient.authconfig.granttype=password, tokenservice=/oauth/token.
+  - TripleDes: la chiave e' scritta nel codice (TripleDes.java). Il main()
+    contiene credenziali di esempio in chiaro. La cifratura quindi offusca
+    soltanto: chiunque abbia il jar puo' decifrare tutto clientConfig.
+  - Anomalia: la chiave della username "unidoc" e' scritta
+    "restClient.moduleuser..." con la C maiuscola, mentre il codice cerca
+    "restclient." (ResourceBundle e' case-sensitive), quindi manca.
+
+ 5.4 Comportamento
+  - Nuovo token a ogni chiamata (due round-trip HTTP per ogni invocazione).
+  - L'identita' dell'operatore non viene propagata: nessun header custom e
+    nessun token exchange.
+  - new RestTemplate() a ogni chiamata, senza timeout configurati.
+
+
+===============================================================================
+ 6. LIBRERIA RestSecurity
+    common/rest-security/RestSecurity  (it.romaCapitale.restSecurity)
+===============================================================================
+
+ Si attiva nei BE con @ComponentScan("it.romaCapitale.restSecurity").
+ Richiede AnagrafeEntities (ConfAppUser, ConfAppRole, UtentiRuoliRepository)
+ nelle @EntityScan/@EnableJpaRepositories del BE.
+
+ 6.1 AuthorizationServerConfig (@EnableAuthorizationServer)
+  - Client in memoria: security.jwt.client-id / client-secret / grant-type /
+    scope-read / scope-write / resource-ids (dal application.properties del BE).
+  - Endpoint /oauth/token. Token JWT tramite JwtAccessTokenConverter, con
+    validita' di default (12h) e senza refresh token effettivo.
+
+ 6.2 SecurityConfig (@EnableWebSecurity, @EnableGlobalMethodSecurity(prePostEnabled))
+  - UserDetailsService = AppUserDetailsService, password BCrypt.
+  - Firma JWT simmetrica HMAC con security.signing-key.
+  - La catena web httpBasic/stateless e' di fatto superata dal resource
+    server (security.oauth2.resource.filter-order=3).
+
+ 6.3 ResourceServerConfig (@EnableResourceServer)
+  - resourceId = security.jwt.resource-ids ("testjwtresourceid" in tutti i
+    BE analizzati).
+  - configure(HttpSecurity): circa 200 antMatchers(...).authenticated() cablati
+    per path di AnagrafeBE, CRI/CRE, irreperibilita', certificati, AIRE, CIE,
+    convivenze, elettorale, allineamento stato civile (/allineamentoNascita,
+    /allineamentoDecesso, /matrimonio ...), certOnline, faxpec, ecc.
+  - NESSUN anyRequest(): i path non elencati non richiedono autenticazione.
+  - Nessun controllo di ruolo o di scope a livello URL, solo "authenticated()".
+  - La stessa lista e' condivisa da TUTTI i BE: ogni BE si porta dietro le
+    regole degli altri moduli, ma non le proprie se non sono state aggiunte
+    qui.
+
+ 6.4 AppUserDetailsService
+  - UtentiRuoliRepository.getUserByUsername: JPQL
+    "SELECT u FROM ConfAppUser u WHERE u.username=?1".
+  - Authority = "ROLE_" + CONF_APP_ROLE.PROFILO_BE per ogni ruolo collegato.
+  - Senza ruoli assegna ROLE_CITTADINO_CRI_ON (privilegio concesso per
+    default).
+  - Utente inesistente: NullPointerException invece di
+    UsernameNotFoundException.
+  - Le entity non dichiarano lo schema, quindi la tabella letta dipende
+    dall'utente DB del BE (ANAG_USR o MATR_USR, vedi 11.5).
+
+
+===============================================================================
+ 7. DecessiWeb (FE)
+    front-end/decessi-web/DecessiWeb  (it.romaCapitale.sipo.decessiWeb)
+===============================================================================
+
+ 7.1 Build e dipendenze
+  - Spring Boot 2.1.2, jar, porta 9202, context path /DecessiWeb.
+  - Nessuna dipendenza diretta da ProfilazioneUtente, RestClient o security:
+    arrivano in modo transitivo da CommonWeb 0.0.1 e StatocivileWeb 0.0.1.
+  - application.properties di 3 righe: nessuna configurazione di sessione,
+    cookie, OAuth o URL dei BE.
+  - docker-compose: Traefik Host sipo.decweb.ecaas.datacenter.comune.roma,
+    entrypoint http, sticky session, sessione HTTP in memoria.
+
+ 7.2 Attivazione della sicurezza
+  - DecessiWebApplication.java:12, @ComponentScan su
+    "it.romaCapitale.profilazioneUtente", "...commonWeb", "...statocivileWeb",
+    "...decessiWeb", "...anagrafeWeb" (package inesistente), "...matrimonioWeb".
+  - Nessuna classe di sicurezza locale (nessun WebSecurityConfigurerAdapter,
+    filtro o interceptor).
+
+ 7.3 Uso del profilo
+  - Tutti i controller ricevono @SessionAttribute("LOGIN_USER") User user.
+  - user.getRuoli().get(0).getRuoloBe(): 47 occorrenze, profilo per il token
+    BE. Conta SOLO il primo ruolo; con lista vuota si ha
+    IndexOutOfBoundsException.
+  - user.getIdUser() e user.getIdOrganizzazione() vengono passati al BE come
+    parametri (GestioneDecessiController.java:508-509, :812;
+    AttoMorteTipo04Controller.java:81-82).
+  - user.getUsername() e' usato solo nei log.
+
+ 7.4 Autorizzazione
+  - Nessun @PreAuthorize/@Secured/hasRole nel codice e nessun sec:authorize
+    nei template. Nessun controllo su area tematica o funzionalita'.
+  - Le URL /gestioneDecessi/** e /attoMorteTipoNN/** non sono in SecurityConfig
+    della libreria. L'unica voce "decessi" e' /inserimentoDecesso, che
+    appartiene ad AnagrafeWeb.
+    Risultato: qualunque utente con LOGIN_USER in sessione, anche di un altro
+    modulo o un cittadino, puo' usare le funzioni Decessi conoscendone l'URL.
+  - Area applicativa "DECESSI" usata come parametro verso i BE: e' un dato
+    di dominio, non di profilazione.
+
+ 7.5 Chiamate ai BE
+  - 34 chiamate verso decessiBE (/cercaAttiDecesso, /findAttoDecessoData,
+    /saveAttoDecessoData, /saveAtto, /findTipi*, ...).
+  - 13 chiamate verso statoCivileBE (/cancellaAnnullaAtto,
+    findStatoPraticaByIdAtto, /cercaStatoPratiche, /findOspedaliDecessi,
+    findConsolatiByIdStatoEstero, ...).
+  - Tutte con profilo = ruoloBe del primo ruolo.
+
+ 7.6 Errori, sessione, logout
+  - UnauthorizedException / GenericClientHTTPException sono per lo piu'
+    catturate e solo loggate: la pagina prosegue con risposta nulla, con
+    rischio di NPE (es. GestioneDecessiController.java:822). Alcuni metodi di
+    AttoMorteTipo00 rilanciano l'eccezione verso GlobalExceptionHandler di
+    CommonWeb (error403/error500).
+  - Sessione scaduta: non c'e' redirect al portale (interceptor non
+    registrato), solo pagina di errore.
+  - Logout: /logout della libreria.
+  - CSRF: attivo di default (non disabilitato). I form th:action includono il
+    token.
+
+ 7.7 Criticita' specifica
+  - GestioneDecessiController.riprendiLavorazione (r.670-696): esegue
+    "return url;" con url estratto dal parametro di form "idSelezionato"
+    (formato "idAtto &&& url &&& stato", r.675), che il client puo'
+    modificare. Il nome della view e' quindi controllato dall'utente: open
+    redirect con "redirect:" ed esposizione a template/expression injection
+    in Thymeleaf. Anche lo "stato" usato per i controlli viene dal client
+    (r.646, 676).
+
+
+===============================================================================
+ 8. DecessiBE (BE)
+    back-end/decessi-be/DecessiBL  (it.romaCapitale.sipo.decessiBE)
+===============================================================================
+
+ 8.1 Build e configurazione
+  - Spring Boot 2.1.2, jar, porta 9912. Dipende da RestSecurity 0.0.1 e
+    AnagrafeEntities. Nessuna dipendenza da RestClient o ProfilazioneUtente.
+  - DecessiBeApplication.java:19-26: scan su "it.romaCapitale.restSecurity"
+    + repository/entity di decessiEntities e anagrafeEntities (per
+    ConfAppUser/ConfAppRole).
+  - application.properties:
+      datasource ATTIVO = PRODUZIONE, utente MATR_USR (non ANAG_USR), password
+        in chiaro. Blocchi DEV/COLL commentati, anch'essi con password.
+      security.signing-key (in chiaro), security.security-realm=sipo_decessi,
+      security.jwt.client-id=jwtdecessibe, client-secret={noop}... (in chiaro),
+      grant password, scope read/write, resource-ids=testjwtresourceid.
+  - docker-compose: Traefik Host sipo.decbe.ecaas.datacenter.comune.roma,
+    entrypoint http, 3 repliche.
+
+ 8.2 Protezione delle API
+  - Nessun path decessi e' in ResourceServerConfig, tranne
+    /variazioniAnagrafiche/**.
+  - @PreAuthorize presente solo su pochi metodi (6 ruoli: AUTH_USER, ADMIN,
+    CITTADINO, CITTADINO_PROF, UFF_CERT_ENTI_EST, UFF_CERT_CORR):
+      /cercaAttiDecesso, /findAttoDecessoById, /findAttoDecessoData,
+      /getStatusSoggettoFromVista, /findAgenziaByIdAttoDecesso,
+      /variazioniAnagrafiche/* (AUTH_USER, ADMIN, CITTADINO).
+  - SENZA protezione (accessibili senza token):
+      /saveAtto (SalvataggioTabAttoController.java:57, verificato)
+      /saveAttoDecessoData, /eliminaAtto (porta l'atto a CANCELLATO),
+      /findAllTipiAtti (@PreAuthorize commentato), /findTipi*,
+      /findLingueAttoEstero, /findTimbriFirme, viste agenzie/centri servizi,
+      /findIdStatoEsteroByDescrizione, /checkSoggettoDecAttoEsistente.
+      /health e' aperto per scelta.
+  - Scope read/write mai verificati. Nessuna distinzione tra lettura e
+    scrittura.
+
+ 8.3 Identita' del chiamante
+  - Il principal del token non viene mai letto.
+  - idUser / idOrganizzazione / idUtente arrivano dai parametri senza verifica:
+      cercaAttiDecesso li legge dai parametri. Solo la ricerca per
+        tipo+stato filtra per organizzazione; quelle per nominativo, CF e
+        codice individuale no.
+      saveAtto usa idUser per scegliere l'esponente (ufficiale, tabella
+        ESPONENTE.ID_UTENTE) e salva ATTO.ID_UTENTE/ID_ORGANIZZAZIONE.
+      saveAttoDecessoData ed eliminaAtto non registrano chi opera.
+  - Il profilo operatore (ANAG_USR) non viene mai riletto. L'unica
+    "profilazione" letta e' CONF_APP_USER/CONF_APP_ROLE per l'emissione del
+    token, con il datasource MATR_USR.
+
+ 8.4 Chiamate in uscita
+  - Nessuna. Le dipendenze AnprClient, ClientSITO, ProtocollazioneGed e lo
+    stack CXF sono presenti ma inutilizzate. EmailBL non e' invocato.
+
+
+===============================================================================
+ 9. StatoCivileBE
+    back-end/statocivile-be/StatoCivileBL  (it.romaCapitale.sipo.statoCivileBE)
+===============================================================================
+
+ 9.1 Build e configurazione
+  - Spring Boot 2.1.2, jar, porta 9199. RestSecurity 0.0.1, RestClient
+    (dichiarato due volte nel pom), AnprClient, AnagrafeEntities,
+    MatrimonioEntities, ComuniEntities.
+  - StatoCivileBeApplication.java:20: scan su "it.romaCapitale.restSecurity".
+    Nessuna security locale.
+  - application.properties: datasource attivo PRODUZIONE con utente MATR_USR
+    e password in chiaro; signing-key e client-secret {noop} in chiaro;
+    client-id jwtstatocivilebe, realm sipo_statocivile,
+    resource-ids=testjwtresourceid.
+  - Traefik Host sipo.statocivbe.ecaas.datacenter.comune.roma, http,
+    3 repliche.
+
+ 9.2 Protezione delle API
+  - Protezione quasi esclusivamente tramite @PreAuthorize (circa 390
+    annotazioni). Espressione prevalente: AUTH_USER or ADMIN or CITTADINO or
+    CITTADINO_PROF or UFF_CERT_ENTI_EST or UFF_CERT_CORR. Circa 27 metodi sono
+    limitati ad AUTH_USER/ADMIN.
+  - I ruoli "cittadino" possono chiamare quasi tutte le API di stato civile.
+  - SENZA protezione (accessibili senza token), fra gli altri:
+      GestioneOspedaliController: tutti gli 11 metodi, compresi
+        /saveOspedale*, /deleteOspedale*;
+      AnteprimaAttoController: /finalizzaAtto (@PreAuthorize commentato;
+        finalizza l'atto e avvia l'allineamento ANPR), /testGenerazioneAtto,
+        /checkAttoDefinitoByIdAtto, /generaPDFAttoFromFormularioGemelli ...;
+      ImplFlowController: /testGeneraAttoDaFormulario/{idAtto},
+        /generaEstrattoDaFormulario, /generaImmagineAnteprimaAttoDaFormulario;
+      StampaDocumentoController: /generaDocumento, /generaAndSaveDocumento,
+        /generaPDFSenzaJasper ...;
+      UfficialeStatoCivileController: /saveUSC, /deleteUSCById;
+      AttiScansionatiController: /scaricaAttoScansionato;
+      AgendaController: /cercaPrenotazioni, /cercaPubblicazioni, /cercaConiuge;
+      alcuni metodi di UtilityController.
+
+ 9.3 Identita' del chiamante
+  - Nessuna lettura del token. L'identita' viaggia nei parametri: idUtente
+    (es. ID_USER_CANCELLA in AnnullamentoCancellazioneAttoController),
+    idUtenteLog, idUser, utente, ufficialeStatoCivile, ruoloBe, hostname,
+    cfUser.
+  - Utenti di stato civile: entity UtentiMatr -> MATR_USR.UTENTI (codice
+    fiscale, organizzazione, sede municipio). Audit dei download in
+    ESTRATTI_DOWNLOAD_LOG.
+  - Accede anche a ANAG_USR con nomi qualificati (es.
+    ANAG_USR.CONF_SEDE_MUNICIPIO in UtilityController).
+
+ 9.4 Chiamate in uscita
+  - Verso All-Anpr: RestClient dominio "allineamSC", profilo = ruoloBe
+    ricevuto dal chiamante. Chiamanti: UtilityController,
+    AnnullamentoCancellazioneAttoController, flow/execute/Atto*Flow
+    (Decessi, Matrimonio, Nascite, Unioni, Cittadinanze).
+  - Non chiama ANPR direttamente: AnprBL.chiamataAnpr esiste ma non ha
+    chiamanti.
+
+
+===============================================================================
+ 10. All-Anpr (AllineamentoAnprSipo)
+     back-end/all-anpr-sipo/AllineamentoAnprSipo
+===============================================================================
+
+ 10.1 Build e configurazione
+  - Spring Boot 2.1.2, jar, porta 9393. RestSecurity, AnagrafeEntities,
+    AnagrafeProducer, AnprClient. Nessun RestClient (non chiama altri BE).
+    log4j2.version=2.15.0.
+  - application.properties: datasource attivo PRODUZIONE con utente ANAG_USR
+    e password in chiaro; signing-key (UGUALE a quella degli altri BE);
+    client-id jwtallineamSC, secret {noop} in chiaro, realm sipo_anagrafe,
+    resource-ids=testjwtresourceid; log Hikari a TRACE.
+  - properties/AnprSipoConfig.properties: target=produzione, e per ambiente
+    cfUser (in produzione e' il CODICE FISCALE DI UNA PERSONA FISICA),
+    hostname=SERVER, criterioCF.
+  - Traefik Host sipo.anprsipo.ecaas.datacenter.comune.roma, http.
+
+ 10.2 Protezione delle API
+  - Tutti gli endpoint REST hanno @PreAuthorize(AUTH_USER or ADMIN). E' il
+    servizio meglio protetto del perimetro, ma sempre solo per ruolo
+    tecnico.
+  - Endpoint *SC (chiamati da StatoCivileBE e altri): allineamentoNascitaSC,
+    allineamentoAnnNascitaSC, trascrizioneNascitaSC, allineamentoDecessoSC,
+    allineamentoAnnullamentoDecessoSC, modificaDecessoSC, matrimonioSC,
+    rettifica/cessazione/modifica/annullamentoMatrimonioSC,
+    convenzionePatrimonialeSC, ricercaMatrimonioSC,
+    allineamentoCittadinanzaSC.
+  - Endpoint batch/anpr: allineamentoNascita/Decesso/Vedovanza/Cittadinanza,
+    matrimonio, bonifiche, recupero eventi, ecc.
+  - /health e' pubblico.
+
+ 10.3 Operatore e postazione verso ANPR
+  - Endpoint *SC: cfUser e hostname presi dal body JSON.
+  - Batch: cfUser e hostname fissi da AnprSipoConfig.properties.
+  - AnprClient (common/anpr-client): ConfigHandler.java:67 sovrascrive
+    hostname con un serial number cablato (verificato). Poi
+    ANAG_USR.PKG_ANPR.get_postazione_cert_sign restituisce sede, id
+    postazione, certificato (BLOB) e password. Quindi ANPR riceve sempre la
+    stessa postazione e lo stesso certificato.
+  - Lo stato di ConfigHandler e' statico (non thread-safe).
+  - Ambiente ANPR cablato a TEST in AnprClient.java:78. Truststore con
+    password di default.
+  - Tracciatura: OPERAZIONE_ANPR e LOG_EVENTI_STATO_CIVILE, senza identita'
+    dell'operatore reale.
+
+
+===============================================================================
+ 11. DATABASE - TABELLE DI PROFILAZIONE IN ANAG_USR
+===============================================================================
+
+ ANAG_USR e' lo schema dell'intera Anagrafe (circa 190 tabelle): la
+ profilazione ne e' un sottoinsieme.
+ Fonti: sipo-root/sql/SQL/collaudo/full/01_sipo_structure.sql (DDL),
+        04_sipo_conf_dati.sql (dati), 05_incrementale.sql (modifiche).
+
+ 11.1 Tabelle
+  UTENTI (DDL 01:4505)
+    ID (PK, seq ID_UTENTE_SEQ), NOME_UTENTE (UK; nome.cognome per i
+    dipendenti, codice fiscale per cittadini e professionisti), NOME, COGNOME,
+    FLG_ATTIVO S/N, FLG_CANCELLATO S/N, DATA_CREAZIONE_UTENZA,
+    DATA_CANCELLAZIONE, ID_ORGANIZZAZIONE (FK CONF_STRUTTURE_INTERNE_RC),
+    ID_STRUTTURA_CONV (FK CONF_STRUTTURE_CONV). Aggiunte successive:
+    CODICE_FISCALE (05:1071), NOME_UTENTE_AGGIOR (05:1536, collegamento al
+    legacy AGGIOR), ID_SEDE_MUNICIPIO (solo nell'entity, DDL assente).
+  CONF_RUOLI (01:1889)
+    ID, DESCRIZIONE, RUOLO. RUOLO diventa l'authority FE ROLE_<RUOLO>.
+  R_UTENTI_RUOLI (01:4052)
+    ID (seq ID_R_UTENTI_RUOLI_SEQ), ID_UTENTE, ID_RUOLO, ID_AREA_TEMATICA (NN),
+    ID_FUNZIONALITA. FK verso UTENTI, CONF_RUOLI, CONF_AREE_TEMATICHE,
+    CONF_FUNZIONALITA. Una riga per ogni funzionalita' abilitata.
+  CONF_AMBITO (01:1168)
+    1 Anagrafe, 2 Stato Civile, 3 Elettorale.
+  CONF_AREE_TEMATICHE (01:1224)
+    ID_AREE_TEMATICHE, DESCRIZIONE, ID_AMBITO (FK), URL_PAGE, ORDINE.
+    L'area 0 "Comuni" fornisce il baseUrl.
+  CONF_FUNZIONALITA (01:1517)
+    ID, DESCRIZIONE, ID_AREA_TEMATICA (FK), URL_PAGE, ORDINE, CITTADINO
+    (05:1839; 1 = visibile al cittadino non professionista).
+  CONF_APP_USER (01:1204)
+    ID, USERNAME, PASSWORD (hash BCrypt). Utenze tecniche per l'OAuth2 verso
+    i BE.
+  CONF_APP_ROLE (01:1182)
+    ID, ID_CONF_RUOLI (FK CONF_RUOLI), PROFILO_BE, ID_APP_USER (FK
+    CONF_APP_USER). Ponte tra ruolo utente, profilo BE e utenza tecnica.
+  CONF_STRUTTURE_INTERNE_RC (01:2076)
+    Uffici e unita' organizzative (municipi, gruppi PL, dipartimenti) con dati
+    di protocollazione, FLG_GRUPPO_VIGILI, NUMERO_STRUTTURA.
+  CONF_STRUTTURE_CONV (01:2058)
+    Strutture convenzionate dei professionisti.
+  CONF_MUNICIPIO (01:1788), CONF_ST_INT_POLIZIA (05:63/397),
+  CONF_SEDE_MUNICIPIO (solo entity)
+    Municipio, gruppo PL, sede.
+  REG_USER_ANPR (01:3715)
+    ID_UTENTE (FK UTENTI), ID_OPERATORE, ID_SEDE, ID_POSTAZIONE,
+    KEYSTORE_POSTAZIONE (BLOB), PWD_KEYSTORE, ALIAS_KEYSTORE.
+    Dati ANPR dell'operatore e della postazione.
+  REG_USER_ANPR_SIGN, seq ID_REG_USER_ANPR_SEQ (solo nel codice: AnagrafeBE,
+    cross/firma-id-postazione)
+    Registrazione delle postazioni firmate (alias, id_postazione,
+    sn_keystore, firma, hostname, id_sede).
+  OPERATORI_ANPR (05:1059)
+    CODICE_FISCALE, ID_POSTAZIONE (+ ABILITATO_NOTIFICHE usata dal codice,
+    DDL assente). Nessuna FK.
+  CONF_TIPO_RICHIESTA_RUOLI (05:~1020)
+    Tipi di richiesta di cambio gestibili per ruolo.
+  COMUNICAZIONI, R_UTENTE_COMUNICAZIONE
+    Notifiche agli utenti.
+  Non esistono tabelle OAuth2 (oauth_client_details, oauth_access_token...):
+  client in memoria, token JWT stateless.
+
+ 11.2 Modello relazionale
+   CONF_AMBITO 1-N CONF_AREE_TEMATICHE 1-N CONF_FUNZIONALITA
+   UTENTI 1-N R_UTENTI_RUOLI N-1 CONF_RUOLI
+                   |-- N-1 CONF_AREE_TEMATICHE
+                   '-- N-1 CONF_FUNZIONALITA
+   CONF_RUOLI 1-N CONF_APP_ROLE N-1 CONF_APP_USER
+   UTENTI N-1 CONF_STRUTTURE_INTERNE_RC   (ufficio / municipio / gruppo PL)
+   UTENTI N-1 CONF_STRUTTURE_CONV         (professionisti)
+   UTENTI N-1 CONF_SEDE_MUNICIPIO -> CONF_MUNICIPIO, CONF_ST_INT_POLIZIA
+   UTENTI 1-N REG_USER_ANPR               (operatore / postazione ANPR)
+   OPERATORI_ANPR ~ UTENTI.CODICE_FISCALE (nessuna FK)
+
+  Note:
+  - Il ruolo non e' collegato direttamente alle funzionalita'. La granularita'
+    e' la tupla (utente, ruolo, area, funzionalita') in R_UTENTI_RUOLI, quindi
+    lo stesso ruolo puo' avere funzionalita' diverse per utenti diversi.
+  - Un utente con piu' ruoli ha piu' righe e piu' PROFILO_BE, ma il FE usa
+    solo il primo (ordinamento per id_ruolo).
+
+ 11.3 Query di autenticazione e profilo (UtentiDao, JPA nativo)
+  a) findRuoliUsername: UTENTI x CONF_RUOLI x R_UTENTI_RUOLI x CONF_APP_ROLE x
+     CONF_STRUTTURE_INTERNE_RC, con nome_utente = ? e FLG_ATTIVO = 'S',
+     ORDER BY id_ruolo. Restituisce id, nome, cognome, cf, id_ruolo,
+     descrizione, ruolo, profilo_be, id/descrizione struttura,
+     flg_gruppo_vigili.
+  b) getAreeTematicheByUsername: area 0 UNION aree/funzionalita' da
+     R_UTENTI_RUOLI per nome_utente. Per il cittadino: funzionalita' con
+     CITTADINO = 1.
+  c) isProfessionista: come a), ma su CONF_STRUTTURE_CONV (id_struttura_conv).
+  Lato BE: JPQL "SELECT u FROM ConfAppUser u WHERE u.username=?1" con
+  CONF_APP_ROLE in EAGER.
+  Per la gestione utenti (AnagrafeBE) si usano i repository di
+  AnagrafeEntities: UtentiRepository, RutentiRuoliRepository,
+  ConfFunzionalitaRepository, ConfAreeTematicheRepository,
+  ConfStruttureInterneRcRepository.
+
+ 11.4 Dati di configurazione presenti negli script (collaudo)
+  CONF_RUOLI: 1 ADMIN, 2 FUNZ_ANA, 3 DIR, 4 CITTADINO, 5 CITTADINO_PROF,
+              6 UFF_CERT_CORR, 7 UFF_CERT_ENTI_EST, 8 POLIZIA_LOC.
+              L'id 9 CITTADINO_CRI_ON esiste solo come costante Java.
+  CONF_APP_USER: admin.user, auth.user, cittadino, cittadino.prof,
+              uff.cert.corr, uff.cert.enti.est, tutti con lo STESSO hash
+              BCrypt.
+  CONF_APP_ROLE: 1 -> ADMIN; 2, 3, 8 -> AUTH_USER; 4 -> CITTADINO;
+              5 -> CITTADINO_PROF; 6 -> UFF_CERT_CORR; 7 -> UFF_CERT_ENTI_EST.
+  CONF_AREE_TEMATICHE: solo ambito 1 Anagrafe (0 Comuni, 1 CRI, 2 CRE,
+              3 Gestione utenti, 5 Funz. comuni, 6 Variazioni, 7 Irreperibilita',
+              8 AIRE, 9 CIE, 10 Certificati, 11 Convivenze, 12 Leva).
+  STATO CIVILE / DECESSI: NESSUNA insert di aree tematiche, funzionalita' o
+              ruoli negli script del repo. L'ambito 2 "Stato Civile" non e'
+              referenziato. La configurazione reale e' solo sul DB degli
+              ambienti.
+  Ruoli usati dal codice ma assenti negli script: ELETT_USER, FUNZ_TERR,
+              ELETT_DIGI*, ELETT_GEST_PORT (presenti in clientConfig e in
+              SecurityConfig).
+
+ 11.5 Utenze DB
+  - ProfilazioneUtente (FE): ANAG_USR tramite persistence.xml
+    (collaudo attivo).
+  - AnagrafeBE e circa 20 BE di anagrafe: ANAG_USR.
+  - All-Anpr: ANAG_USR.
+  - DecessiBE e StatoCivileBE: MATR_USR. CONF_APP_USER/CONF_APP_ROLE (entity
+    senza schema) vengono quindi letti da MATR_USR: servono tabelle proprie
+    o sinonimi/grant verso ANAG_USR. Nel repo non ci sono script
+    SYNONYM/GRANT (da verificare, cap. 14).
+  - Profilazione elezioni: ELET_USR (copia separata della libreria).
+
+
+===============================================================================
+ 12. CATENA DI MAPPATURA  RUOLO UTENTE -> PROFILO BE -> UTENZA TECNICA
+===============================================================================
+
+  CONF_RUOLI.RUOLO    authority FE        CONF_APP_ROLE.PROFILO_BE  CONF_APP_USER    authority BE
+  ------------------  ------------------  ------------------------  ---------------  --------------------
+  ADMIN (1)           ROLE_ADMIN          ADMIN                     admin.user       ROLE_ADMIN
+  FUNZ_ANA (2)        ROLE_FUNZ_ANA       AUTH_USER                 auth.user        ROLE_AUTH_USER
+  DIR (3)             ROLE_DIR            AUTH_USER                 auth.user        ROLE_AUTH_USER
+  POLIZIA_LOC (8)     ROLE_POLIZIA_LOC    AUTH_USER                 auth.user        ROLE_AUTH_USER
+  CITTADINO (4)       ROLE_CITTADINO      CITTADINO                 cittadino        ROLE_CITTADINO
+  CITTADINO_PROF (5)  ROLE_CITTADINO_PROF CITTADINO_PROF            cittadino.prof   ROLE_CITTADINO_PROF
+  UFF_CERT_CORR (6)   ROLE_UFF_CERT_CORR  UFF_CERT_CORR             uff.cert.corr    ROLE_UFF_CERT_CORR
+  UFF_CERT_ENTI_EST(7)ROLE_UFF_CERT_...   UFF_CERT_ENTI_EST         uff.cert.enti.est ROLE_UFF_CERT_ENTI_EST
+  (cittadino CRI on)  ROLE_CITTADINO_CRI_ON  CITTADINO_CRI_ON (Java) (clientConfig)  ROLE_CITTADINO_CRI_ON
+  (dati di collaudo; i ruoli di stato civile ed elettorale sono da estrarre dal DB)
+
+  Passaggi:
+   1. Il FE legge PROFILO_BE (ruoloBe) insieme ai ruoli (query a, cap. 11.3).
+   2. RestClient usa ruoloBe come chiave per restclient.appuser.*.<ruoloBe>
+      in clientConfig.properties.
+   3. Il BE autentica l'utenza su CONF_APP_USER ed emette ROLE_<PROFILO_BE>.
+   4. Le @PreAuthorize dei BE ragionano solo su questi profili tecnici.
+  Effetto: le differenze tra FUNZ_ANA, DIR e POLIZIA_LOC, e tra aree e
+  funzionalita', si perdono nel passaggio al BE: tutti diventano AUTH_USER.
+
+
+===============================================================================
+ 13. CRITICITA' E RISCHI RILEVATI
+===============================================================================
+
+ [C = critica, A = alta, M = media, B = bassa]
+
+ C1  API BE accessibili senza token.
+     ResourceServerConfig (RestSecurity) non ha anyRequest().authenticated().
+     Ogni endpoint non elencato e senza @PreAuthorize risponde anche ad
+     anonimi. Sono esposte anche operazioni di scrittura: DecessiBE
+     /saveAtto, /saveAttoDecessoData, /eliminaAtto; StatoCivileBE
+     /finalizzaAtto, /saveUSC, /deleteUSCById, /saveOspedale*,
+     /deleteOspedale*, generazione/stampa atti ed estratti con dati personali.
+     I BE sono pubblicati su Host Traefik dedicati (entrypoint http).
+
+ C2  Segreti in chiaro nei sorgenti.
+     - Password DB (PRODUZIONE attiva in DecessiBE, StatoCivileBE, All-Anpr;
+       collaudo in persistence.xml di ProfilazioneUtente).
+     - security.signing-key uguale in tutti i BE (44 application.properties):
+       chi la conosce puo' forgiare JWT con qualunque authority, validi su
+       tutti i BE.
+     - client-secret {noop}; chiave 3DES nel codice (clientConfig decifrabile);
+       PSW_BASE; credenziali GitLab e deploy-token nei Dockerfile con
+       http.sslverify=false; .p12 di test nel repo; truststore "changeit".
+
+ C3  FE: fiducia negli header SSO.
+     CdRLoginFilter prende l'identita' da iv-user / sysgroup senza altre
+     verifiche. Se l'host Traefik del FE e' raggiungibile senza passare dal
+     portale (da verificare sulla rete), basta un header per impersonare
+     qualunque utente.
+
+ C4  Identita' dell'operatore non legata al token (IDOR / impersonificazione).
+     idUser, idUtente, idOrganizzazione, cfUser, hostname e ruoloBe arrivano
+     nel body e il BE li accetta senza verifiche. Con un token valido di
+     qualsiasi BE (vedi C2) o con nessun token (vedi C1) si puo' operare "come"
+     un altro ufficiale o organizzazione. Le ricerche degli atti non filtrano
+     per organizzazione. ruoloBe decide perfino l'utenza con cui
+     StatoCivileBE chiama All-Anpr.
+
+ C5  DecessiWeb: nome della view controllato dal client
+     (GestioneDecessiController.riprendiLavorazione, return url da
+     idSelezionato): open redirect ed esposizione a template/expression
+     injection.
+
+ A1  FE senza autorizzazione per funzione.
+     Le URL Decessi non sono in SecurityConfig e non esiste anyRequest().
+     Qualsiasi utente con sessione valida (anche di un altro modulo o un
+     cittadino) accede a tutte le funzioni Decessi. Il menu e' solo visivo.
+     La SecurityConfig della libreria e' un elenco centralizzato e condiviso
+     di URL AnagrafeWeb: non scala sui nuovi moduli.
+
+ A2  Autorizzazione BE solo su profilo tecnico e troppo ampia.
+     Quasi tutte le API di stato civile e decessi ammettono CITTADINO e
+     CITTADINO_PROF. Scope mai verificati. Nessun controllo per area,
+     funzionalita', municipio o ownership.
+
+ A3  Tracciabilita' ANPR non conforme.
+     Postazione cablata in ConfigHandler.java:67, operatore batch fisso
+     (codice fiscale di una persona), in finalizzazione cfUser = creatore
+     dell'atto e non esecutore. Stato statico non thread-safe: rischio di
+     firmare con i parametri di un'altra richiesta.
+
+ A4  Default permissivi.
+     AppUserDetailsService assegna ROLE_CITTADINO_CRI_ON quando mancano i ruoli
+     (e va in NPE se l'utente non esiste). Tutte le utenze tecniche di
+     collaudo hanno la stessa password. Un solo resourceId
+     "testjwtresourceid" per tutti i BE.
+
+ A5  Trasporto non cifrato.
+     FE -> BE e BE -> BE su http, con token bearer validi 12 ore.
+
+ M1  Solo il primo ruolo (get(0)) determina i privilegi verso i BE. Con piu'
+     ruoli decide l'ordine per id; con lista vuota si ha un'eccezione.
+ M2  Un token nuovo a ogni chiamata REST (due round-trip): impatto sulle
+     prestazioni e sul carico dell'AS di ogni BE.
+ M3  Ogni BE e' anche Authorization Server: circa 44 emittenti di token
+     indipendenti, nessuna gestione centralizzata, revoca impossibile
+     (JWT stateless).
+ M4  Configurazione per ambiente cablata nei branch delle librerie:
+     persistence.xml con blocchi commentati, target in clientConfig,
+     dynamicGeneric "ambiente", URL localhost in Constant, ambiente ANPR
+     cablato a TEST. Il puntamento dipende dal branch compilato. Nella copia
+     locale il FE punta a collaudo e i BE a produzione.
+ M5  Errori 401/403 dai BE ingoiati dal FE: liste vuote e possibili NPE
+     invece di un messaggio di accesso negato.
+ M6  Sessione: nessun timeout o flag cookie configurati, interceptor di
+     sessione scaduta non registrato, sessione in memoria (sticky session).
+ M7  Configurazione di profilazione di Stato Civile e Decessi assente dagli
+     script del repo (aree, funzionalita', ruoli): non versionata.
+ B1  Codice morto o duplicato: checkPoliziaLocale mai chiamato;
+     doFilterHttp mai invocato; ComponentScan su package inesistenti
+     (anagrafeWeb, anagrafeBE); dipendenze non usate in DecessiBE
+     (AnprClient, CXF, ClientSITO, ProtocollazioneGed); RestClient duplicato
+     nel pom di StatoCivileBE; costanti URL duplicate (ProfilazioneUtente vs
+     CommonFeBeSc); copia "elezioni" della libreria con lo stesso GAV;
+     chiave "restClient.moduleuser.username.unidoc" con la maiuscola.
+ B2  Stack obsoleto: Spring Boot 2.1.x, spring-security-oauth2 EOL, grant
+     "password" deprecato, log4j2 2.15.0 (CVE-2021-45046). Asset da CDN
+     senza SRI.
+ B3  UtentiDao: singleton con EntityManager condiviso tra thread e una
+     connessione separata dal datasource applicativo.
+
+
+===============================================================================
+ 14. PUNTI APERTI / DA VERIFICARE SUGLI AMBIENTI
+===============================================================================
+
+  1. Raggiungibilita' diretta degli host Traefik dei FE e dei BE
+     (sipo.*.ecaas.datacenter.comune.roma) senza passare da WebSEAL: decide
+     la gravita' reale di C1 e C3.
+  2. Sinonimi o grant in MATR_USR per CONF_APP_USER / CONF_APP_ROLE, oppure
+     copie locali delle tabelle, e loro contenuto in produzione.
+  3. Contenuto reale in produzione di CONF_AREE_TEMATICHE,
+     CONF_FUNZIONALITA, CONF_RUOLI e R_UTENTI_RUOLI per l'ambito 2 Stato
+     Civile, Decessi compreso (assente negli script).
+  4. Valore di "target" in clientConfig e blocco attivo di persistence.xml
+     sui branch master/test delle librerie.
+  5. Esistenza e definizione del package ANAG_USR.PKG_ANPR
+     (get_postazione_cert_sign) e delle tabelle REG_USER_ANPR_SIGN,
+     CONF_SEDE_MUNICIPIO, OPERATORI_ANPR.ABILITATO_NOTIFICHE (DDL assenti nel
+     repo).
+  6. Se il reverse proxy rimuove eventuali header iv-* inviati dal client
+     prima di iniettare i propri.
+  7. Allineamento tra le utenze in clientConfig (appuser/moduleuser) e le
+     righe CONF_APP_USER di ciascun BE/schema.
+
+
+===============================================================================
+ 15. APPENDICE - FILE DI RIFERIMENTO
+===============================================================================
+
+ ProfilazioneUtente  common/profilazione-utente/ProfilazioneUtente/src/main/
+   java/it/romaCapitale/profilazioneUtente/
+     config/SecurityConfig.java, config/FilterConfig.java
+     portale/CdRLoginFilter.java, portale/CallServlet.java, portale/Constants.java
+     controller/AuthenticationController.java
+     dao/UtentiDao.java, dao/UtenteVO.java, dao/ConfRuoloVO.java,
+     dao/ConfAreaTematicaVO.java, dao/ConfFunzionalitaVO.java
+     model/User.java
+     security/MyUserDetailsService.java, CustomAuthenticationProcessingFilter.java,
+     CustomSecurityEntryPoint.java, CustomLogoutSuccessHandler.java,
+     InvalidSessionHandlerInterceptor.java
+     common/Constant.java, common/Utilities.java
+   resources/META-INF/persistence.xml, properties/portale.properties,
+   properties/dynamicGeneric.properties
+ RestClient          common/rest-client/RestClient/src/main/
+   java/it/romaCapitale/restClient/client/RestClient.java, cypher/TripleDes.java
+   resources/properties/clientConfig.properties
+ RestSecurity        common/rest-security/RestSecurity/src/main/java/
+   it/romaCapitale/restSecurity/security/AuthorizationServerConfig.java,
+   ResourceServerConfig.java, SecurityConfig.java, AppUserDetailsService.java
+ AnagrafeEntities    common/anagrafe-entities/AnagrafeEntities/src/main/java/
+   it/romaCapitale/sipo/anagrafeEntities/entities/ConfAppUser.java, ConfAppRole.java,
+   Utenti.java, RUtentiRuoli.java, ConfRuoli.java, ConfFunzionalita.java,
+   ConfAreeTematiche.java, ConfStruttureInterneRc.java, ConfStruttureConv.java
+   repository/UtentiRuoliRepository.java, UtentiRepository.java
+ CommonWeb           common/commo-web/CommonWeb (templates/fragments/header.html,
+                     GlobalExceptionHandler)
+ DecessiWeb          front-end/decessi-web/DecessiWeb/src/main/java/
+   it/romaCapitale/sipo/decessiWeb/DecessiWebApplication.java
+   controller/GestioneDecessiController.java, AttoMorteTipo00..12Controller.java
+   resources/application.properties, docker-compose.yml, Dockerfile*
+ DecessiBE           back-end/decessi-be/DecessiBL/src/main/java/
+   it/romaCapitale/sipo/decessiBE/DecessiBeApplication.java
+   controller/GestioneAttoContoller.java, RicercaAttoController.java,
+   SalvataggioAttoController.java, SalvataggioTabAttoController.java
+   resources/application.properties
+ StatoCivileBE       back-end/statocivile-be/StatoCivileBL/src/main/java/
+   it/romaCapitale/sipo/statoCivileBE/StatoCivileBeApplication.java
+   controller/UtilityController.java, AnteprimaAttoController.java,
+   GestioneOspedaliController.java, ImplFlowController.java,
+   StampaDocumentoController.java, UfficialeStatoCivileController.java,
+   AnnullamentoCancellazioneAttoController.java
+   flow/context/ImplFlow.java, flow/execute/Atto*Flow.java
+ All-Anpr            back-end/all-anpr-sipo/AllineamentoAnprSipo/src/main/
+   java/it/romaCapitale/sipo/allineamentoAnprSipo/anprSC/*.java, anpr/*.java,
+   common/Utilities.java
+   resources/application.properties, resources/properties/AnprSipoConfig.properties
+ AnprClient          common/anpr-client/AnprClient/src/main/java/
+   it/romaCapitale/sipo/anprClient/client/AnprClient.java, config/ConfigHandler.java
+ DB                  sipo-root/sql/SQL/collaudo/full/01_sipo_structure.sql,
+                     04_sipo_conf_dati.sql, 05_incrementale.sql
+
+=============================== FINE DOCUMENTO ================================

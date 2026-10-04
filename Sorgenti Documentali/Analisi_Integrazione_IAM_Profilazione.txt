@@ -1,0 +1,1012 @@
+===============================================================================
+ SIPO - ROMA CAPITALE
+ ANALISI DI INTEGRAZIONE CON IAM (OpenID Connect) DEL FLUSSO DI PROFILAZIONE
+ Interventi necessari: dal modello AS-IS (header SSO) al modello TO-BE (OIDC)
+===============================================================================
+ Data analisi : 30/09/2026
+ Stato        : analisi preliminare. Le parti che dipendono da decisioni o
+                informazioni non ancora disponibili sono marcate [DA DECIDERE]
+                o [DA CONFERMARE].
+
+ FONTI UTILIZZATE
+  DOC-1  RMCAP-IAM-MAN "Integrazione applicativa con il servizio di Identity
+         and Access Management", Ed. 16 del 23/06/2025 (RTI Fastweb-Leonardo).
+         Specifica normativa: header (cap. 3.2-3.4), OIDC (cap. 3.9.2),
+         Single-Logout (3.9.3), processo di configurazione (cap. 4).
+  DOC-2  Prologic "Comunicazione tra Identity Broker e servizi SSO".
+         Descrive l'Identity Broker Prologic come Relying Party OIDC.
+  DOC-3  "01_Manuale Operativo Applicazione RDE_COEC - template 2026.2 - V0.1".
+         Modello CED per la richiesta di risorse e la messa in esercizio.
+  DOC-4  Flusso di login e catalogo scope/claim forniti dal referente
+         (conversazione del 30/09/2026): 11 scope, flusso in 2 fasi, chiamata
+         al servizio "management" per codice fiscale.
+  DOC-5  Analisi_AS-IS_Profilazione.txt (stessa cartella): analisi dell'attuale
+         profilazione SIPO (ProfilazioneUtente, RestClient, RestSecurity,
+         DecessiWeb/BE, StatoCivileBE, All-Anpr, ANAG_USR).
+  DOC-6  IAM-roma-capitale/analisi-business-conformita-iam.txt: verifica di
+         conformita' dello starter "iam-roma-capitale", da cui si riprendono
+         le evidenze documentali (catalogo claim, divergenze DOC-1/DOC-4).
+
+ Nessuna credenziale o segreto e' riportato in questo documento.
+
+-------------------------------------------------------------------------------
+ INDICE
+-------------------------------------------------------------------------------
+  1. Sintesi
+  2. Punto di partenza: SIPO e' gia' integrato con IAM in "modalita' header"
+  3. Il flusso target e il suo impatto passo per passo su SIPO
+  4. Decisioni architetturali preliminari
+  5. Interventi per componente
+     5.1 Libreria ProfilazioneUtente (punto di integrazione principale)
+     5.2 Nuovo servizio "SIPO Profile Management" (recupero profili per CF)
+     5.3 Database ANAG_USR
+     5.4 CommonWeb e i 35 front-end (es. DecessiWeb)
+     5.5 Front Office: seconda fase (persona giuridica / delega / assistito)
+     5.6 Back-end: propagazione dell'identita' (RestClient, RestSecurity,
+         DecessiBE, StatoCivileBE, All-Anpr)
+     5.7 Altri consumatori degli header iv-* (fuori perimetro, impattati)
+  6. Mappatura claim IAM -> modello utente SIPO
+  7. Requisiti di sicurezza dell'integrazione
+  8. Adempimenti infrastrutturali e procedurali (IAM, CED, Cybersecurity)
+  9. Piano per fasi e stima indicativa
+ 10. Rischi
+ 11. Domande aperte (Presidio IAM, Prologic, referenti SIPO)
+ 12. Appendice - sequence diagram TO-BE e checklist di collaudo
+
+
+===============================================================================
+ 1. SINTESI
+===============================================================================
+
+ SIPO oggi non e' "fuori" da IAM: usa l'integrazione in MODALITA' HEADER di
+ DOC-1 (cap. 3.2). Il reverse proxy di Portale inietta iv-user, iv-codfis,
+ iv-nome ecc. e la libreria ProfilazioneUtente li legge in CdRLoginFilter.
+ Poi carica ruoli, aree tematiche e funzionalita' da ANAG_USR e li mette in
+ sessione come LOGIN_USER.
+
+ Passare al flusso OIDC indicato (redirect a SSO -> callback -> token con
+ claim -> "management" per codice fiscale -> fase 2 opzionale per il Front
+ Office) vuol dire cambiare SOLO lo strato di ingresso dell'identita'. Il
+ resto della profilazione SIPO resta com'e'. In concreto:
+
+  (1) SOSTITUIRE, nella libreria ProfilazioneUtente, la lettura degli header
+      con un client OIDC (Authorization Code con state, nonce ed
+      eventualmente PKCE). Servono una callback, lo scambio del code in
+      back-channel, la validazione dell'id_token e la mappatura dei claim iv_*.
+      Il contratto verso le applicazioni (oggetto model.User in sessione come
+      "LOGIN_USER") resta INVARIATO: i 35 front-end non vanno riscritti, solo
+      configurati e ricollaudati.
+
+  (2) REALIZZARE il passo "management con codice fiscale per recupero
+      profili". Nel caso SIPO i profili sono in ANAG_USR (UTENTI,
+      R_UTENTI_RUOLI, CONF_RUOLI, CONF_AREE_TEMATICHE, CONF_FUNZIONALITA,
+      CONF_APP_ROLE). La raccomandazione e' esporli con un servizio dedicato
+      (REST, per CF) al posto delle query JPA che oggi girano dentro ogni FE
+      con credenziali DB nel jar. [DA CONFERMARE se "management" e' invece un
+      servizio IAM/Prologic, cap. 4 D2.]
+
+  (3) BONIFICARE ANAG_USR, perche' la chiave di ricerca diventa il codice
+      fiscale. Oggi le query cercano per NOME_UTENTE (nome.cognome);
+      UTENTI.CODICE_FISCALE e' nullable, non e' univoco e non e' indicizzato.
+
+  (4) FASE 2 (consigliata, puo' seguire): portare l'identita' dell'operatore
+      fino ai back-end con un token firmato, al posto delle utenze tecniche per
+      ruolo di RestClient/RestSecurity. Serve a chiudere le criticita' C1/C4
+      di DOC-5 e a dare ad ANPR operatore e postazione reali.
+
+  (5) FASE 3 (solo Front Office cittadini): seconda authorization per persona
+      giuridica / delega / assistito, con un modello esplicito di "contesto
+      operativo" (chi si e' autenticato e per conto di chi opera).
+
+ Prima di scrivere codice servono quattro decisioni (cap. 4):
+   D1 chi fa da Relying Party (la libreria, l'Identity Broker Prologic o un
+      gateway SIPO);
+   D2 chi e' "management";
+   D3 la chiave di correlazione (CF o username);
+   D4 come l'identita' arriva ai BE.
+ Serve inoltre un PoC tecnico sulla compatibilita' di Spring Boot 2.1 /
+ Spring Security 5.1 con PKCE e con l'algoritmo di firma dell'id_token
+ (l'esempio di DOC-1 mostra HS256).
+
+
+===============================================================================
+ 2. PUNTO DI PARTENZA: SIPO E' GIA' INTEGRATO IN "MODALITA' HEADER"
+===============================================================================
+
+ Confronto tra quanto descrive DOC-1 per la modalita' header e l'attuale
+ implementazione SIPO (dettaglio in DOC-5, cap. 3-4):
+
+  DOC-1 (modalita' header)              SIPO AS-IS
+  ------------------------------------  ---------------------------------------
+  Web Policy Agent / reverse proxy      Portale -> Traefik -> FE (ECaaS, http)
+  intercetta la URL protetta
+  Header iv-user (username:             CdRLoginFilter legge "iv-user"
+  nome.cognome o CF)                    (portale.properties)
+  Header iv-codfis, iv-nome,            letti per il cittadino (setHeaderParam)
+  iv-cognome, iv-res-*, iv-email ...
+  Tipo utente: non in Tabella 2         header "sysgroup" (identificati /
+                                        interniIdentificati), variabile custom
+                                        di policy
+  iv-portal-groups (gruppi LDAP)        NON usato: i ruoli arrivano da ANAG_USR
+  Codifica RFC 2047 =?UTF-8?B?..?=      Utilities.decodeHeader (solo "B")
+  Autorizzazione di massima via policy  autorizzazione applicativa da ANAG_USR
+  Access Manager                        (R_UTENTI_RUOLI) + controllo goUrl
+  Logout                                redirect a sso_logout.jsp (portale)
+  Header aggiuntivi di infrastruttura   x-real-ip, x-client-sn-sipo (serial
+                                        del certificato di postazione)
+
+ Cosa implica per il TO-BE:
+  - L'autenticazione e' gia' delegata a IAM. Cambia il protocollo (da header
+    fidati a OIDC) e con esso il modello di fiducia: con OIDC l'identita' e'
+    provata da un token firmato e non da un header, il che chiude la
+    criticita' C3 di DOC-5 (impersonificazione se il FE e' raggiungibile
+    senza passare dal proxy).
+  - L'autorizzazione applicativa e' gia' in SIPO (ANAG_USR). Il passo
+    "management per CF" del flusso target corrisponde a quello che oggi fanno
+    AuthenticationController e UtentiDao, con la chiave cambiata da
+    NOME_UTENTE a codice fiscale.
+  - Header come x-client-sn-sipo (postazione ANPR) e x-real-ip non sono
+    identita' IAM ma infrastruttura: vanno garantiti anche nel TO-BE, se la
+    pubblicazione resta dietro il reverse proxy di Portale [DA CONFERMARE].
+
+
+===============================================================================
+ 3. IL FLUSSO TARGET E IL SUO IMPATTO PASSO PER PASSO SU SIPO
+===============================================================================
+
+ FASE 1 - Login (tutti gli utenti: dipendenti back-office e cittadini)
+
+ Passo 1. 302 redirect verso SSO
+   Oggi:    non esiste. L'utente arriva gia' autenticato con gli header.
+   TO-BE:   entry point /init/default?goUrl=... (link di menu gia' esistenti in
+            CommonWeb/header.html) oppure qualunque URL protetta senza sessione.
+            La libreria genera state, nonce e code_verifier (PKCE), li salva in
+            sessione insieme a goUrl e risponde 302 verso l'authorize endpoint:
+              https://ssopre.comune.roma.it/ssoservice/oauth2/realms/root/
+              realms/public/authorize  (produzione: sso.comune.roma.it)
+            con client_id, redirect_uri, response_type=code, scope, state,
+            nonce, response_mode e l'eventuale code_challenge.
+   Componente: ProfilazioneUtente (nuovo OidcLoginEntryPoint al posto di
+            CustomSecurityEntryPoint, che oggi rimanda a www.comune.roma.it).
+
+ Passo 2. IAM esegue l'autenticazione
+   Oggi/TO-BE: invariato, a carico di IAM. SPID/CIE/CNS per i cittadini,
+            username/password per i dipendenti (DOC-1 3.9.2.3).
+
+ Passo 3. IAM chiama la callbackURI
+   TO-BE:   nuovo endpoint, es. /<contesto>/oidc/callback (GET o POST con
+            response_mode=form_post). Verifica lo state rispetto alla sessione
+            e rifiuta i valori assenti, alterati o scaduti.
+   Componente: ProfilazioneUtente (nuovo OidcCallbackController/Filter).
+   Nota:    la redirect_uri deve essere registrata presso IAM e corrispondere
+            esattamente (cap. 8). Con 35 FE su context path diversi servono o
+            35 redirect_uri o un punto di callback centralizzato (cap. 4 D1).
+
+ Passo 4. La callbackURI ottiene un access token con i claim
+   TO-BE:   POST back-channel al token endpoint (grant_type=
+            authorization_code, code, redirect_uri, client_id, client_secret,
+            code_verifier) e risposta con access_token, id_token,
+            refresh_token, expires_in (~3600s).
+            Validazione dell'id_token: firma, iss, aud=client_id, exp/iat,
+            nonce. I claim si leggono dall'id_token (o dall'access token JWT)
+            SENZA chiamare /userinfo, che DOC-1 3.9.2 dichiara non supportato
+            per usi diversi dall'autenticazione.
+            Mappatura dei claim iv_* su CdrUser (cap. 6): iv_tipoutente
+            ("cittadino" / "dipendente") prende il posto dell'header sysgroup.
+   Componente: ProfilazioneUtente.
+
+ Passo 5. Chiamata a "management" con il codice fiscale per i profili
+   Oggi:    AuthenticationController.getDipendenteUser ->
+            UtentiDao.findRuoliUsername(NOME_UTENTE) + getAreeTematicheByUsername;
+            getCittadinoUser -> isProfessionista(CF) oppure ruolo di default
+            CITTADINO_CRI_ON.
+   TO-BE:   chiamata al servizio profili con iv_codfis che restituisce
+            utente (id, nome, cognome, organizzazione, sede municipio),
+            ruoli (RUOLO + PROFILO_BE), aree tematiche e funzionalita' abilitate,
+            eventuali dati ANPR dell'operatore e struttura convenzionata per i
+            professionisti. Poi si costruisce il model.User, si rigenera l'id
+            di sessione, si salva LOGIN_USER e si fa redirect al goUrl
+            validato.
+   Componente: nuovo servizio "SIPO Profile Management" (5.2) + adattatore in
+            AuthenticationController + bonifica DB (5.3).
+
+ FASE 2 - Opzionale, solo Front Office
+
+ Passo 6. Redirect verso la pagina "personale" IAM
+ Passo 7. L'utente sceglie persona giuridica, delega, assistito o altro
+ Passo 8. IAM richiama la callbackURI
+ Passo 9. La callbackURI ottiene un nuovo access token con i claim aggiornati
+   Oggi:    non esiste. Il "professionista" e' ricavato da ANAG_USR
+            (CONF_STRUTTURE_CONV), senza rappresentanza PG ne' deleghe.
+   TO-BE:   azione applicativa "Opera per conto di..." -> nuova authorization
+            [URL e parametri della pagina personale DA CONFERMARE con IAM] ->
+            stessa callback -> merge dei claim iv_pg_*, iv_dg_*, iv_ass_* nel
+            contesto operativo, senza toccare l'identita' della persona fisica
+            autenticata (5.5).
+   Riguarda solo i FE di Front Office: cr-fo-web, rich_online-web,
+            pago-cie-web, rich-temp-web, cert-online. DecessiWeb e gli altri
+            back-office non sono interessati.
+
+
+===============================================================================
+ 4. DECISIONI ARCHITETTURALI PRELIMINARI
+===============================================================================
+
+ D1 - CHI E' IL RELYING PARTY OIDC VERSO IAM              [DA DECIDERE]
+ -----------------------------------------------------------------------------
+  Opzione A - La libreria ProfilazioneUtente, dentro ciascun FE (RP diretto
+              verso sso.comune.roma.it, come DOC-1 3.9.2)
+    +  Nessun nuovo componente da esercire. Intervento concentrato in una
+       libreria gia' condivisa dai 35 FE.
+    +  E' il modello descritto e collaudato da DOC-1.
+    -  Servono 35 redirect_uri (una per context path) sotto un solo client_id,
+       oppure un client per FE.
+    -  Il client_secret va distribuito a 35 container.
+    -  Ogni FE deve raggiungere in back-channel il token endpoint e il JWKS di
+       IAM (aperture firewall da ECaaS verso ssopre/sso).
+    -  Il token IAM non e' spendibile verso i BE SIPO (audience = client IAM):
+       la propagazione ai BE resta un problema separato (D4).
+
+  Opzione B - Identity Broker Prologic (DOC-2) fra SIPO e IAM
+    Il Broker e' l'unico client registrato presso IAM, con un'unica
+    redirect_uri (la propria callback). Normalizza gli attributi ed emette un
+    PROPRIO token verso le applicazioni (DOC-2 cap. 1).
+    +  Una sola registrazione presso IAM, un solo segreto e un solo punto di
+       uscita verso sso.comune.roma.it.
+    +  Il token del Broker puo' diventare il token SIPO da propagare ai BE,
+       risolvendo D4 con lo stesso componente, se il Broker accetta claim
+       applicativi (profili).
+    +  E' il fornitore indicato dal referente come "nostro fornitore per SSO".
+    -  DOC-2 descrive Silfi IAM (WSO2) ed Entra ID, NON l'IAM di Roma Capitale:
+       il supporto va verificato. Punti di attrito gia' visibili:
+         * Il Broker legge i claim da /userinfo per default (DOC-2 cap. 5).
+           Con IAM Roma va configurato su "id_token" (DOC-1 vieta usi non
+           autenticativi di userinfo).
+         * La verifica dell'id_token richiede RS256 + JWKS con "kid"
+           obbligatorio. L'esempio di id_token in DOC-1 3.9.2.3 e' HS256:
+           [DA CONFERMARE l'algoritmo effettivo di IAM].
+         * Se la verifica fallisce il Broker "ricade sulla sola lettura dei
+           claim senza validazione della firma" (DOC-2 cap. 5). Per SIPO e'
+           inaccettabile: va disattivato o almeno monitorato.
+         * Il modello normalizzato (providerUserId, email, givenName,
+           familyName, fiscalCode, ente) NON contiene iv_tipoutente,
+           iv_pg_*, iv_dg_*, iv_ass_*. Senza estensione del Broker si perdono
+           il tipo utente e tutta la fase 2 Front Office.
+         * PKCE non usato dal Broker: da concordare se IAM lo richiede.
+         * La redirect verso la "pagina personale" (fase 2) deve essere
+           gestita dal Broker.
+    -  Aggiunge un componente di terze parti sul percorso critico del login.
+
+  Opzione C - Gateway di autenticazione SIPO centralizzato
+              (es. applicazione "sipo-auth" o Keycloak con IAM come IdP)
+    +  Una sola redirect_uri e un solo segreto presso IAM, come in B, ma sotto
+       controllo SIPO.
+    +  Emette token SIPO (RS256, JWKS) con claim applicativi: risolve D4.
+    -  Nuovo componente da progettare, esercire e mettere in alta
+       affidabilita' (Manuale Operativo CED, DOC-3).
+
+  RACCOMANDAZIONE
+   - Se l'uso del Broker Prologic per SIPO e' contrattualmente confermato e
+     il Broker supporta l'IAM di Roma Capitale con claim iv_*, lettura da
+     id_token e verifica firma non disattivabile: Opzione B.
+   - Altrimenti: Opzione A per la fase 1, cioe' la via piu' breve per
+     sostituire gli header senza nuovi componenti. L'Opzione C resta da
+     valutare per la fase 2 (BE).
+   - In entrambi i casi il codice di ProfilazioneUtente va scritto dietro
+     un'interfaccia (es. IdentityProviderAdapter: buildAuthorizeRedirect,
+     handleCallback -> IdentitaAutenticata). Cosi' la scelta A/B/C non
+     costringe a riscrivere la libreria.
+
+ D2 - CHI E' IL SERVIZIO "MANAGEMENT"                      [DA CONFERMARE]
+ -----------------------------------------------------------------------------
+  Il flusso fornito dice "viene richiamato management con il codice fiscale
+  per recupero profili", senza indicare il proprietario. Le letture possibili
+  sono due:
+   (a) Un servizio IAM/Prologic che restituisce profili gestiti centralmente
+       (gli equivalenti OIDC di iv-portal-groups). In questo caso bisogna
+       definire come i profili IAM si traducono nei ruoli SIPO.
+       CONF_RUOLI + R_UTENTI_RUOLI hanno granularita' per funzionalita' e
+       struttura, che un IAM tipicamente non gestisce. Serve una tabella di
+       mapping (5.3) e resta comunque la lettura di ANAG_USR per aree,
+       funzionalita' e organizzazione.
+   (b) Un servizio SIPO che espone i profili di ANAG_USR per CF.
+  Raccomandazione: modello IBRIDO.
+   - IAM decide l'accesso di massima: l'utente e' abilitato a "SIPO
+     back-office" o "SIPO front-office" (policy o profilo IAM).
+   - SIPO resta la fonte dei profili di dettaglio tramite "SIPO Profile
+     Management" (5.2).
+   - Se (a) esiste, il servizio SIPO lo consulta come filtro aggiuntivo.
+
+ D3 - CHIAVE DI CORRELAZIONE UTENTE IAM <-> ANAG_USR       [DA DECIDERE]
+ -----------------------------------------------------------------------------
+  - Claim disponibili: sub = username (CF per i cittadini, nome.cognome per
+    i dipendenti), iv_user (stesso valore) e iv_codfis ("garantito", DOC-1
+    3.2).
+  - Oggi SIPO cerca UTENTI.NOME_UTENTE = iv-user; per i cittadini
+    NOME_UTENTE = CF.
+  - Il flusso target usa il CF. Raccomandazione:
+     chiave primaria = iv_codfis su UTENTI.CODICE_FISCALE, dopo la bonifica
+       (5.3);
+     fallback transitorio = iv_user su NOME_UTENTE, con log e allarme, per
+       gli utenti non ancora bonificati;
+     rimozione del fallback a bonifica completata.
+  - Motivo: il CF e' stabile e comune a tutti i canali (SPID, CIE, IAM), e
+    DOC-2 7.1 segnala che su alcuni provider il "sub" non e' stabile.
+
+ D4 - COME L'IDENTITA' ARRIVA AI BACK-END                  [DA DECIDERE]
+ -----------------------------------------------------------------------------
+  Oggi il token verso i BE rappresenta un'utenza tecnica per ruolo e
+  l'operatore viaggia in chiaro nel body (DOC-5 cap. 5-10 e 13).
+  Opzioni:
+   D4.1 Nessun cambiamento in fase 1. RestClient continua a usare
+        l'utenza tecnica ricavata da PROFILO_BE, come oggi: minimo impatto,
+        ma non risolve C1/C4.
+   D4.2 Token SIPO per l'utente, emesso da un Authorization Server SIPO
+        centrale (Opzione C) o dal Broker (Opzione B), con claim sub=CF,
+        idUtente, ruoli, profiloBe, idOrganizzazione, idSedeMunicipio,
+        postazione. Firma RS256, validazione nei BE via JWKS.
+   D4.3 Passare ai BE il token IAM: sconsigliato. L'audience e' il client
+        IAM, DOC-1 limita l'uso degli endpoint OIDC all'autenticazione, e i
+        BE SIPO non sono client IAM.
+  Raccomandazione: D4.1 in fase 1, D4.2 in fase 2.
+
+ D5 - VERSIONE DELLO STACK                                 [DA VERIFICARE CON PoC]
+ -----------------------------------------------------------------------------
+  - FE su Spring Boot 2.1.2/2.1.4 = Spring Security 5.1 (EOL).
+  - oauth2Login e OIDC sono disponibili, ma ci sono limiti da verificare con
+    un PoC:
+     * PKCE per client confidenziali: supporto nativo configurabile solo in
+       versioni successive di Spring Security (customizer delle
+       authorization request).
+     * id_token firmato HMAC (HS256, come nell'esempio di DOC-1): il
+       decoder OIDC della 5.1 e' pensato per RS256/JWKS.
+     * response_mode=form_post e parametri custom (acr_values per eIDAS).
+  - Le strade possibili sono due:
+     (i)  implementare la callback in modo esplicito nella libreria usando
+          nimbus-jose-jwt (gia' presente transitivamente con
+          spring-security-oauth2-jose). Nessun aggiornamento di piattaforma,
+          pieno controllo su PKCE, algoritmi e merge della fase 2;
+     (ii) aggiornare prima la piattaforma (Boot 2.7 / Security 5.8, poi 3.x):
+          intervento trasversale su 35 FE + 44 BE, da pianificare a parte.
+  - Raccomandazione: (i) per non legare l'integrazione IAM all'upgrade, che
+    resta comunque necessario (DOC-5 B2).
+  - Lo starter "iam-roma-capitale" (IAM-roma-capitale/iam-spring-starter) usa
+    Spring Boot 4 / Java 25: NON e' utilizzabile in SIPO (Java 11). Se ne
+    possono riusare le mappature, una volta corrette secondo DOC-6
+    (claim iv_*, niente /userinfo, PKCE).
+
+ D6 - COESISTENZA HEADER / OIDC DURANTE LA MIGRAZIONE
+ -----------------------------------------------------------------------------
+  - Proprieta' per ambiente sipo.auth.mode = HEADER | OIDC, per far
+    convivere le due modalita' e tornare indietro senza rilasci.
+  - In modalita' OIDC gli header iv-* in ingresso vanno IGNORATI e rimossi
+    dalla request (wrapper), per non riaprire il vettore di
+    impersonificazione.
+  - La modalita' HEADER va dismessa a fine migrazione, insieme a portale.properties
+    e al parametro "mode=local" di CdRLoginFilter.
+
+
+===============================================================================
+ 5. INTERVENTI PER COMPONENTE
+===============================================================================
+
+ 5.1 LIBRERIA ProfilazioneUtente  (common/profilazione-utente)
+ -----------------------------------------------------------------------------
+  E' il punto di integrazione principale: tutti i 35 FE la ricevono
+  tramite CommonWeb.
+
+  NUOVI COMPONENTI
+   a) OidcProperties: issuer, endpoint (da well-known), client_id, riferimento
+      al segreto, redirect_uri, scope per profilo (BO/FO), response_mode,
+      pkce on/off, algoritmi ammessi, clock skew.
+      Il segreto NON va nei file di properties del repo: va in una variabile
+      d'ambiente o in un secret ECaaS/Kubernetes. Oggi le credenziali DB sono
+      in chiaro in persistence.xml (DOC-5 C2) e questo non deve ripetersi.
+   b) OidcLoginEntryPoint (sostituisce CustomSecurityEntryPoint)
+      - Senza sessione: genera state, nonce e code_verifier, salva goUrl e fa
+        302 verso authorize.
+      - Con sessione ma senza autorizzazione: accessDenied.htm, come oggi.
+   c) OidcCallbackController su /oidc/callback (GET e POST)
+      Ordine delle operazioni:
+       1. verifica dello state;
+       2. scambio del code in back-channel (client_secret_post, come
+          nell'esempio di DOC-1);
+       3. validazione dell'id_token (firma via JWKS in cache o, se HS256, con
+          il client_secret; poi iss, aud, exp, nonce);
+       4. mappatura dei claim su IdentitaAutenticata;
+       5. chiamata al servizio profili (5.2);
+       6. costruzione di model.User;
+       7. rigenerazione dell'id di sessione (session fixation);
+       8. salvataggio di LOGIN_USER (e dei token solo lato server, mai nel
+          browser);
+       9. redirect al goUrl validato.
+   d) IamClaimMapper: da claim iv_* a CdrUser/User (cap. 6). Gestisce
+      iv_tipoutente. Nei claim JSON non serve la decodifica RFC 2047, che
+      resta solo per la modalita' header.
+   e) OidcSessionRefresher (opzionale): alla scadenza del token (circa 1h)
+      oppure della sessione applicativa, nuova authorization silenziosa
+      tramite il cookie SSO di IAM, oppure refresh_token se IAM lo emette (la
+      risposta di esempio in DOC-1 lo contiene).
+
+  COMPONENTI DA MODIFICARE
+   - CdRLoginFilter: resta solo per la modalita' HEADER (D6). In modalita'
+     OIDC, /init/default diventa l'avvio del login (passo 1), preservando i
+     link del menu.
+   - AuthenticationController: getDipendenteUser e getCittadinoUser prendono
+     in ingresso l'identita' OIDC (CF, tipo utente, anagrafica) invece di
+     CdrUser da header, e recuperano i profili dal servizio 5.2 invece che da
+     UtentiDao. La regola "cittadino non censito = ruolo CITTADINO_CRI_ON con
+     funzionalita' CITTADINO=1" va mantenuta, ma decisa sul claim
+     iv_tipoutente e non su "e' un CF?" (oggi Utilities.isCodiceFiscale(null)
+     restituisce true).
+   - UtentiDao / persistence.xml: da DISMETTERE nei FE, sostituiti dal
+     client del servizio profili. Si eliminano cosi' la connessione diretta
+     dei FE a ANAG_USR e le password in chiaro.
+   - SecurityConfig:
+      * aggiungere anyRequest().authenticated() dopo gli antMatchers
+        esistenti (DOC-5 A1), con whitelist di callback, errori, static e
+        health;
+      * mantenere l'attuale pre-authentication (CustomAuthentication-
+        ProcessingFilter + MyUserDetailsService), ma facendo produrre le
+        authority dal profilo gia' in sessione invece di rileggere il DB a
+        ogni richiesta;
+      * CSRF resta attivo; la callback in form_post va esclusa dal CSRF
+        (e' protetta da state e nonce).
+   - Controllo del goUrl: oggi e' "url.contains(goUrl)" (DOC-5 4.3).
+     Diventa una corrispondenza esatta sul path della funzionalita'
+     abilitata, e il goUrl viaggia nello state lato server e non in query al
+     ritorno, contro l'open redirect.
+   - CustomLogoutSuccessHandler: oggi rimanda a sso_logout.jsp del portale.
+     In OIDC la raccomandazione di DOC-1 3.9.3 e' chiudere solo la sessione
+     applicativa, senza Single-Logout, salvo diverso accordo con il referente
+     [DA DECIDERE].
+   - InvalidSessionHandlerInterceptor: da registrare davvero (oggi non lo
+     e', DOC-5 7.6). La sessione scaduta avvia un nuovo login OIDC invece
+     della pagina di errore.
+   - checkPoliziaLocale (vincolo di giunzione per la PL): oggi e' codice
+     morto. Va deciso se implementarlo come regola sul profilo.
+
+  MODALITA' SVILUPPO
+   - Il parametro "mode=local" (iv-user dalla sessione) va sostituito da un
+     IdP di sviluppo (es. Keycloak in container con utenti di test e claim
+     iv_*) oppure da un profilo Spring "dev" con identita' simulata
+     disattivabile in build di produzione.
+
+ 5.2 NUOVO SERVIZIO "SIPO PROFILE MANAGEMENT"
+ -----------------------------------------------------------------------------
+  Scopo: realizzare il passo 5 del flusso ("management per CF") con i dati
+  di ANAG_USR. Diventa l'unica fonte dei profili per FE, BE e l'eventuale
+  Authorization Server SIPO.
+
+  Contratto minimo proposto (REST/JSON):
+    GET /profili/{codiceFiscale}?tipoUtente=dipendente|cittadino
+    Risposta:
+      utente        { id, nomeUtente, nome, cognome, codiceFiscale, flgAttivo,
+                      idOrganizzazione, descrizioneOrganizzazione,
+                      flgGruppoVigili, idSedeMunicipio, idStrutturaConv,
+                      descrizioneStrutturaConv }
+      ruoli         [ { id, ruolo, descrizione, profiloBe } ]  ordinati come oggi
+      areeTematiche [ { id, descrizione, urlPage, idAmbito,
+                        funzionalita: [ { descrizione, url, ordine } ] } ]
+      baseUrl       (area 0 "Comuni")
+      anpr          { idOperatore, idSede, idPostazione }  opzionale, senza keystore
+    404 = utente non censito (cittadino non professionista: il FE applica il
+    ruolo di default); 403 = utente disattivato o cancellato.
+
+  Implementazione:
+   - Riusa le query esistenti di UtentiDao (DOC-5 11.3) con la chiave
+     CODICE_FISCALE, piu' il filtro FLG_CANCELLATO='N' (oggi assente).
+     Le inner join che escludono gli utenti senza ID_ORGANIZZAZIONE o senza
+     CONF_APP_ROLE diventano esplicite (errore diagnostico, non lista vuota).
+   - L'accesso al servizio e' riservato ai client SIPO (client credentials o
+     mTLS interno). Non va esposto su Traefik pubblico: e' il problema C1 di
+     DOC-5.
+   - Audit di ogni accesso (chi, quando, esito) in una tabella dedicata.
+   - Cache breve lato FE (durata della sessione): il profilo si legge una
+     volta al login, come oggi.
+
+  Collocazione:
+   - microservizio nuovo su ECaaS (serve il Manuale Operativo, cap. 8),
+     oppure
+   - estensione di AnagrafeBE, che ha gia' accesso a ANAG_USR e il modulo di
+     gestione utenti (/gestioneUtentiRest/**). Evita un nuovo componente, ma
+     lega il login alla disponibilita' di AnagrafeBE [DA DECIDERE].
+
+ 5.3 DATABASE ANAG_USR
+ -----------------------------------------------------------------------------
+  Evidenze attuali (DOC-5 cap. 11 e verifica sugli script):
+   - UTENTI.CODICE_FISCALE e' stata aggiunta con 05_incrementale.sql:1071.
+     E' nullable, senza vincolo di unicita' e senza indice (nessuna
+     occorrenza negli script). Il repository JPA findByCodiceFiscale esiste
+     gia'.
+   - Le query di profilazione cercano per NOME_UTENTE.
+  Interventi:
+   a) Bonifica dei dati (con il supporto del business):
+      - censimento dei dipendenti attivi senza CODICE_FISCALE;
+      - duplicati di CF;
+      - coerenza fra NOME_UTENTE e l'username IAM (iv_user) e fra
+        CODICE_FISCALE e iv_codfis;
+      - verifica dei CF in minuscolo o con spazi (normalizzare in UPPER/TRIM).
+   b) DDL:
+      - indice univoco su UPPER(CODICE_FISCALE) per gli utenti non cancellati
+        (indice funzionale o vincolo, secondo il modello dei cancellati);
+      - vincolo NOT NULL per gli utenti attivi, a bonifica conclusa.
+   c) Opzionale, se D2 = (a): tabella di mapping CONF_IAM_PROFILO
+      (codice profilo IAM -> ID CONF_RUOLI / area) per tradurre i profili IAM
+      in ruoli SIPO.
+   d) Nuove tabelle di supporto:
+      - LOG_ACCESSI (login OIDC: cf, tipo utente, esito, sessione, ip,
+        postazione, timestamp, auditTrackingId IAM se presente nel token);
+      - dalla fase 3, CONTESTO_OPERATIVO_LOG (persona fisica + soggetto
+        rappresentato + id delega) per l'imputabilita' degli atti.
+   e) Grant e sinonimi: DecessiBE/StatoCivileBE si collegano come MATR_USR e
+      leggono CONF_APP_USER senza schema (DOC-5 11.5). Va verificato sul DB
+      prima della fase 2.
+   f) Configurazione di Stato Civile/Decessi (aree, funzionalita') assente
+      negli script del repo (DOC-5 M7). Va estratta dal DB di produzione e
+      versionata, perche' il servizio profili ne dipende.
+
+ 5.4 CommonWeb E I 35 FRONT-END (esempio: DecessiWeb)
+ -----------------------------------------------------------------------------
+  Se il contratto model.User / LOGIN_USER resta invariato, l'intervento sui
+  singoli FE e' di CONFIGURAZIONE e REGRESSIONE, non di sviluppo:
+   - proprieta' OIDC per ambiente (redirect_uri del context path, es.
+     https://<host-portale>/DecessiWeb/oidc/callback), con il segreto come
+     secret ECaaS;
+   - pubblicazione su HTTPS tramite il reverse proxy di Portale (oggi
+     Traefik entrypoint http, DOC-5 A5). La callback su http non e'
+     ammissibile;
+   - apertura delle rotte in uscita dai container verso ssopre/sso
+     (token endpoint, JWKS), solo nell'Opzione A;
+   - allineamento delle dipendenze (versione di CommonWeb/ProfilazioneUtente,
+     con la stessa versione su tutti i branch: DOC-5 M4 e memoria di build
+     sul "clobber" della copia sipo-elezioni).
+  CommonWeb:
+   - GlobalExceptionHandler: su UnauthorizedException (401/403 dai BE) resta
+     error403. Su sessione mancante va il nuovo login invece dell'errore 400
+     di @SessionAttribute.
+   - Menu (header.html): invariato, usa LOGIN_USER.areeTematiche.
+  DecessiWeb in particolare:
+   - Nessun codice specifico da toccare per il login: usa solo LOGIN_USER e
+     user.getRuoli().get(0).getRuoloBe().
+   - Il rilascio e' l'occasione per chiudere A1 (URL /gestioneDecessi/** e
+     /attoMorteTipoNN/** protette da anyRequest e, meglio, da regole per
+     funzionalita') e C5 (view name da input client), anche se non
+     strettamente legati a IAM.
+
+ 5.5 FRONT OFFICE: SECONDA FASE (PERSONA GIURIDICA / DELEGA / ASSISTITO)
+ -----------------------------------------------------------------------------
+  Ambito: FE per i cittadini (cr-fo-web, rich_online-web, pago-cie-web,
+  rich-temp-web, cert-online-be/dotnet). Non riguarda i back-office.
+  Interventi:
+   a) Modello: nuovo oggetto ContestoOperativo in model.User, con:
+        personaFisica    (sempre: chi si e' autenticato, dal token di fase 1)
+        tipoContesto     PROPRIO | PERSONA_GIURIDICA | DELEGA | ASSISTITO
+        soggettoRappresentato (CF/PIVA, denominazione, ruolo, categoria)
+        delega           (id, iat/nbf/exp, services)
+      Un solo punto di verita' per "per conto di chi" (DOC-6 B6.3).
+   b) Azione "Opera per conto di..." -> nuova authorization verso la pagina
+      personale IAM -> stessa callback -> merge nel ContestoOperativo. Se il
+      CF della persona fisica e' diverso da quello della fase 1, la sessione
+      va invalidata.
+   c) Regole obbligatorie:
+      - delega utilizzabile solo se l'uuid del servizio SIPO e' presente in
+        iv_dg_services (DOC-1 3.4);
+      - controllo di iv_dg_nbf/iv_dg_exp;
+      - per la persona giuridica, presenza di iv_pg_piva e iv_pg_codfis
+        (DOC-1 3.3).
+   d) Relazione con il "professionista" attuale (ruolo CITTADINO_PROF su
+      CONF_STRUTTURE_CONV): va deciso se resta una profilazione SIPO o se
+      diventa una rappresentanza PG da IAM [DA DECIDERE con il business].
+   e) Propagazione ai BE (fase 2): il soggetto rappresentato va nel token
+      SIPO e negli atti (oggi le pratiche FO sono intestate al solo CF
+      dell'utente).
+   f) Divergenze fra DOC-1 e DOC-4 da chiarire (DOC-6 passo 0.5):
+      - consenso GDPR e scadenza della delega PG non compaiono nello scope
+        persona_giuridica;
+      - email o telefono del delegante;
+      - nome del claim della categoria giuridica.
+
+ 5.6 BACK-END: PROPAGAZIONE DELL'IDENTITA' (fase 2)
+ -----------------------------------------------------------------------------
+  Obiettivo: il BE sa CHI opera leggendo un token firmato, non un parametro
+  del body.
+   a) Authorization Server centrale (Opzione C) o Broker (Opzione B):
+      - emette al FE, dopo il login, un token SIPO (RS256, validita' breve)
+        con sub=CF, idUtente, ruoli/profiloBe, idOrganizzazione,
+        idSedeMunicipio, postazione (x-client-sn-sipo) e, dalla fase 3,
+        contesto operativo;
+      - in alternativa il FE lo ottiene con un token exchange (RFC 8693)
+        presentando l'id_token IAM.
+   b) RestClient:
+      - nuovo metodo che invia il token utente (Bearer) al posto di
+        generateToken con utenza tecnica;
+      - cache del token per sessione, al posto di un token nuovo a ogni
+        chiamata (DOC-5 M2);
+      - i metodi attuali restano per i batch (client credentials).
+   c) RestSecurity:
+      - i BE diventano solo Resource Server: si rimuove
+        @EnableAuthorizationServer da ogni BE e la chiave HMAC condivisa
+        (DOC-5 C2);
+      - validazione via JWKS del server centrale;
+      - anyRequest().authenticated() (DOC-5 C1);
+      - authority dai claim ruoli/profiloBe, cosi' le @PreAuthorize
+        esistenti su ROLE_AUTH_USER, ROLE_ADMIN ecc. restano valide nella
+        prima iterazione;
+      - utility SipoPrincipal.current() per leggere idUtente, CF e
+        organizzazione dal SecurityContext.
+   d) DecessiBE:
+      - idUser/idOrganizzazione di /cercaAttiDecesso e /saveAtto dal
+        token, non dal body;
+      - tracciare l'utente anche in /saveAttoDecessoData ed /eliminaAtto.
+   e) StatoCivileBE:
+      - idUtente, idUtenteLog, cfUser e ruoloBe dal token;
+      - verso All-Anpr: token relay dell'utente, oppure token exchange con
+        audience All-Anpr, al posto del "ruoloBe" ricevuto nel body;
+      - cfUser ANPR = operatore che esegue l'operazione, non il creatore
+        dell'atto (DOC-5 3.5).
+   f) All-Anpr:
+      - endpoint *SC: cfUser e hostname dai claim del token;
+      - batch: utenza tecnica dedicata, NON il CF di una persona fisica;
+      - AnprClient: rimuovere l'hostname cablato (ConfigHandler.java:67) e
+        risolvere la postazione da REG_USER_ANPR/OPERATORI_ANPR in base a CF
+        e serial del certificato.
+   g) Transizione: i BE accettano per un periodo sia il token SIPO sia quello
+      tecnico attuale (due token services), con dismissione pianificata.
+
+ 5.7 ALTRI CONSUMATORI DEGLI HEADER iv-* (fuori perimetro, impattati)
+ -----------------------------------------------------------------------------
+  - sipo-root/sipo-elezioni/profilazione-utente-elezioni: copia della
+    libreria con lo stesso GAV. Va allineata o dismessa, altrimenti
+    sovrascrive in .m2 la versione OIDC.
+  - cross/Signps: SignpsInterconnectPortal/filter/CdRLoginFilter.java e
+    SignpsWeb/authentication (proprio CdRLoginFilter e portale.properties).
+  - cross/cert-online-dotnet (Global.asax.cs, Emissione.aspx.cs): .NET, legge
+    gli header.
+  Se il reverse proxy di Portale smette di iniettare gli header per SIPO,
+  anche questi vanno migrati o restano su una giunzione in modalita' header
+  [DA CONFERMARE con il Presidio Portale].
+
+
+===============================================================================
+ 6. MAPPATURA CLAIM IAM -> MODELLO UTENTE SIPO
+===============================================================================
+
+ Convenzione: i claim OIDC usano "iv_" e l'underscore; gli header usano il
+ trattino. Principio di minimizzazione (DOC-1 3.2): richiedere solo gli scope
+ necessari per ciascun profilo di client.
+
+ Scope per client:
+  SIPO back-office (dipendenti) : openid profile email tipo_utente
+  SIPO front-office (cittadini) : openid profile email tipo_utente anagrafica
+                                  residenza numeri_telefono (+ domicilio se
+                                  serve) + in fase 2: persona_giuridica
+                                  attributi_delega assistito
+                                  [DA CONFERMARE quali scope IAM abilita per
+                                   ciascun client]
+
+  Claim (scope)            Oggi (header / campo)          Campo SIPO TO-BE          Uso
+  -----------------------  -----------------------------  ------------------------  -------------------------------
+  sub / iv_user (profile)  iv-user -> CdrUser.userId      User.username             fallback chiave (D3), log
+  iv_codfis (profile)      iv-codfis -> codiceFiscale     User.cf                   CHIAVE verso Profile Mgmt
+  iv_nome, iv_cognome      iv-nome, iv-cognome            User.nome/cognome         anagrafica (DB per i dipendenti)
+  iv_tipoutente            sysgroup (identificati /       User.groupId              scelta dipendente/cittadino
+   (tipo_utente)           interniIdentificati)           (cittadino->identificati,
+                                                          dipendente->interniIdent.)
+  iv_email, iv_emailp      iv-email                       User.email                FO: contatti
+  iv_mobile, iv_tel        iv-tel                         User.telefono             FO
+  iv_nascita_data/_comune  iv-nascita-data/-comune        User.dataNascita,         FO: pratiche cittadino
+   /_prov/_nazione, iv_sex  iv-sex                        comuneNasc, provinciaNasc,
+   (anagrafica)                                           statoNasc, sesso
+  iv_res_* (residenza)     iv-res-via/-civico/-cap/       User.indirizzoRes,        FO (CRI online ecc.)
+                           -comune/-prov                  civicoRes, capRes
+  iv_dom_* (domicilio)     -                              User.indirizzoDom...      FO (se necessario)
+  iv_pg_* (persona_giur.)  -                              ContestoOperativo (5.5)   solo fase 2 FO
+  iv_dg_* (attributi_del.) -                              ContestoOperativo.delega  solo fase 2 FO, check services
+  iv_ass_* (assistito)     -                              ContestoOperativo         solo fase 2 FO [semantica DA CONF.]
+  (non OIDC)               x-real-ip, x-client-sn-sipo    User.ipPostazione,        ANPR/postazione: restano header
+                                                          User.hostname             di infrastruttura [DA CONFERMARE]
+  (non disponibile)        iv-portal-groups (non usato)   -                         ruoli da Profile Mgmt (D2)
+
+ Per i DIPENDENTI nome, cognome e organizzazione continuano a venire da
+ ANAG_USR, come oggi (getDipendenteUser). I claim servono per identificare
+ l'utente e per verificare la coerenza con i dati DB (segnalare in log le
+ differenze).
+
+
+===============================================================================
+ 7. REQUISITI DI SICUREZZA DELL'INTEGRAZIONE
+===============================================================================
+
+  S1  Solo Authorization Code (niente implicit o hybrid). state e nonce sempre
+      presenti, PKCE se supportato o richiesto da IAM [DA CONFERMARE].
+  S2  Validazione completa dell'id_token: firma, iss, aud, exp/iat, nonce.
+      Nessun fallback su claim non verificati (vedi il comportamento del
+      Broker, DOC-2 cap. 5). Algoritmi ammessi in whitelist (RS256; HS256
+      solo se IAM lo usa davvero, con segreto dedicato).
+  S3  Nessuna chiamata a /userinfo per l'uso ordinario (DOC-1 3.9.2).
+  S4  Callback e applicazioni solo su HTTPS tramite il reverse proxy di
+      Portale. redirect_uri registrate in modo esatto.
+  S5  Segreti (client_secret, credenziali del servizio profili) fuori dal
+      codice e dai file di properties versionati: secret ECaaS o vault, con
+      rotazione.
+  S6  Token solo lato server, in sessione, mai esposti al browser ne' nei log.
+      Log con CF mascherato quando possibile (GDPR).
+  S7  Rigenerazione dell'id di sessione dopo il login. Cookie Secure,
+      HttpOnly, SameSite=Lax (compatibile con il ritorno GET dalla callback;
+      con form_post cross-site serve la valutazione di SameSite=None e
+      Secure). Timeout di sessione esplicito.
+  S8  In modalita' OIDC, header iv-* in ingresso ignorati e rimossi.
+  S9  goUrl validato con corrispondenza esatta su funzionalita' abilitate e
+      conservato lato server (nello state).
+  S10 Audit: login riusciti e falliti, utente non censito, utente
+      disattivato, cambio di contesto operativo (fase 2), con correlazione
+      all'auditTrackingId del token IAM se presente.
+  S11 Logout: sessione applicativa invalidata. Single-Logout IAM solo se
+      concordato (DOC-1 3.9.3).
+  S12 Le criticita' AS-IS C1 (API BE aperte), C2 (segreti in chiaro) e C5
+      (view name da input) non dipendono da IAM. Vanno pero' risolte prima o
+      insieme all'integrazione: un login OIDC robusto davanti a BE
+      accessibili senza token non migliora la sicurezza complessiva.
+
+
+===============================================================================
+ 8. ADEMPIMENTI INFRASTRUTTURALI E PROCEDURALI
+===============================================================================
+
+  Verso il Presidio Sistema IAM (presidiosupportoutentiesterni@comune.roma.it)
+  - DOC-1 cap. 4.1: Scheda di definizione del servizio applicativo (Mod.
+    SSA). Contiene:
+      denominazione e descrizione;
+      contesto di business;
+      referenti interno ed esterno;
+      giunzione;
+      criterio di autorizzazione (es. dipendenti abilitati SIPO, cittadini);
+      ambito (Internet/intranet);
+      utenze nominative di pre-produzione con ruolo.
+  - DOC-1 3.9.2.2: creazione del client (client_id e secret per client
+    confidenziale), registrazione delle redirect_uri (una per FE o una del
+    componente centrale, secondo D1), scope concordati, endpoint
+    (authorization, token, JWKS).
+  - Utenze di test in pre-produzione: dipendente con piu' ruoli, dipendente
+    senza CF in ANAG_USR, cittadino non censito, cittadino professionista e,
+    per la fase 3, utente con delega, con rappresentanza PG e con assistito.
+
+  Verso il Presidio Portale / RTI Sistemi Centrali (rti.salamacchine@...)
+  - Pubblicazione dei FE (e dell'eventuale componente centrale) sul reverse
+    proxy di Portale in HTTPS, con giunzioni. Chiarire se, per le URL OIDC,
+    il proxy continua a iniettare x-client-sn-sipo e x-real-ip (necessari
+    per ANPR).
+
+  Verso il Dipartimento Cybersecurity (tech.cybersecurity@...)
+  - Aperture firewall in uscita dai namespace ECaaS verso ssopre/sso
+    (token endpoint, JWKS) per il back-channel: da ogni FE (Opzione A) o
+    dal solo componente centrale o Broker (B/C). Il front-channel passa dal
+    browser.
+
+  Verso Servizio Datacenter / Sala macchine (DOC-3)
+  - DOC-3 e' il template Manuale Operativo compilato per RDE/COEC (Prologic),
+    non per SIPO. Serve un Manuale Operativo SIPO (o l'aggiornamento di
+    quello esistente) per i nuovi componenti:
+      servizio profili;
+      eventuale Authorization Server o gateway;
+      eventuale istanza Broker.
+    Da compilare:
+      ambienti di sviluppo, collaudo e produzione (per la pre-produzione IAM
+        il collaudo e' obbligatorio);
+      interazioni con altri applicativi (IAM, Broker), capitolo
+        propedeutico alle aperture firewall;
+      namespace ECaaS;
+      monitoraggio;
+      avvio e stop.
+  - Il documento va portato a versione 1.x firmata prima della produzione
+    (requisito di DOC-3).
+
+  Verso Prologic (se Opzione B)
+  - Conferma del supporto all'IAM Roma Capitale (realm public, claim iv_*,
+    algoritmo di firma, PKCE).
+  - Configurazione "id_token" come sorgente dei claim e disattivazione del
+    fallback senza firma.
+  - Estensione del modello normalizzato con iv_tipoutente, iv_pg_*, iv_dg_*,
+    iv_ass_* e profili SIPO.
+  - Contratto del token emesso verso le applicazioni (claim, firma, JWKS,
+    durata) e gestione della fase 2 (pagina personale).
+
+
+===============================================================================
+ 9. PIANO PER FASI E STIMA INDICATIVA
+===============================================================================
+
+ Stime in giorni/uomo, indicative. Da validare dopo le decisioni D1-D5 e
+ dopo il PoC. Non includono i tempi di risposta dei presidi esterni ne' la
+ bonifica dati a carico del business.
+
+ FASE 0 - Decisioni, PoC e richieste                          ~ 6-9 gg
+   - Decisioni D1-D6 con referenti, Presidio IAM e Prologic ....... 2-3
+   - PoC su ssopre: login OIDC da un FE Boot 2.1 (DecessiWeb) con
+     callback, validazione id_token, PKCE, mappatura iv_* ........... 3-4
+   - Scheda servizio applicativo, richiesta client e utenze,
+     richiesta aperture firewall, bozza del Manuale Operativo ....... 1-2
+
+ FASE 1 - Login OIDC back-office e front-office "base"        ~ 45-60 gg
+   - ProfilazioneUtente: adapter IdP, entry point, callback,
+     validazione, mapper, feature flag HEADER/OIDC, logout, sessione,
+     SecurityConfig (anyRequest), goUrl, profilo dev ............. 10-12
+   - Servizio SIPO Profile Management (API, query per CF, audit,
+     autenticazione client, deploy ECaaS) ........................ 6-8
+   - Client del servizio profili nella libreria e dismissione di
+     UtentiDao/persistence.xml nei FE ............................ 2-3
+   - ANAG_USR: script di censimento e bonifica CF, DDL (indice
+     univoco, NOT NULL), LOG_ACCESSI, versionamento configurazione
+     Stato Civile/Decessi ......................................... 3-4
+   - Rilascio e regressione sui 35 FE (configurazione, pipeline,
+     smoke test del login e della navigazione fra FE, circa 0,5 gg
+     per FE) ...................................................... 15-20
+   - Collaudo in pre-produzione con il Presidio IAM ............... 5-8
+   - Documentazione (Manuale Operativo, runbook) ................... 2-3
+   - Opzione B: la parte "adapter/callback" si riduce, ma va
+     aggiunta l'integrazione con il contratto del Broker (da stimare
+     sul suo contratto di interfaccia).
+
+ FASE 2 - Identita' fino ai back-end (perimetro campione:
+          RestClient, RestSecurity, DecessiBE, StatoCivileBE, All-Anpr) ~ 30-40 gg
+   - Authorization Server centrale o integrazione con il token
+     del Broker (emissione token SIPO, JWKS, token exchange) ...... 6-8
+   - RestClient (token utente, cache) e RestSecurity (solo Resource
+     Server, JWKS, anyRequest, SipoPrincipal) ..................... 5-6
+   - DecessiBE, StatoCivileBE, All-Anpr: identita' dal token,
+     relay/exchange verso All-Anpr, operatore e postazione ANPR
+     reali (AnprClient) ........................................... 12-16
+   - Test e collaudo end-to-end con ANPR in ambiente di test ...... 7-10
+   - L'estensione agli altri ~40 BE e' un programma a parte, di
+     entita' proporzionale al numero di endpoint.
+
+ FASE 3 - Front Office: seconda fase (PG / delega / assistito)  ~ 15-20 gg
+   - ContestoOperativo, seconda authorization, merge, verifiche su
+     services/nbf/exp, audit, adeguamento dei FE FO e dei BE FO per
+     il soggetto rappresentato, collaudo con utenze reali di delega
+     e PG ......................................................... 15-20
+
+ FASE 4 - Dismissione della modalita' header                     ~ 3-5 gg
+   - Rimozione di CdRLoginFilter/portale.properties e del flag,
+     chiusura delle giunzioni header, dismissione delle utenze
+     tecniche per ruolo lato BE (dopo la fase 2).
+
+ Percorso minimo per avere il login su IAM OIDC: FASE 0 + FASE 1.
+ Le FASI 2 e 3 portano i benefici di sicurezza e di tracciabilita'
+ (operatore reale verso BE e ANPR, rappresentanza legale nel FO).
+
+
+===============================================================================
+ 10. RISCHI
+===============================================================================
+
+  Rischio                                  Prob.  Impatto  Mitigazione
+  ---------------------------------------  -----  -------  -----------------------------------
+  CF mancanti o duplicati in UTENTI:        Alta   Alto     Bonifica anticipata (FASE 0/1),
+  dipendenti che non entrano piu'                           fallback transitorio su iv_user,
+                                                            report giornaliero degli esiti
+  "management" non chiarito (D2)           Media  Alto     Servizio profili SIPO sotto
+                                                            controllo interno (5.2)
+  Spring Security 5.1 incompatibile        Media  Medio    PoC in FASE 0; callback esplicita
+  con PKCE o HS256 dell'IAM                                 con nimbus (D5)
+  Broker non conforme all'IAM Roma         Media  Alto     Verifica preliminare dei requisiti
+  (userinfo, fallback senza firma,                          di cap. 8; in alternativa Opzione A
+  claim mancanti)
+  35 redirect_uri / 35 segreti da          Alta   Medio    Un client unico con piu' redirect
+  gestire (Opzione A)                                       o un componente centrale (B/C)
+  Perdita di x-client-sn-sipo /            Media  Alto     Verifica con il Presidio Portale
+  x-real-ip (postazione ANPR)                               prima del cut-over
+  Navigazione fra FE: login ripetuti o     Media  Medio    SSO silenzioso via cookie IAM;
+  sessioni scollegate                                       verifica in PoC
+  Copia sipo-elezioni che sovrascrive      Alta   Medio    Allineare o rinominare il GAV della
+  la libreria in .m2                                        copia prima del rilascio
+  Consumatori header esterni (Signps,      Media  Medio    Censimento e piano dedicato (5.7)
+  cert-online .NET) rotti dal cambio
+  di giunzione
+  BE ancora aperti (C1) nonostante il      Alta   Critico  Anticipare anyRequest().
+  login OIDC                                                authenticated() in RestSecurity
+                                                            (intervento piccolo, indipendente)
+  Seconda fase FO: atti imputati alla      Media  Alto     ContestoOperativo esplicito e
+  persona sbagliata                                         audit (5.5), collaudo con dati reali
+
+
+===============================================================================
+ 11. DOMANDE APERTE
+===============================================================================
+
+ Al Presidio Sistema IAM
+  Q1  Algoritmo di firma dell'id_token e dell'access token (l'esempio di
+      DOC-1 e' HS256): RS256 con JWKS disponibile? URL del JWKS dal
+      well-known?
+  Q2  PKCE obbligatorio o facoltativo per i client confidenziali?
+  Q3  Quali degli 11 scope possono essere abilitati per un client
+      back-office e per uno front-office?
+  Q4  Durata di access/id token e disponibilita' del refresh_token. Una nuova
+      authorization con sessione SSO attiva e' silenziosa?
+  Q5  Il servizio "management" del flusso fornito e' un servizio IAM? Con
+      quale endpoint, autenticazione e formato dei profili?
+  Q6  Fase 2 FO: URL e parametri per l'avvio della "pagina personale";
+      semantica di "assistito"; uuid del servizio SIPO per iv_dg_services.
+  Q7  Divergenze DOC-1/DOC-4: consenso GDPR e scadenza della delega PG in
+      OIDC, email o telefono del delegante, nome del claim della categoria
+      giuridica.
+  Q8  iv_codfis e' sempre valorizzato per i dipendenti (utenze nome.cognome)?
+  Q9  Si possono registrare piu' redirect_uri (35) su un solo client_id?
+
+ Al Presidio Portale / Sistemi Centrali
+  Q10 Con la pubblicazione OIDC le giunzioni SIPO restano dietro il reverse
+      proxy? x-client-sn-sipo e x-real-ip continuano a essere iniettati?
+  Q11 Le giunzioni in modalita' header per Signps e cert-online vanno
+      mantenute?
+
+ A Prologic
+  Q12 Il Broker supporta l'IAM di Roma Capitale con i vincoli di cap. 8? E'
+      previsto contrattualmente per SIPO o solo per RDE/COEC?
+  Q13 Il token emesso dal Broker puo' contenere claim applicativi (profili
+      SIPO) e si puo' usare verso i back-end? Firma e JWKS?
+  Q14 Il fallback "claim senza verifica di firma" si puo' disattivare?
+
+ Ai referenti SIPO / business
+  Q15 Il "professionista" (CITTADINO_PROF) resta una profilazione SIPO o
+      diventa una rappresentanza PG da IAM?
+  Q16 Single-Logout: va propagato a IAM o basta la chiusura della sessione
+      applicativa?
+  Q17 Chi esegue e approva la bonifica dei CF in ANAG_USR?
+
+
+===============================================================================
+ 12. APPENDICE
+===============================================================================
+
+ 12.1 Sequence diagram TO-BE (Opzione A, fase 1, back-office)
+
+  Browser            FE (ProfilazioneUtente)        IAM (sso/ssopre)      SIPO Profile Mgmt   ANAG_USR
+    |  GET /DecessiWeb/init/default?goUrl=X |               |                     |              |
+    |------------------------------------->|                |                     |              |
+    |       302 authorize?client_id&redirect_uri&scope&state&nonce[&code_challenge]            |
+    |<-------------------------------------|                |                     |              |
+    |  GET authorize ------------------------------------->|                     |              |
+    |  (login SPID/CIE/credenziali, se non gia' in SSO)     |                     |              |
+    |  302/POST redirect_uri?code&state <------------------|                     |              |
+    |  GET|POST /DecessiWeb/oidc/callback ->|               |                     |              |
+    |                                       | verifica state|                     |              |
+    |                                       | POST token (code, secret, verifier) |              |
+    |                                       |-------------->|                     |              |
+    |                                       |<-- id_token, access_token, (refresh)|              |
+    |                                       | valida firma/iss/aud/exp/nonce      |              |
+    |                                       | mappa iv_codfis, iv_tipoutente...   |              |
+    |                                       | GET /profili/{CF} ----------------->|  query      |
+    |                                       |                                     |------------->|
+    |                                       |<------- utente, ruoli, aree, funz. -|<-------------|
+    |                                       | model.User -> sessione LOGIN_USER   |              |
+    |                                       | nuovo session id, verifica goUrl    |              |
+    |  302 /DecessiWeb/X <------------------|                |                     |              |
+    |  (navigazione normale; verso i BE: RestClient con utenza tecnica in fase 1, token SIPO in fase 2)
+
+ 12.2 Checklist di collaudo (estratto)
+  [ ] Dipendente con un ruolo: login, menu, accesso alla funzionalita' da goUrl
+  [ ] Dipendente con piu' ruoli: profiloBe verso i BE uguale all'AS-IS
+      (primo ruolo)
+  [ ] Dipendente senza CF in ANAG_USR: fallback iv_user registrato in log,
+      poi blocco
+  [ ] Dipendente disattivato o cancellato: accesso negato con messaggio
+  [ ] Cittadino non censito: ruolo CITTADINO_CRI_ON e funzionalita'
+      CITTADINO=1
+  [ ] Cittadino professionista: CITTADINO_PROF e struttura convenzionata
+  [ ] goUrl non abilitato o manipolato: accessDenied, nessun open redirect
+  [ ] state o nonce alterati, code riusato, id_token scaduto o con firma
+      errata: login rifiutato
+  [ ] Header iv-user forgiato in modalita' OIDC: ignorato
+  [ ] Sessione scaduta: nuovo login silenzioso via SSO, ritorno alla pagina
+  [ ] Logout: sessione invalidata, nessun accesso con il vecchio cookie
+  [ ] Navigazione fra due FE (es. DecessiWeb -> StatoCivileWeb): SSO senza
+      nuova digitazione delle credenziali
+  [ ] Postazione ANPR (x-client-sn-sipo) presente in sessione dopo il login
+      OIDC
+  [ ] (Fase 3) Delega con uuid servizio assente o scaduta: rifiutata; PG:
+      atto intestato al soggetto rappresentato
+  [ ] Nessuna chiamata a /userinfo nei log di rete; nessun token nei log
+      applicativi
+
+=============================== FINE DOCUMENTO ================================

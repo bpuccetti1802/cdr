@@ -457,7 +457,10 @@ def controlla_riferimenti(doc):
     # punti controversi: definiti come heading «PC-n — …»
     pc_def = {re.match(r'(PC-\d+)', h).group(1)
               for h in doc.heading(2) if re.match(r'PC-\d+', h)}
-    pc_cit = set(re.findall(r'\bPC-\d+\b', doc.testo))
+    # ⚠️ «\b» non basta: in «058091-PC-2611» (un nome di certificato di postazione)
+    # il confine di parola cade dopo il trattino e il riferimento sembra un PC-n.
+    # Un riferimento vero non è mai preceduto da un trattino o da un alfanumerico.
+    pc_cit = set(re.findall(r'(?<![-\w])PC-\d+\b', doc.testo))
     for m in sorted(pc_cit - pc_def):
         problemi.append(('KO', f'{m} citato ma non esiste il paragrafo corrispondente', ''))
 
