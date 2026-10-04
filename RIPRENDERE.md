@@ -5,12 +5,22 @@ arrivati **i lavori** e come si continuano.
 
 ---
 
-## 1. Trasferire il repository senza GitHub
+## 1. Prendere il repository
 
-Se il push non è ancora andato a buon fine, non serve aspettarlo: git sa produrre un
-**pacchetto autoportante**, un singolo file che contiene l'intera storia.
+Il repository è su GitHub, privato, e si clona così (serve essere autenticati: `gh auth
+login`, oppure un token personale al posto della password):
 
-Sulla postazione di partenza (già fatto, il file è pronto):
+```bash
+git clone https://github.com/bpuccetti1802/cdr.git "Comune di Roma"
+cd "Comune di Roma"
+```
+
+### Senza GitHub
+
+Se la postazione non raggiunge GitHub, git sa produrre un **pacchetto autoportante**, un
+singolo file che contiene l'intera storia.
+
+Sulla postazione di partenza:
 
 ```bash
 git bundle create workspace-comune-di-roma.bundle --all

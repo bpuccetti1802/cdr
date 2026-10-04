@@ -8,7 +8,7 @@ personali non lasciano il perimetro dell'ente.
 ## 1. Prendere questo repository
 
 ```bash
-git clone <url-del-repository> "Comune di Roma"
+git clone https://github.com/bpuccetti1802/cdr.git "Comune di Roma"
 cd "Comune di Roma"
 ```
 
