@@ -23,13 +23,13 @@ import diagrammi_comune as G   # noqa: E402
 BASE = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'img')
 
-W, H = 1700, 1250
+W, H = 1700, 1454
 LARG = 350                                  # larghezza di ogni scheda
 COL = {1: 60, 2: 470, 3: 880, 4: 1290}      # ascisse delle quattro colonne
-RIGA = {1: 176, 2: 392, 3: 592}             # ordinate delle tre righe della configurazione
-OPER = 842                                  # ordinata della fascia operativa
+RIGA = {1: 176, 2: 392, 3: 592, 4: 796}     # ordinate delle quattro righe della configurazione
+OPER = 1046                                 # ordinata della fascia operativa
 CORR_V = {'1-2': 440, '2-3': 850, '3-4': 1260}   # corridoi verticali fra le colonne
-CORR_H = {'1-2': 366, '2-3': 576, '2-3b': 586, 'sotto': 780}  # corridoi orizzontali fra le righe
+CORR_H = {'1-2': 366, '2-3': 576, '2-3b': 586, 'sotto': 984}  # corridoi orizzontali fra le righe
 
 # (colonna, riga, colore, titolo, righe, nota)
 TABELLE = [
@@ -95,7 +95,8 @@ TABELLE = [
     (4, 3, 'verde', 'RICONCILIAZ_DIZIONARI', [
         ('PK', 'ID_RICONCILIAZIONE'), ('UK', 'DECODIFICA + VALORE_ANSC'),
         ('', '+ CAMPO_SIPO · VALORE_SIPO'),
-        ('', 'SCHEMA/TABELLA_SIPO, CONDIZIONE'), ('', 'validità temporale')],
+        ('', 'SCHEMA/TABELLA_SIPO, CAMPO_SIPO'),
+        ('FK', 'ID_DOMINIO_SIPO (in alternativa)'), ('', 'validità temporale')],
      'il corrispondente locale di un valore ANSC'),
 
     # ─────────── alla base: ciò che accade agli atti
@@ -111,10 +112,19 @@ TABELLE = [
     (2, 'op', 'blu', 'ANSC_LOG_AUDIT', [
         ('PK', 'ID_AUDIT'), ('FK', 'ID_STATO_ATTO'),
         ('', 'FASE, ESITO'), ('', 'RICHIESTA / RISPOSTA')], 'la traccia di ogni passo'),
-    (3, 'op', 'blu', 'ALLEGATO', [
+    # ⚠️ ALLEGATO sta in MATR_USR, non in ANSC_USR: si disegna in grigio per distinguerla
+    # dalle altre e la nota lo dichiara. ⚠️ «fg_extra» era il nome superato dalla v3.29.
+    (3, 'op', 'grigio', 'ALLEGATO', [
         ('PK', 'id_allegato'), ('', 'id_atto_sipo, id_ansc_allegato'),
         ('', 'oj_allegato (BLOB), cd_hash'),
-        ('', 'cd_stato, fg_extra')], 'i documenti — ereditata da Side'),
+        ('', 'cd_stato, fg_testo_libero')], 'i documenti — in MATR_USR, da Side'),
+    (4, 4, 'verde', 'ANSC_CFG_DOMINIO_SIPO', [
+        ('PK', 'ID_DOMINIO_SIPO'),
+        ('', 'ID_DOMINIO + NM_DOMINIO (il dominio)'),
+        ('', 'SCHEMA_SIPO (facoltativo)'),
+        ('', 'TABELLA_SIPO, CAMPO_SIPO'),
+        ('UK', 'DECODIFICA — colonna virtuale')],
+     'dove vive in SIPO un dominio ANSC'),
     (4, 'op', 'blu', 'ANSC_NOTIFICA', [
         ('PK', 'ID_NOTIFICA'), ('', 'ID_ANSC, genere, stato')], 'il flusso in ingresso'),
 ]
@@ -139,6 +149,8 @@ LEGAMI = [
     ('ALLEGATI_USECASE', 'g', ['v:2-3'], 'ANSC_ANA_UC', 'd', True),
     ('ANSC_CFG_CAMPO', 'd', [], 'VALORE_DOMINIO', 's', True),
     ('RICONCILIAZ_DIZIONARI', 'g', [], 'VALORE_DOMINIO', 'b', True),
+    ('ANSC_CFG_DOMINIO_SIPO', 'g', [], 'RICONCILIAZ_DIZIONARI', 'b', False),
+    ('ANSC_CFG_DOMINIO_SIPO', 's', [], 'DOMINIO_DECODIFICA', 's', True),
 ]
 
 
@@ -146,10 +158,11 @@ def disegna(percorso=None):
     percorso = percorso or os.path.join(IMG, 'erd_ansc_usr.png')
     im, dr = G.tela(W, H, 'Schema ANSC_USR',
                     'le tabelle operative sono la base: configurazione e dizionari esistono '
-                    'per metterle in grado di lavorare')
-    G.banda(dr, 40, 140, W - 40, 776, '#3f8f5f',
+                    'per metterle in grado di lavorare. In grigio l’unica tabella che non '
+                    'sta in ANSC_USR')
+    G.banda(dr, 40, 140, W - 40, 980, '#3f8f5f',
             'CONFIGURAZIONE — la decide il Comune · REPLICHE — le pubblica ANSC', '#a8801a')
-    G.banda(dr, 40, 812, W - 40, 1072, '#2f6bb0',
+    G.banda(dr, 40, 1016, W - 40, 1276, '#2f6bb0',
             'OPERATIVE — ciò che accade agli atti', '#25548a')
 
     riq = {}
@@ -180,13 +193,13 @@ def disegna(percorso=None):
         colore = G.MUTED if tratteggio else G.ARROW
         G.percorso(dr, punti, colore, tratteggio, 2)
 
-    G.percorso(dr, [(860, 778), (860, 838)], '#25548a', False, 4)
-    dr.text((876, 790), 'la configurazione guida ciò che accade agli atti',
+    G.percorso(dr, [(860, 982), (860, 1042)], '#25548a', False, 4)
+    dr.text((876, 994), 'la configurazione guida ciò che accade agli atti',
             font=G.fnt(G.F_ITA, 17), fill='#25548a')
 
-    G.legenda(dr, 60, 1100, [('verde', 'decise dal Comune'), ('giallo', 'replicate da ANSC'),
+    G.legenda(dr, 60, 1304, [('verde', 'decise dal Comune'), ('giallo', 'replicate da ANSC'),
                              ('viola', 'dizionari'), ('blu', 'operative')])
-    y = 1144
+    y = 1348
     G.linea(dr, [(62, y + 8), (122, y + 8)], G.ARROW, False, 3)
     dr.text((132, y), 'chiave esterna dichiarata nel DDL', font=G.fnt(G.F_REG, 16),
             fill=G.MUTED)
