@@ -1,0 +1,780 @@
+===============================================================================
+ SIPO - ROMA CAPITALE
+ ANALISI INCROCIATA: IDENTITA', PROFILAZIONE E INTEGRAZIONE CON IAM
+ Confronto fra il documento di progetto v0.3 e le nostre analisi, e soluzione
+ finale proposta per integrare la nuova profilazione nel codice esistente
+===============================================================================
+ Data         : 05/10/2026
+ Documenti confrontati
+  [DOCX] ANALISI_Identita-Profilazione-IAM_v0.3.docx (02/10/2026)
+  [ASIS] Analisi_AS-IS_Profilazione.txt (30/09/2026)       = [F2] nel DOCX
+  [INT]  Analisi_Integrazione_IAM_Profilazione.txt (30/09/2026) = [F3] nel DOCX
+ Base delle verifiche: sorgenti in C:\Users\FabioGalliani\Desktop\roma-capitale
+ (cartelle target/ escluse). Nessun segreto o codice fiscale e' riportato.
+
+-------------------------------------------------------------------------------
+ INDICE
+-------------------------------------------------------------------------------
+  1. Sintesi del confronto
+  2. Mappa di corrispondenza fra i documenti
+  3. Punti in cui i documenti concordano
+  4. Cosa aggiunge il DOCX rispetto alle nostre analisi (verificato sul codice)
+  5. Cosa hanno le nostre analisi e il DOCX non riporta
+  6. Divergenze e incongruenze da correggere nel DOCX
+  7. Fatti nuovi emersi dalla verifica sul codice
+  8. Soluzione finale proposta
+     8.5 Progetto separato o modifiche al codice esistente
+     8.6 Variante "proxy di autenticazione": fase 1 senza toccare i FE
+     8.7 Confronto fra le due sequenze e criterio di scelta
+  9. Piano di integrazione nel codice esistente, componente per componente
+ 10. Piano per fasi aggiornato (sequenza A e sequenza B)
+ 11. Decisioni e punti aperti che restano bloccanti
+
+
+===============================================================================
+ 1. SINTESI DEL CONFRONTO
+===============================================================================
+
+ Il DOCX v0.3 e' l'accorpamento delle nostre due analisi ([F2] = ASIS,
+ [F3] = INT) con una terza ricognizione in ampiezza ([F1], ASIS v0.2 sull'intero
+ perimetro) e con la documentazione della libreria Angular dell'ente ([F7],
+ [F8]). Sui fatti d'impianto le tre fonti concordano: due livelli di identita'
+ scollegati, autenticazione delegata al portale in modalita' header,
+ autorizzazione applicativa in ANAG_USR, utenze tecniche per ruolo verso i BE,
+ operatore che viaggia nel body, BE senza anyRequest().
+
+ Il DOCX porta tre contributi reali:
+  a) sei rilievi in piu', provenienti da [F1] e confermati sul codice
+     (cap. 4);
+  b) una scala di cinque soluzioni (S0-S4) valutata su tre vincoli che le
+     nostre analisi non consideravano: front-end Angular, back-end Java,
+     esercizio in Kubernetes;
+  c) due ipotesi nuove: la convergenza su msAuth (S4), il servizio usato dalle
+     applicazioni Angular, e la variante BFF del gateway SIPO (S3).
+
+ Perde invece buona parte del dettaglio operativo di INT: contratto del
+ servizio profili, mappatura dei claim, requisiti di sicurezza, adempimenti
+ verso i presidi, stime per fase, checklist di collaudo (cap. 5). Nel
+ consegnarlo conviene che rinvii esplicitamente a INT per queste parti, oppure
+ che le riassorba.
+
+ La soluzione finale proposta (cap. 8) si discosta su un punto dalla
+ raccomandazione del DOCX ("S1 adesso, S3 come architettura"). Proponiamo di
+ costruire subito il componente centrale (S3), facendolo partire in modalita'
+ header, invece di scrivere OIDC dentro ciascuno dei 35 FE (S1) per poi
+ rifarlo. La ragione e' un dato di codice che nessun documento riporta: ci
+ sono 4.781 call site di getRuoloBe() nei FE (cap. 7). La fase 2 deve quindi
+ lasciare intatte le firme di RestClient, e questo e' possibile solo se il
+ token utente esiste gia' in sessione dalla fase 1.
+
+ La logica nuova (OIDC, emissione del token, profili) va in progetti
+ separati, sipo-auth e sipo-profili. Nel codice esistente restano solo
+ adattatori sottili in tre librerie condivise: ProfilazioneUtente,
+ RestClient e RestSecurity. Non si puo' scendere a zero modifiche senza
+ lasciare aperti RI-01 e RI-02 (cap. 8.5).
+ Si confrontano due sequenze (cap. 8.6-8.7):
+  A) la libreria dei FE diventa subito client OIDC di sipo-auth;
+  B) sipo-auth fa da proxy di autenticazione e inietta gli header di oggi,
+     cosi' la fase 1 non tocca i 35 FE.
+ B anticipa il valore e rinvia la ricompilazione dei FE, ma per un periodo
+ la fiducia negli header resta, protetta solo dalla rete. Si sceglie in
+ base alla risposta a PI-12.
+
+
+===============================================================================
+ 2. MAPPA DI CORRISPONDENZA FRA I DOCUMENTI
+===============================================================================
+
+  DOCX                                   Nostre analisi
+  -------------------------------------  ------------------------------------
+  3.1 Autenticazione                     ASIS 3.1, 4
+  3.1 Tabella ruolo->utenza tecnica      ASIS 12 (identica)
+  3.2 Profilazione                       ASIS 11
+  3.3 Identita' verso l'esterno (ANPR)   ASIS 3.5, 10.3
+  3.4 Tracciamento                       ASIS 9.3, 10.3 (parziale)
+  3.5 Rilievi RI-01..RI-29               ASIS 13 (C1-C5, A1-A5, M1-M7, B1-B3)
+  4.1 Punto di partenza                  INT 2
+  4.2 Flusso target (8 passi)            INT 3 (9 passi, con fase 2 FO)
+  4.3 Decisioni D1-D6                    INT 4 D1-D6
+  4.4 Soluzioni S0-S4 + BFF              -- (nuovo)
+  4.5 Cosa l'integrazione chiude         INT 7 S12, 9 (implicito)
+  4.6 Interventi per componente          INT 5 (molto piu' dettagliato)
+  4.7 Rischi                             INT 10 (DOCX omette 2 rischi)
+  5   Punti aperti PI-01..PI-19          ASIS 14 + INT 11 Q1-Q17
+
+  Corrispondenza rilievi DOCX -> ASIS
+   RI-01=C1  RI-02=C4  RI-03=C2  RI-04=C3  RI-05=C5  RI-07=A1  RI-08=A2
+   RI-09=A3  RI-13=A4  RI-14=A5  RI-16=M1  RI-18=M2+M3  RI-19=M6
+   RI-20=M7  RI-25=M5  RI-26=M4  RI-27=B1(parte)  RI-28=B1(parte)  RI-29=B2
+   Senza equivalente in ASIS: RI-06, RI-10, RI-11, RI-12*, RI-15*, RI-17*,
+   RI-21, RI-22, RI-23, RI-24*
+   (* presente in ASIS come osservazione, non come criticita' numerata)
+   Presenti in ASIS e assenti dal registro DOCX: B3 (UtentiDao non
+   thread-safe), anomalie puntuali di ASIS 4.3 (cap. 5).
+
+  Corrispondenza punti aperti DOCX -> INT/ASIS
+   PI-01=Q1  PI-02=Q2  PI-03=Q3  PI-04=Q4+Q9  PI-05=Q5  PI-06=Q8
+   PI-07=Q10  PI-08=ASIS14.6  PI-09=Q12-Q14  PI-10=Q15  PI-11=Q17
+   PI-12=ASIS14.1  PI-13=ASIS14.2  PI-14=ASIS14.3  PI-15=ASIS14.5
+   Nuovi nel DOCX: PI-16, PI-17 (msAuth), PI-18, PI-19 (BFF).
+   Assenti dal DOCX: Q6, Q7 (fase 2 FO: pagina personale, divergenze
+   DOC-1/DOC-4), Q11 (giunzioni Signps/cert-online), Q16 (Single-Logout),
+   ASIS 14.4 (target/persistence sui branch), ASIS 14.7 (allineamento
+   clientConfig/CONF_APP_USER).
+
+
+===============================================================================
+ 3. PUNTI IN CUI I DOCUMENTI CONCORDANO
+===============================================================================
+
+  - SIPO e' gia' in IAM in modalita' header (DOC-1 cap. 3.2). Passare a OIDC
+    cambia il protocollo e il modello di fiducia, non la ripartizione delle
+    responsabilita'.
+  - Il contratto verso le applicazioni (model.User in sessione come
+    LOGIN_USER) resta invariato: i 35 FE si configurano, non si riscrivono.
+  - D2: modello ibrido. IAM decide l'accesso di massima, SIPO resta la fonte
+    dei profili di dettaglio tramite un servizio dedicato per CF.
+  - D3: la chiave e' il codice fiscale, con ripiego transitorio su
+    NOME_UTENTE. La bonifica di UTENTI.CODICE_FISCALE e' un prerequisito.
+  - D4: nessun cambiamento in fase 1, token SIPO per l'utente in fase 2. Il
+    token IAM non va inoltrato ai BE.
+  - D5: callback esplicita con nimbus-jose-jwt, senza legare l'integrazione
+    all'upgrade di piattaforma.
+  - D6: proprieta' sipo.auth.mode = HEADER | OIDC. In OIDC gli header iv-*
+    vengono rimossi.
+  - Codice dietro un'interfaccia (buildAuthorizeRedirect / handleCallback).
+  - RI-01 (C1) non dipende da IAM e va anticipato: e' il rischio che vanifica
+    l'intero intervento.
+  - La copia sipo-elezioni con lo stesso GAV va allineata o rinominata prima
+    del rilascio.
+
+
+===============================================================================
+ 4. COSA AGGIUNGE IL DOCX (VERIFICATO SUL CODICE)
+===============================================================================
+
+ 4.1 Rilievi nuovi
+  RI-06  mode=local                       CONFERMATO
+         CdRLoginFilter.java:83, senza condizioni di profilo o ambiente.
+         (In ASIS era citato in 3.1 ma non classificato come criticita'.)
+  RI-10  Sei BasicConfiguration permitAll CONFERMATO, 6 file:
+         all-dec-be, all-matr-be, all-nas-be, faxpec-be (x2, di cui una
+         copia fuori da src/: FaxpecBE/security/), sad-be (ServletSAD).
+  RI-11  ApiKeyFilter inefficace           CONFERMATO
+         cert-online-be/.../filter/ApiKeyFilter.java:43 confronta il path con
+         "/generate" e "/validate". TokenController e' mappato su
+         @RequestMapping("/api/token"), quindi la condizione non scatta mai.
+  RI-21  cxf.xml / saml.properties orfani FILE PRESENTI in
+         common/anpr-client/AnprClient/src/main/resources. La classe
+         inesistente non e' stata riverificata.
+  RI-22  CheckPermission commentate        CONFERMATO, 4 classi
+         (gest-evel-be, gest-evel-web e le due copie *-backup).
+  RI-23  Firma postazione in 3 copie       Non riverificato (coerente con ASIS
+         11.1: AnagrafeBE, cross/firma-id-postazione, anpr-client).
+
+ 4.2 Numeri corretti dal DOCX
+  - signing-key: il DOCX dice "identica in 57 file". VERIFICATO: 57 file
+    .properties, 107 occorrenze, un solo valore distinto. In ASIS avevamo
+    scritto "44 application.properties" contando solo i BE canonici. Il dato
+    da usare e' quello del DOCX.
+  - anpr-client: il DOCX parla di "dipendenza di trenta moduli". Il conteggio
+    dei pom che dichiarano AnprClient da' 65, copie comprese.
+    Raccomandazione: scrivere "piu' di trenta moduli" o dichiarare il
+    criterio di conteggio.
+
+ 4.3 Soluzioni e vincoli nuovi
+  - S0 (consolidamento in modalita' header): formalizza come voce a se'
+    quanto in INT era il requisito S12 e il rischio "BE ancora aperti".
+    Giusto renderla autonoma: e' l'unica cosa che si puo' fare subito.
+  - Vincolo Angular: i micro-frontend non possono usare la modalita' header.
+    E' il criterio che rende S1 una soluzione parziale.
+  - S4 msAuth (/msAuth/api/v1/autenticazione/loginIAM): NON VERIFICABILE in
+    questo repository. Nessuna occorrenza di msAuth o loginIAM nei sorgenti
+    SIPO; l'unico riscontro grep e' un falso positivo .NET
+    (FormsAuthenticationTicket). L'informazione viene solo da [F7] (libreria
+    Angular esterna). Va trattata come ipotesi fino alla risposta a PI-17.
+  - Variante BFF: utile per le applicazioni Angular, che oggi tengono il
+    gettone in localStorage (dato di [F7], non verificabile qui).
+  - Kubernetes: un solo Secret per namespace, readiness che non deve
+    dipendere da IAM, sessione da rendere condivisa (RI-19).
+
+
+===============================================================================
+ 5. COSA HANNO LE NOSTRE ANALISI E IL DOCX NON RIPORTA
+===============================================================================
+
+ Da INT, necessari per l'esecuzione (da riassorbire o richiamare nel DOCX):
+  - Contratto del servizio profili: GET /profili/{cf}?tipoUtente, risposta
+    utente/ruoli/aree/funzionalita'/baseUrl/anpr, semantica 404/403 (INT 5.2).
+  - Collocazione del servizio profili: microservizio nuovo oppure estensione
+    di AnagrafeBE (/gestioneUtentiRest/**). Il DOCX non pone la scelta.
+  - Mappatura claim iv_* -> model.User e scope per client BO/FO (INT 6).
+  - Requisiti di sicurezza S1-S12 (INT 7): PKCE, whitelist algoritmi, niente
+    /userinfo, SameSite e form_post, goUrl nello state, audit con
+    auditTrackingId.
+  - Adempimenti: Mod. SSA, registrazione client, aperture firewall verso
+    ssopre/sso, Manuale Operativo CED (INT 8).
+  - Stime in giorni/uomo per fase (INT 9). Il DOCX ha solo
+    "giorni / settimane / da stimare".
+  - Fase 3 Front Office in dettaglio: ContestoOperativo, controlli su
+    iv_dg_services/nbf/exp, invalidazione se cambia il CF (INT 5.5).
+  - Lo starter iam-roma-capitale (Spring Boot 4 / Java 25) non e'
+    utilizzabile in SIPO (Java 11) (INT D5).
+  - Consumatori esterni degli header nominati: cross/Signps (proprio
+    CdRLoginFilter) e cross/cert-online-dotnet (INT 5.7). Il DOCX (PI-08 e
+    tabella 4.6) ne parla solo in generale.
+  - Due rischi omessi: "management non chiarito" e "fase 2 FO: atti imputati
+    alla persona sbagliata".
+  - Checklist di collaudo (INT 12.2).
+
+ Da ASIS, difetti puntuali assenti dal registro RI:
+  - Utilities.isCodiceFiscale(null) restituisce true: con header assente
+    l'utente resta vuoto.
+  - UtentiDao e' un singleton con EntityManager condiviso fra thread (B3).
+  - findRuoliUsername non filtra FLG_CANCELLATO. Le inner join rendono
+    "senza ruoli" gli utenti privi di organizzazione o di CONF_APP_ROLE.
+  - doFilterHttp di CustomAuthenticationProcessingFilter non viene mai
+    invocato.
+  - La chiave "restClient.moduleuser.username.unidoc" con la maiuscola non
+    viene mai letta.
+  - DecessiBE e StatoCivileBE leggono CONF_APP_USER come MATR_USR (nel DOCX
+    c'e' solo come PI-13).
+  - Ambiente ANPR cablato a TEST in AnprClient.java:78.
+  Per la fase 1 contano soprattutto i primi tre: il servizio profili riusa
+  quelle query e deve nascere gia' corretto.
+
+
+===============================================================================
+ 6. DIVERGENZE E INCONGRUENZE DA CORREGGERE NEL DOCX
+===============================================================================
+
+  1. D1 / Identity Broker. INT raccomandava l'opzione B se confermata
+     contrattualmente. Il DOCX la esclude ("non la proporrei"). La posizione
+     del DOCX e' piu' solida: il ripiego sui claim senza verifica della firma
+     non si puo' accettare sul percorso di login di atti di stato civile.
+     Allineare INT al DOCX.
+  2. Collisione di nomi: "S1-S4" sono le soluzioni nel DOCX e i requisiti di
+     sicurezza in INT. Rinominare i requisiti (es. RS-01..RS-12) prima di
+     unire i documenti.
+  3. Tabella di confronto 4.4.6: per S1 le celle "Registrazioni presso IAM" e
+     "Dove vive il segreto del client" sono vuote. Valori corretti: "1 client
+     con 35 redirect_uri, oppure 35 client" e "in ciascuno dei 35 FE (Secret
+     condiviso)".
+  4. Storia del documento: v0.1 dichiara "sedici punti aperti", ma il
+     capitolo 5 ne elenca 19. La differenza (+2 in v0.2, +1 in v0.3) torna, ma
+     va detta esplicitamente.
+  5. Executive summary, ultimo periodo: la frase non e' grammaticale
+     ("Cio' che risulta e' che i servizi rispondono ... non dipendono da come
+     si entra"). Proposta: "Restano indipendenti da come si entra: i servizi
+     che rispondono senza token, i segreti in chiaro, il trasporto non
+     cifrato e l'assenza di autorizzazione per funzione."
+  6. Refusi: "vegono" (3.1), "il BFF tiene puo' tenere" (S3/BFF), "S2 ... la
+     sua documentazione descrive due prodotti" (manca il soggetto). In 4.4.7
+     "Presentare S1 come la soluzione significa farsi chiedere..." ha un tono
+     da nota interna, non adatto a un documento consegnato al committente.
+  7. RI-16 "Il gettone puo' portare tutti i ruoli": vero, ma i BE ragionano
+     su un solo PROFILO_BE per utenza tecnica. Va detto che, per non cambiare
+     il comportamento delle @PreAuthorize, nella prima iterazione il token
+     deve portare profiloBe del primo ruolo (come oggi) e la lista completa
+     come claim aggiuntivo (cap. 9.4).
+  8. Il DOCX cita due volte msAuth come "il servizio che gia' esiste" e "gia'
+     li serve" (tabella), ma nessuna evidenza e' nei sorgenti SIPO. Nella
+     tabella conviene scrivere "da accertare (PI-17)" anche per le righe
+     "registrazione gia' fatta" e "serve i FE Angular".
+
+
+===============================================================================
+ 7. FATTI NUOVI EMERSI DALLA VERIFICA SUL CODICE
+===============================================================================
+
+  F-1  Nei front-end ci sono 4.781 occorrenze di getRuoloBe() e 4.834 call
+       site di callRestServicePost fra FE e BE.
+       Conseguenza: la fase 2 ("token dell'utente verso i BE") NON si puo'
+       fare cambiando i call site. RestClient deve sostituire il token tecnico
+       con quello dell'utente al suo interno, a parita' di firma. Il
+       parametro "profilo" resta per i batch e per la transizione.
+       Nessun documento quantifica questo vincolo, e INT 5.6 b) ("nuovo
+       metodo che invia il token utente") lo sottovaluta.
+  F-2  RestClient dipende gia' da spring-boot-starter-web, quindi
+       RequestContextHolder e la sessione HTTP sono accessibili senza nuove
+       dipendenze. La sostituzione interna del token di F-1 e' realizzabile.
+  F-3  RestSecurity configura JwtAccessTokenConverter.setSigningKey(HMAC) in
+       SecurityConfig.java:67-69. In spring-security-oauth2 2.x il converter
+       ha un solo verifier. Per far convivere il token tecnico HMAC e il
+       token utente RS256 serve un converter composito scritto da noi (cap.
+       9.4); non basta una proprieta'.
+  F-4  nimbus-jose-jwt e oauth2-oidc-sdk sono gia' nel repository Maven
+       locale: la callback esplicita di D5 non richiede librerie nuove.
+  F-5  ResourceServerConfig non contiene anyRequest(): RI-01 e' confermato
+       alla data odierna.
+  F-6  ConfigHandler.getPropOperatore sovrascrive ancora il parametro
+       hostname con un valore cablato: RI-09 e' confermato.
+
+
+===============================================================================
+ 8. SOLUZIONE FINALE PROPOSTA
+===============================================================================
+
+ 8.1 In una frase
+  Un unico componente centrale di autenticazione SIPO ("sipo-auth") si mette
+  davanti a IAM ed emette il token SIPO. ProfilazioneUtente diventa un suo
+  client tramite un adapter, con LOGIN_USER invariato. RestClient e
+  RestSecurity propagano quel token ai BE senza toccare i 4.781 call site.
+  Il componente nasce in modalita' header e passa a OIDC con un cambio di
+  configurazione. Se msAuth si rivela adatto (PI-17), sipo-auth si riduce a
+  un adattatore verso msAuth.
+
+ 8.2 Perche' questa e non "S1 adesso, S3 dopo"
+  - S1 obbliga a 35 redirect_uri (o 35 client), 35 copie del segreto e 35
+    regole di uscita verso IAM: sono proprio i rischi che DOCX e INT
+    classificano con probabilita' Alta. Tutto questo lavoro si butta quando
+    arriva S3.
+  - Con S1 il token IAM non e' spendibile verso i BE. La fase 2 richiede
+    comunque un emittente e, per F-1, un token gia' in sessione. Con
+    sipo-auth il token SIPO esiste dal primo login: la fase 2 si riduce a
+    "RestClient lo usa" e "RestSecurity lo verifica".
+  - E' la lettura del DOCX stesso sulla variante BFF: "il solo modo di
+    cominciare a costruire prima che D1-D6 siano decise, perche' il
+    componente non cambia fra le due modalita'". Proponiamo di applicarla
+    anche ai 35 FE Java come punto di autenticazione, non come proxy del
+    traffico: i FE Java la sessione ce l'hanno gia'.
+  - Un componente nuovo non e' vincolato a Spring Boot 2.1 / Java 11. Puo'
+    usare Spring Authorization Server su una piattaforma supportata, il che
+    riduce il debito di RI-29 invece di aumentarlo.
+  - Costo: un componente sul percorso del login, con alta affidabilita' reale
+    (almeno 2 repliche, sessione e chiavi non in memoria locale, readiness
+    indipendente da IAM) e il percorso formale del Manuale Operativo. E'
+    l'unico svantaggio vero, ed e' lo stesso che il DOCX accetta per S3.
+
+ 8.3 Architettura risultante
+
+   [Browser]
+      | HTTPS
+   [Portale / reverse proxy]  -- inietta solo x-real-ip, x-client-sn-sipo
+      |                           (gli iv-* rimossi in modalita' OIDC)
+      +--> [35 FE Java + ProfilazioneUtente]
+      |        | 1. senza sessione: 302 verso sipo-auth/authorize
+      |        | 2. callback: code -> token SIPO (RS256) + profilo
+      |        | 3. LOGIN_USER invariato + token SIPO in sessione (lato server)
+      |        | 4. RestClient: Bearer <token SIPO> verso i BE (fase 2)
+      |        v
+      |    [44+ BE con RestSecurity]  solo Resource Server, JWKS di sipo-auth
+      |        |  (token tecnico HMAC accettato fino alla dismissione)
+      |        v
+      |    [All-Anpr] -> ANPR con operatore e postazione dal token
+      |
+      +--> [Shell Angular BO] <-> [sipo-auth in ruolo BFF] (cookie, no localStorage)
+
+   [sipo-auth]  modalita' HEADER (fase 1a) | OIDC verso IAM (fase 1b)
+                | oppure delega a msAuth (se PI-17 positivo)
+                +--> [sipo-profili]  GET /profili/{cf}  -> ANAG_USR
+                     (anche come estensione di AnagrafeBE, cap. 9.2)
+
+ 8.4 Collocazione rispetto alla scala del DOCX
+  S0 subito, in ogni caso. Accertamento S4 in parallelo. S3 (con la variante
+  BFF per l'Angular) come soluzione di costruzione, al posto di S1. S2 escluso
+  finche' PI-09 non e' risolto. Se S4 risulta adeguato, sipo-auth diventa un
+  token exchange verso msAuth e il resto del piano non cambia, perche' FE e BE
+  parlano solo con sipo-auth.
+
+ 8.5 Progetto separato o modifiche al codice esistente
+  Domanda: conviene costruire tutto in un microservizio o progetto a parte e
+  poi agganciarlo al vecchio, invece di modificare il codice esistente?
+
+  Risposta: si', per tutta la logica nuova. Pero' alcune modifiche al codice
+  esistente non si possono evitare. L'identita' entra nel vecchio codice in
+  tre punti, e un servizio esterno non li puo' sostituire:
+
+   Punto                       Perche' va toccato
+   --------------------------  ----------------------------------------------
+   RestSecurity (nei BE)       La verifica del token avviene dentro ogni BE.
+                               Se il BE non verifica, chiunque lo raggiunga
+                               entra (RI-01). L'unica alternativa e' un proxy
+                               davanti a ciascuno dei 44 BE.
+   RestClient                  E' il componente che sceglie l'utenza tecnica.
+                               Per portare la persona ai BE deve usare un
+                               altro token; con 4.781 call site (F-1) il
+                               cambiamento va fatto qui, non nelle
+                               applicazioni.
+   ProfilazioneUtente          Finche' CdRLoginFilter accoglie gli header
+                               iv-*, la fiducia negli header resta (RI-04).
+
+  Sono tre librerie condivise, non i 35 FE e i 44 BE. Il codice applicativo
+  dei moduli non cambia. Fanno eccezione gli interventi sui BE per leggere
+  l'identita' dal token invece che dal body (9.6), che sono comunque
+  progressivi.
+
+  Nel progetto separato (sipo-auth, sipo-profili) va tutta la logica nuova:
+  OIDC verso IAM o msAuth, emissione del token SIPO, audit degli accessi,
+  BFF per la shell Angular, lettura dei profili per CF con le query
+  corrette. Vantaggi:
+   - piattaforma supportata (Java 17+, Spring Authorization Server), invece
+     di costruire OIDC sopra Boot 2.1 e spring-security-oauth2 EOL;
+   - repository e ciclo di rilascio propri. Oggi le librerie comuni sono
+     0.0.1-SNAPSHOT, i Dockerfile clonano il ramo git e la copia
+     sipo-elezioni le sovrascrive in .m2 (RI-26, RI-28). Logica complessa
+     dentro quelle librerie erediterebbe tutti questi problemi;
+   - collaudo indipendente e sostituibilita' (es. verso msAuth) senza
+     toccare SIPO.
+  Nelle librerie esistenti restano adattatori sottili e stabili, "leggi
+  l'identita' da qui" e "usa questo token", da cambiare una volta sola.
+
+ 8.6 Variante "proxy di autenticazione": fase 1 senza toccare i FE
+  Nella sequenza A (8.1-8.3, cap. 9.1) la fase 1 trasforma subito
+  ProfilazioneUtente in client OIDC di sipo-auth. Ogni modifica alla
+  libreria obbliga pero' a ricompilare e ricollaudare 35 immagini FE (10-15
+  gg/u solo di regressione).
+
+  Nella sequenza B sipo-auth si mette prima come proxy di autenticazione
+  davanti ai FE Java, dietro il portale:
+   - gestisce OIDC con IAM (o msAuth) e tiene la sessione di autenticazione;
+   - verso i FE inietta GLI STESSI header di oggi (iv-user, sysgroup,
+     iv-codfis, iv-*), valorizzati dai claim verificati, piu' x-real-ip e
+     x-client-sn-sipo ricevuti dal portale;
+   - inietta il token SIPO in un header dedicato (es. X-Sipo-Token), che in
+     fase 2 RestClient usera' al posto dell'utenza tecnica;
+   - rimuove sempre gli header iv-* e X-Sipo-Token che arrivano dal client.
+  CdRLoginFilter, AuthenticationController e UtentiDao continuano a
+  funzionare come oggi: nella fase 1 il codice dei FE non cambia.
+
+  Condizione indispensabile: una NetworkPolicy Kubernetes per cui i pod dei
+  FE accettano traffico SOLO da sipo-auth. Senza questa regola la variante
+  non chiude RI-04 e non si deve adottare. La regola diventa un controllo di
+  sicurezza critico: va scritta come codice (manifest versionato),
+  verificata in collaudo (chiamata diretta al pod = rifiutata) e monitorata.
+
+  Pro
+   - Fase 1 senza rilasci dei 35 FE: si esce dagli header del portale e si
+     passa a IAM OIDC prima e con meno rischi di regressione.
+   - Un solo client presso IAM, come nella sequenza A.
+   - In fase 2 basta cambiare RestClient (token letto dall'header della
+     richiesta corrente) e RestSecurity: ancora solo librerie.
+   - E' lo stesso componente che fa da BFF per la shell Angular (PI-19):
+     un solo pattern per vecchio e nuovo.
+  Contro
+   - La fiducia negli header non sparisce: si sposta su un solo emittente
+     protetto dalla rete. E' un miglioramento di presidio, non di
+     architettura (stessa valutazione del DOCX sulla variante BFF).
+   - Tutto il traffico dei FE passa da sipo-auth, non solo il login: alta
+     affidabilita', capacita' e latenza da dimensionare; un salto in piu'
+     dietro il reverse proxy del portale.
+   - I FE continuano a leggere ANAG_USR con le credenziali nel jar
+     (persistence.xml) finche' la libreria non viene aggiornata (fase 3 B).
+   - Il token SIPO viaggia in un header fra sipo-auth e FE: il tratto va in
+     TLS o resta dentro il namespace, e non va mai scritto nei log di
+     accesso.
+
+ 8.7 Confronto fra le due sequenze e criterio di scelta
+
+   Aspetto                         Sequenza A              Sequenza B
+                                   (libreria OIDC)         (proxy di autent.)
+   ------------------------------  ----------------------  ----------------------
+   Modifiche ai FE in fase 1       ProfilazioneUtente,     nessuna
+                                   35 rilasci
+   Chiude RI-04 in fase 1          si', per costruzione    si', solo con
+                                                           NetworkPolicy
+   Traffico attraverso sipo-auth   solo login              tutto il traffico FE
+   Credenziali ANAG_USR nei FE     rimosse in fase 1       rimosse in fase 3
+   Token SIPO disponibile per F2   in sessione             in header per richiesta
+   Alta affidabilita' richiesta    login                   login + navigazione
+   Ricollaudo totale dei FE        una volta (fase 1)      una volta (fase 3),
+                                                           a sistema gia' su IAM
+   Tempo per uscire dagli header   ~55-75 gg               ~35-50 gg
+   del portale (stima)
+
+  Criterio di scelta: la risposta a PI-12.
+   - Se oggi i FE sono raggiungibili senza passare dal portale, RI-04 e'
+     sfruttabile: la sequenza B lo chiude prima. In questo caso conviene B.
+   - Se invece la rete gia' impedisce di scavalcare il portale, la
+     NetworkPolicy aggiunge poco e il vantaggio di B si riduce al solo
+     risparmio di rilasci. Questo non compensa il traffico in piu' su
+     sipo-auth e le credenziali DB che restano piu' a lungo nei FE. In
+     questo caso conviene A.
+  In entrambe le sequenze progetti separati, librerie toccate e stato
+  finale sono gli stessi: cambia solo l'ordine.
+
+
+===============================================================================
+ 9. PIANO DI INTEGRAZIONE NEL CODICE ESISTENTE, COMPONENTE PER COMPONENTE
+===============================================================================
+
+ 9.1 ProfilazioneUtente (common/profilazione-utente)  - fase 1
+  Nuovo
+   - IdentityProvider (interfaccia)
+       buildLoginRedirect(request, goUrl) -> URI
+       handleCallback(request) -> IdentitaAutenticata
+                                  { cf, username, tipoUtente, nome, cognome,
+                                    anagrafica FO, tokenSipo, scadenza }
+   - HeaderIdentityProvider: estrae la logica attuale di CdRLoginFilter
+     (iv-user, sysgroup, iv-*). mode=local resta solo con profilo Spring
+     "dev" ed e' assente dai build di produzione (RI-06).
+   - SipoAuthIdentityProvider: client OIDC verso sipo-auth con callback
+     esplicita (nimbus, F-4): state, nonce, PKCE e validazione RS256 via
+     JWKS. Un solo client e una sola configurazione verso sipo-auth, uguale
+     per tutti i FE; cambia solo la redirect_uri del context path,
+     registrata su sipo-auth e non su IAM.
+   - ProfiliClient: chiama sipo-profili. In alternativa i profili arrivano
+     come claim nel token SIPO (cap. 9.3) e il client serve solo al refresh.
+   - sipo.auth.mode = HEADER | OIDC per ambiente (D6). In OIDC un wrapper
+     rimuove gli header iv-* dalla request.
+  Modificato
+   - AuthenticationController: getDipendenteUser e getCittadinoUser ricevono
+     IdentitaAutenticata invece di CdrUser, e leggono i profili da
+     ProfiliClient invece che da UtentiDao. La regola "cittadino non censito =
+     CITTADINO_CRI_ON" si decide su tipoUtente, non su isCodiceFiscale(), che
+     con null restituisce true.
+   - model.User: invariato nei campi esistenti. Si aggiungono un campo
+     transient "tokenSipo" (non serializzato verso le viste) e, dalla fase
+     3, "contestoOperativo".
+   - SecurityConfig: anyRequest().authenticated() dopo gli antMatchers, con
+     whitelist di /oidc/callback, error, static e health (RI-07, gia' in
+     S0). Il CSRF esclude solo la callback.
+   - MyUserDetailsService: authority da LOGIN_USER gia' in sessione, senza
+     rileggere il DB a ogni richiesta.
+   - Controllo goUrl: corrispondenza esatta sul path, goUrl conservato nello
+     state lato server (RI-17).
+   - CustomSecurityEntryPoint -> IdentityProvider.buildLoginRedirect.
+   - InvalidSessionHandlerInterceptor registrato davvero; la sessione scaduta
+     avvia il login silenzioso.
+   - Rigenerazione dell'id di sessione dopo il login; cookie Secure, HttpOnly,
+     SameSite=Lax; timeout esplicito (RI-19).
+  Dismesso (fine fase 1)
+   - UtentiDao e persistence.xml nei FE: niente piu' connessione diretta ad
+     ANAG_USR ne' password nel jar (RI-03 in parte, B3).
+
+ 9.2 sipo-profili (nuovo, oppure estensione di AnagrafeBE)  - fase 1
+   - Contratto di INT 5.2, senza cambiamenti.
+   - Query di UtentiDao riscritte per CODICE_FISCALE, con FLG_CANCELLATO='N'
+     e LEFT JOIN diagnostiche: errore esplicito invece di "senza ruoli".
+   - Raggiungibile solo da sipo-auth e dai client SIPO (client credentials
+     o NetworkPolicy), mai pubblicato su Traefik.
+   - Raccomandazione sulla collocazione: estensione di AnagrafeBE per la
+     fase 1 (accede gia' ad ANAG_USR e ha /gestioneUtentiRest/**), dietro lo
+     stesso contratto, cosi' da poterlo estrarre in seguito senza impatti.
+
+ 9.3 sipo-auth (nuovo)  - fase 1
+   - Due modalita' per ambiente, con la stessa interfaccia di 9.1:
+       HEADER: unico punto che legge iv-* (NetworkPolicy: raggiungibile solo
+               dal proxy). Centralizza il difetto di RI-04 invece di lasciarlo
+               in 35 punti, finche' OIDC non e' pronto.
+       OIDC:   unico Relying Party verso IAM (1 client, 1 redirect_uri, 1
+               segreto, 1 regola di uscita).
+       MSAUTH: (se PI-17 positivo) token exchange verso msAuth.
+   - Verso i FE e' un Authorization Server OIDC: code flow, JWKS pubblico
+     interno, token RS256 di breve durata con refresh.
+   - Claim del token SIPO:
+       sub=cf, idUtente, username, tipoUtente, idOrganizzazione,
+       idSedeMunicipio, idStrutturaConv, ruoli[], profiloBe (primo ruolo,
+       come oggi), postazione (x-client-sn-sipo), ip, aud=[sipo-be]
+       e, dalla fase 3, contesto {tipo, soggettoRappresentato, delega}.
+   - Audit su LOG_ACCESSI, con l'auditTrackingId di IAM se presente.
+   - Il ruolo BFF per la shell Angular arriva come estensione dello stesso
+     servizio (PI-19), con sessione in archivio condiviso.
+
+ 9.4 RestSecurity (common/rest-security)
+  Fase 0 (S0)
+   - ResourceServerConfig: anyRequest().authenticated() in coda; permitAll
+     solo per /health e /oauth/token (RI-01).
+  Fase 2
+   - Converter composito al posto del JwtAccessTokenConverter HMAC (F-3):
+     prova RS256 con il JWKS di sipo-auth e, solo se
+     sipo.legacy-token.enabled=true, ricade sulla verifica HMAC del token
+     tecnico. Il flag e' per ambiente, con data di dismissione.
+   - Authority: ROLE_<profiloBe> dal token SIPO, cosi' le circa 390
+     @PreAuthorize di StatoCivileBE e le altre restano valide senza modifiche.
+     I ruoli completi vanno in un claim separato per le regole future.
+   - SipoPrincipal.current(): idUtente, cf, idOrganizzazione, postazione dal
+     SecurityContext.
+   - @EnableAuthorizationServer si spegne BE per BE quando il flag legacy
+     passa a false. Con lui spariscono i 44 emittenti e la chiave HMAC
+     condivisa dei 57 file (RI-03, RI-18).
+
+ 9.5 RestClient (common/rest-client)  - fase 2
+   - Firma pubblica INVARIATA (F-1). Dentro generateToken(url, dominio,
+     profilo):
+       1. se nella richiesta corrente esiste una sessione con tokenSipo
+          valido (RequestContextHolder, F-2), si usa quello: niente chiamata a
+          /oauth/token, niente utenza tecnica. Nella sequenza B (8.6) il
+          token si legge dall'header X-Sipo-Token della richiesta corrente,
+          iniettato da sipo-auth; la sorgente e' una strategia configurabile
+          (SESSION | HEADER), cosi' il passaggio da B ad A non tocca di nuovo
+          RestClient;
+       2. se il token e' prossimo alla scadenza, refresh verso sipo-auth;
+       3. altrimenti (batch, thread senza richiesta, flag spento) si segue il
+          comportamento attuale con l'utenza tecnica di "profilo".
+   - BE -> BE (StatoCivileBE -> All-Anpr): la stessa regola, leggendo il token
+     dal SecurityContext del BE chiamato (token relay). Il ruoloBe ricevuto
+     nel body non serve piu'.
+   - Cache del token tecnico per i batch (RI-18 / M2).
+   Effetto: 4.781 call site invariati; per i FE il passaggio alla fase 2 e'
+   solo un aggiornamento di versione di RestClient.
+
+ 9.6 Back-end applicativi  - fase 2, a partire dal campione
+   - DecessiBE: idUser e idOrganizzazione di /cercaAttiDecesso e /saveAtto da
+     SipoPrincipal invece che dal body; tracciare chi opera anche in
+     /saveAttoDecessoData ed /eliminaAtto.
+   - StatoCivileBE: idUtente, idUtenteLog e cfUser da SipoPrincipal; cfUser
+     verso ANPR = chi esegue, non ATTO.ID_UTENTE.
+   - All-Anpr: endpoint *SC con cfUser e postazione dal token; batch con
+     utenza tecnica dedicata invece del CF di una persona (RI-09, RI-12).
+   - AnprClient: rimuovere l'hostname cablato in ConfigHandler.getPropOperatore
+     (F-6) e lo stato statico; risolvere la postazione da REG_USER_ANPR in
+     base a CF e serial.
+   - Regola transitoria per tutti i BE: se il body contiene idUser diverso da
+     SipoPrincipal.idUtente, registrare in log e, dopo un periodo di
+     osservazione, rifiutare con 403. Cosi' si misura l'impatto prima di
+     chiudere RI-02.
+
+ 9.7 Database ANAG_USR  - prerequisito della fase 1
+   - Bonifica di CODICE_FISCALE, poi indice univoco su UPPER(TRIM(CF)) per
+     i non cancellati, poi NOT NULL per gli attivi (INT 5.3).
+   - LOG_ACCESSI; dalla fase 3 CONTESTO_OPERATIVO_LOG.
+   - Estrazione e versionamento della configurazione di Stato Civile/Decessi
+     (RI-20, PI-14): sipo-profili ne dipende.
+   - Opzionale, fuori dal percorso critico: tabella CONF_RUOLI_FUNZIONALITA
+     come "template" del ruolo, per affrontare RI-15 senza migrare
+     R_UTENTI_RUOLI.
+
+ 9.8 Igiene da fare insieme alla fase 1 (non dipende da IAM)
+   - GAV distinto per le copie sipo-elezioni (RI-28): altrimenti la libreria
+     OIDC viene sovrascritta in .m2, come gia' accade in build.
+   - Segreti fuori dai properties: Secret Kubernetes per namespace, rotazione
+     della signing-key dopo lo spostamento (RI-03).
+   - RI-05 (view name da idSelezionato), RI-10, RI-11: correzioni locali e
+     piccole, da includere nel primo rilascio.
+
+
+===============================================================================
+ 10. PIANO PER FASI AGGIORNATO
+===============================================================================
+
+ Stime in giorni/uomo, indicative, ricavate da INT 9 e ricalibrate sulla
+ soluzione di cap. 8. Non includono i tempi dei presidi ne' la bonifica dati.
+ La FASE 0 e' comune alle due sequenze.
+
+ ----- SEQUENZA A: libreria dei FE subito client OIDC di sipo-auth -----
+
+ FASE 0 - S0 + decisioni + accertamenti                         ~ 8-12 gg
+   - anyRequest() in RestSecurity e in SecurityConfig, rimozione di mode=local
+     in produzione, RI-05/10/11, sessione e cookie ....................... 3-4
+   - NetworkPolicy/rotte: BE e FE raggiungibili solo dal proxy (PI-12) .. 1-2
+   - Accertamento msAuth (PI-17) e risposte IAM (PI-01..06) .............. 1-2
+   - PoC: FE Boot 2.1 (DecessiWeb) <-> sipo-auth in modalita' HEADER, con
+     callback esplicita e LOGIN_USER invariato ........................... 3-4
+
+ FASE 1a - sipo-auth in modalita' HEADER, nuova ProfilazioneUtente  ~ 35-45 gg
+   - sipo-auth (AS OIDC verso i FE, modalita' HEADER, JWKS, audit, HA) .. 10-12
+   - sipo-profili (estensione AnagrafeBE) ................................ 5-6
+   - ProfilazioneUtente: adapter, entry point, callback, flag, goUrl,
+     sessione, dismissione UtentiDao ..................................... 8-10
+   - Bonifica CF + DDL + versionamento configurazione SC ................. 3-4
+   - Rilascio e regressione sui 35 FE (~0,3-0,5 gg ciascuno) ............. 10-15
+   Risultato: header letti in un solo punto, token SIPO gia' in sessione,
+   nessuna connessione dei FE ad ANAG_USR. Non serve ancora la registrazione
+   presso IAM.
+
+ FASE 1b - sipo-auth in modalita' OIDC verso IAM (o msAuth)         ~ 12-18 gg
+   - RP verso IAM (1 client), mappatura claim iv_*, scope BO/FO .......... 5-7
+   - Collaudo in pre-produzione con il Presidio IAM ..................... 5-8
+   - Commutazione per ambiente; FE invariati ............................. 2-3
+
+ FASE 2 - Identita' fino ai BE (campione: RestClient, RestSecurity,
+          DecessiBE, StatoCivileBE, All-Anpr)                       ~ 25-32 gg
+   - RestSecurity: converter composito, SipoPrincipal ................... 4-5
+   - RestClient: token di sessione a parita' di firma, relay BE->BE ..... 3-4
+   - DecessiBE, StatoCivileBE, All-Anpr, AnprClient ...................... 12-15
+   - End-to-end con ANPR di test ......................................... 6-8
+   La fase costa meno della corrispondente di INT (30-40 gg) perche'
+   l'emittente esiste gia' dalla fase 1a. Gli altri ~40 BE si adeguano con il
+   solo aggiornamento di RestSecurity; l'identita' dal token entra endpoint
+   per endpoint, con la regola transitoria di 9.6.
+
+ FASE 3 - Front Office: PG / delega / assistito                     ~ 15-20 gg
+   Come INT 5.5, con il contesto operativo emesso come claim da sipo-auth.
+
+ FASE 4 - Dismissioni                                                ~ 3-5 gg
+   Modalita' HEADER in sipo-auth, flag legacy-token nei BE,
+   @EnableAuthorizationServer, utenze tecniche per ruolo (escluse quelle dei
+   batch), clientConfig appuser.*.
+
+ Percorso minimo per uscire dalla fiducia negli header: FASE 0 + 1a + 1b,
+ ~55-75 gg. E' paragonabile a FASE 0+1 di INT (~51-69 gg), ma lascia gia'
+ costruito l'emittente che la fase 2 richiede.
+
+ ----- SEQUENZA B: sipo-auth come proxy di autenticazione (cap. 8.6) -----
+
+ FASE 0 - come nella sequenza A                                  ~ 8-12 gg
+   Il PoC diventa: DecessiWeb dietro sipo-auth in modalita' proxy, con
+   header iniettati dai claim e NetworkPolicy che rifiuta l'accesso diretto
+   al pod.
+
+ FASE 1 - sipo-auth come proxy OIDC davanti ai FE Java           ~ 25-35 gg
+   - sipo-auth: RP verso IAM (o msAuth), sessione condivisa, reverse proxy
+     con iniezione e rimozione degli header, emissione del token SIPO,
+     audit, HA dimensionata sul traffico FE ........................... 12-15
+   - NetworkPolicy per namespace (FE raggiungibili solo da sipo-auth),
+     come manifest versionato, con test negativo in pipeline ........... 2-3
+   - Giunzioni del portale verso sipo-auth invece che verso i FE (PI-07,
+     PI-08) ............................................................ 2-3
+   - Bonifica CF + DDL + versionamento configurazione SC. Serve gia' qui:
+     sipo-auth mappa il claim iv_codfis sull'utente ANAG_USR ............ 3-4
+   - Collaudo in pre-produzione con il Presidio IAM; smoke test di
+     navigazione sui 35 FE (nessun rilascio dei FE) ..................... 6-10
+   Risultato: login su IAM, nessun header dal portale accettato dai FE,
+   token SIPO disponibile su ogni richiesta. FE invariati.
+
+ FASE 2 - Identita' fino ai BE                                    ~ 25-32 gg
+   Come nella sequenza A, con RestClient in strategia HEADER (9.5).
+
+ FASE 3 - Allineamento della libreria FE e uscita dal proxy      ~ 25-30 gg
+   - sipo-profili (estensione AnagrafeBE) ............................ 5-6
+   - ProfilazioneUtente client OIDC di sipo-auth, dismissione di UtentiDao
+     e persistence.xml, RestClient in strategia SESSION ................ 8-10
+   - Rilascio e regressione sui 35 FE ................................. 10-15
+   - sipo-auth smette di attraversare il traffico dei FE Java (resta BFF
+     solo per la shell Angular); NetworkPolicy riportata al solo portale.
+   Puo' coincidere con il primo rilascio applicativo dei FE gia' in piano,
+   per non pagare la regressione due volte.
+
+ FASE 4 - Front Office (PG / delega / assistito) e dismissioni    ~ 18-25 gg
+   Come FASI 3 e 4 della sequenza A.
+
+ Percorso minimo per uscire dagli header del portale: FASE 0 + 1,
+ ~35-50 gg. Il totale fino allo stato finale e' simile alla sequenza A, o
+ di poco superiore (~5-10 gg per il proxy e la NetworkPolicy, che poi si
+ semplificano).
+
+
+===============================================================================
+ 11. DECISIONI E PUNTI APERTI CHE RESTANO BLOCCANTI
+===============================================================================
+
+  Bloccanti per partire con la FASE 1a
+   - Approvazione della soluzione di cap. 8 al posto di "S1 adesso" (D1).
+   - PI-12: raggiungibilita' diretta degli host. Decide se la NetworkPolicy
+     di fase 0 e' un'urgenza e quale sequenza adottare, A o B (8.7).
+   - Solo per la sequenza B: conferma che il cluster applica davvero le
+     NetworkPolicy (CNI che le supporta) e che le giunzioni del portale si
+     possono puntare a sipo-auth invece che ai singoli FE (Presidio
+     Portale).
+   - PI-11 / PI-06: chi bonifica i CF, e se iv_codfis e' sempre valorizzato
+     per i dipendenti.
+   - Collocazione di sipo-profili (AnagrafeBE oppure servizio nuovo).
+   - Piattaforma di sipo-auth (Java 17+/Spring Authorization Server) e
+     relativo Manuale Operativo.
+
+  Bloccanti per la FASE 1b
+   - PI-01 (algoritmo e JWKS dell'IAM), PI-02 (PKCE), PI-03 (scope).
+   - PI-17 / PI-18: msAuth e l'eventuale decisione d'ente. Se positivi,
+     sipo-auth in modalita' MSAUTH invece che OIDC.
+   - PI-07: persistenza di x-client-sn-sipo e x-real-ip dietro il proxy.
+
+  Bloccanti per la FASE 2
+   - PI-13: sinonimi e grant MATR_USR -> CONF_APP_USER (impatta il periodo
+     di doppio token).
+   - PI-15: PKG_ANPR e REG_USER_ANPR_SIGN, per risolvere la postazione reale.
+
+  Da reintegrare nel registro PI del DOCX (cap. 2): Q6, Q7, Q11, Q16, ASIS
+  14.4, ASIS 14.7.
+
+=============================== FINE DOCUMENTO ================================

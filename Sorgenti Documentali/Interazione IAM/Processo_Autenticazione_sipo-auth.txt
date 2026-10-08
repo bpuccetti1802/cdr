@@ -1,0 +1,231 @@
+===============================================================================
+ SIPO - ROMA CAPITALE
+ IL NUOVO PROCESSO DI AUTENTICAZIONE (sipo-auth)
+ Riassunto del funzionamento a regime e nel periodo di transizione
+===============================================================================
+ Data        : 06/10/2026
+ Riferimenti : Analisi_Incrociata_IAM_Profilazione.txt (motivazioni)
+               Guida_Implementazione_sipo-auth_v1.0.docx (passi di lavoro)
+ Uso interno.
+
+-------------------------------------------------------------------------------
+ 1. OGGI IN DUE RIGHE
+-------------------------------------------------------------------------------
+ Il portale autentica l'utente e passa ai FE la sua identita' negli header
+ HTTP (iv-user, sysgroup, iv-codfis, iv-*). Ogni FE si fida di quegli header,
+ legge i profili direttamente da ANAG_USR e chiama i BE con un'utenza tecnica
+ scelta in base al ruolo. I BE non sanno chi e' la persona: lo leggono dal
+ body della richiesta.
+
+-------------------------------------------------------------------------------
+ 2. CHI PARTECIPA A REGIME
+-------------------------------------------------------------------------------
+  IAM            Identity provider di Roma Capitale. Autentica la persona
+                 (OIDC). In alternativa msAuth, se PI-17 risulta positivo.
+  sipo-auth      Nuovo. Unico punto di autenticazione di SIPO: parla con IAM,
+                 recupera il profilo ed emette il TOKEN SIPO.
+  sipo-profili   Nuovo endpoint in AnagrafeBE. Restituisce ruoli, aree e
+                 funzionalita' dell'utente per codice fiscale (ANAG_USR).
+  FE Java (35)   Con la libreria ProfilazioneUtente aggiornata. Tengono in
+                 sessione LOGIN_USER (invariato) e il token SIPO.
+  BE (44)        Con la libreria RestSecurity aggiornata. Verificano il token
+                 SIPO con le chiavi pubbliche (JWKS) di sipo-auth.
+  Portale        Resta il reverse proxy davanti a SIPO, ma non inietta piu'
+                 l'identita': passa solo x-real-ip e x-client-sn-sipo.
+
+ Il TOKEN SIPO e' un JWT firmato RS256 da sipo-auth, di breve durata
+ (10-15 minuti, con refresh). Contiene:
+   - chi e': codice fiscale (sub), idUtente, username, tipoUtente;
+   - dove opera: idOrganizzazione, idSedeMunicipio, idStrutturaConv;
+   - cosa puo' fare: ruoli (lista completa) e profiloBe (primo ruolo, come
+     oggi, per non cambiare le @PreAuthorize dei BE);
+   - da dove: postazione (x-client-sn-sipo) e ip;
+   - per chi e' valido: aud = sipo-be;
+   - Front Office, dalla fase 3: contesto (PG, delega, assistito).
+
+-------------------------------------------------------------------------------
+ 3. IL LOGIN DI UN OPERATORE (BACK OFFICE)
+-------------------------------------------------------------------------------
+  1. L'operatore apre un FE SIPO (es. DecessiWeb) e non ha una sessione.
+  2. Il FE lo reindirizza a sipo-auth (/authorize), conservando lato server
+     la pagina richiesta (goUrl), con state, nonce e PKCE.
+  3. sipo-auth non ha una sessione per lui e lo reindirizza a IAM.
+  4. L'operatore si autentica su IAM (credenziali, SPID, CIE: lo decide IAM).
+  5. IAM rimanda l'operatore a sipo-auth con un codice; sipo-auth lo scambia
+     con il token IAM e ne verifica la firma in locale.
+  6. sipo-auth prende il codice fiscale dal token IAM e chiama sipo-profili
+     per ottenere idUtente, organizzazione e ruoli.
+       - Utente non trovato o disabilitato: accesso negato, con messaggio
+         esplicito (non piu' "utente senza ruoli").
+  7. sipo-auth registra l'accesso in LOG_ACCESSI ed emette il token SIPO.
+     Il token IAM resta in sipo-auth e non arriva mai ai BE.
+  8. sipo-auth rimanda l'operatore al FE (/oidc/callback) con un codice; il
+     FE lo scambia con il token SIPO e lo verifica con il JWKS.
+  9. Il FE costruisce il model.User come oggi e lo salva in sessione come
+     LOGIN_USER; accanto salva il token SIPO (solo lato server, mai nel
+     browser). L'id di sessione viene rigenerato.
+ 10. L'operatore arriva alla pagina richiesta all'inizio (goUrl).
+
+ Se poi apre un altro FE SIPO, i passi 3-5 non si ripetono: sipo-auth ha gia'
+ la sua sessione e risponde subito (single sign-on fra i FE).
+
+-------------------------------------------------------------------------------
+ 4. IL LOGIN DI UN CITTADINO (FRONT OFFICE)
+-------------------------------------------------------------------------------
+ Stesso flusso, con il client e gli scope FO verso IAM. Differenze:
+  - se il cittadino non e' censito in ANAG_USR riceve il ruolo
+    CITTADINO_CRI_ON; la decisione si prende sul tipo di utente indicato da
+    IAM, non piu' sul controllo del formato del codice fiscale;
+  - se durante la sessione cambia il codice fiscale autenticato, la sessione
+    viene invalidata.
+
+ Passaggio opzionale: operare per conto di altri (dalla fase 3)
+  1. Il cittadino sceglie nel FE "Opera per conto di..." (persona
+     giuridica, delega, assistito).
+  2. Il FE lo manda a sipo-auth, che lo reindirizza alla "pagina personale"
+     di IAM con una nuova richiesta di autorizzazione.
+  3. Su IAM il cittadino seleziona la persona giuridica, la delega,
+     l'assistito o altro.
+  4. IAM richiama la callback di sipo-auth (la stessa del login); sipo-auth
+     ottiene un nuovo token IAM con i claim iv_pg_*, iv_dg_*, iv_ass_*.
+  5. sipo-auth controlla i claim (date di validita' della delega, servizio
+     SIPO in iv_dg_services) ed emette un nuovo token SIPO con il contesto
+     operativo: chi opera resta la persona fisica, per conto di chi e' il
+     soggetto scelto. Il cambio viene registrato in CONTESTO_OPERATIVO_LOG.
+  6. Il FE aggiorna il contesto in sessione; da qui in poi i BE imputano gli
+     atti al soggetto rappresentato e tracciano chi ha operato.
+  URL e parametri della pagina personale e il significato di "assistito"
+  sono ancora da confermare con IAM (Q6, Q7).
+
+-------------------------------------------------------------------------------
+ 5. LE CHIAMATE VERSO I BACK-END
+-------------------------------------------------------------------------------
+ FE -> BE
+  1. Il codice del FE chiama RestClient come oggi (stessa firma, stesso
+     parametro "profilo"): nessuna delle 4.834 chiamate cambia.
+  2. RestClient trova nella sessione corrente il token SIPO e lo usa come
+     "Authorization: Bearer ...", invece di chiedere un token con l'utenza
+     tecnica. Se il token sta per scadere, prima lo rinnova presso sipo-auth.
+  3. Il BE verifica firma, emittente, scadenza e destinatario del token con
+     il JWKS di sipo-auth.
+  4. Il BE concede ROLE_<profiloBe>: le @PreAuthorize esistenti funzionano
+     senza modifiche.
+  5. Il BE legge chi opera da SipoPrincipal (dal token), non dal body. Se il
+     body riporta un utente diverso, prima lo segnala nei log, poi (dopo il
+     periodo di osservazione) rifiuta con 403.
+
+ BE -> BE (es. StatoCivileBE -> All-Anpr)
+  Il BE chiamante inoltra lo stesso token SIPO ricevuto (token relay).
+  All-Anpr comunica ad ANPR l'operatore e la postazione presi dal token.
+
+ Batch e processi senza utente
+  Non c'e' una richiesta utente in corso: RestClient usa un'utenza tecnica
+  dedicata al batch (non il codice fiscale di una persona), con il token
+  messo in cache.
+
+-------------------------------------------------------------------------------
+ 6. SCADENZA, LOGOUT, ERRORI
+-------------------------------------------------------------------------------
+  - Token SIPO scaduto durante la navigazione: RestClient lo rinnova con il
+    refresh token, senza che l'utente se ne accorga.
+  - Sessione del FE scaduta: nuovo giro verso sipo-auth; se la sessione di
+    sipo-auth (o di IAM) e' ancora valida il login e' silenzioso.
+  - Logout: il FE chiude la propria sessione e quella di sipo-auth; la
+    propagazione a IAM dipende dal Single-Logout (punto aperto Q16).
+  - IAM non raggiungibile: chi ha gia' una sessione continua a lavorare
+    fino alla scadenza; i nuovi login falliscono con un messaggio chiaro.
+    sipo-auth resta "ready" (la sua readiness non dipende da IAM).
+  - Header iv-* contraffatti inviati dal browser: vengono scartati e non
+    autenticano nessuno.
+
+-------------------------------------------------------------------------------
+ 7. SHELL ANGULAR (BACK OFFICE)
+-------------------------------------------------------------------------------
+ Le applicazioni Angular non tengono token nel browser (niente
+ localStorage). sipo-auth fa da BFF: il browser ha solo un cookie di
+ sessione (Secure, HttpOnly, SameSite) e sipo-auth aggiunge il token SIPO
+ alle chiamate verso i BE.
+
+-------------------------------------------------------------------------------
+ 8. COSA CAMBIA RISPETTO A OGGI
+-------------------------------------------------------------------------------
+  Aspetto                     Oggi                        A regime
+  --------------------------  --------------------------  ---------------------
+  Chi autentica               portale (header)            IAM via sipo-auth
+  Prova dell'identita'        header HTTP non firmati     token firmati, verificati
+  Lettura dei profili         ogni FE su ANAG_USR         sipo-profili, una volta
+  Credenziali DB nei FE       si'                         no
+  Identita' verso i BE        utenza tecnica per ruolo    token SIPO dell'utente
+  Chi opera, per il BE        dal body (falsificabile)    dal token
+  Emittenti di token          44 BE, chiave HMAC comune   solo sipo-auth (RS256)
+  Client registrati su IAM    -                           1 (sipo-auth)
+  Audit degli accessi         non centralizzato           LOG_ACCESSI centrale
+  Per i FE e i loro sviluppi  LOGIN_USER in sessione      LOGIN_USER invariato
+
+-------------------------------------------------------------------------------
+ 9. CONFRONTO CON IL FLUSSO RICHIESTO DA IAM
+-------------------------------------------------------------------------------
+ Il flusso indicato all'inizio dal referente (DOC-4) resta valido passo per
+ passo. Cambia solo chi esegue la parte applicativa: un unico componente,
+ sipo-auth, invece di ciascuno dei 35 FE.
+
+  Flusso richiesto                       Nella soluzione
+  -------------------------------------  --------------------------------------
+  302 redirect verso SSO                 Il FE manda a sipo-auth, sipo-auth fa
+                                         il 302 verso SSO (par. 3, passi 2-3)
+  IAM fa l'autenticazione                Invariato (passo 4)
+  IAM chiama la callbackURI              Callback di sipo-auth: una sola URI
+                                         registrata su IAM (passo 5)
+  La callback ottiene un access token    sipo-auth scambia il codice e
+  con i claim                            verifica la firma (passo 5)
+  "management" con il CF per i profili   sipo-profili in AnagrafeBE (passo 6)
+  FO opzionale: redirect alla pagina     Invariato, passando da sipo-auth
+  personale, scelta PG/delega/assistito  (par. 4, passaggio opzionale 1-3)
+  IAM richiama la callbackURI e la       Stessa callback di sipo-auth, nuovo
+  callback ottiene un token con i claim  token con i claim iv_pg/dg/ass (4-5)
+
+ Cosa si aggiunge rispetto al flusso richiesto, dopo l'ultimo passo:
+  - sipo-auth emette il token SIPO e lo consegna al FE con un secondo,
+    breve scambio di codice interno a SIPO (par. 3, passi 7-9);
+  - il token IAM non esce da sipo-auth; i BE ricevono solo il token SIPO.
+
+ Per IAM non cambia niente: vede un solo client (sipo-auth) che segue
+ esattamente il flusso richiesto. Il passaggio in piu' resta tutto dentro
+ SIPO.
+
+ Un punto da chiudere: se "management" fosse un servizio di IAM e non di
+ SIPO (D2, Q5), sipo-auth lo chiama al passo 6 come filtro aggiuntivo, ma i
+ profili di dettaglio restano comunque in ANAG_USR (sipo-profili).
+
+-------------------------------------------------------------------------------
+ 10. NEL PERIODO DI TRANSIZIONE
+-------------------------------------------------------------------------------
+ Lo stato finale e' lo stesso in entrambe le sequenze; cambia come ci si
+ arriva (la scelta dipende da PI-12).
+
+ Sequenza A
+  - Fase 1a: i FE fanno gia' login verso sipo-auth, ma sipo-auth legge
+    ancora gli header del portale (in un solo punto, protetto dalla rete).
+  - Fase 1b: sipo-auth passa a OIDC verso IAM; i FE non cambiano.
+  - Fase 2: RestClient inizia a mandare il token SIPO ai BE.
+
+ Sequenza B
+  - Fase 1: sipo-auth si mette davanti ai FE come proxy. Fa il login con
+    IAM e passa ai FE gli stessi header di oggi, valorizzati da dati
+    verificati, piu' il token SIPO nell'header X-Sipo-Token. I FE accettano
+    traffico solo da sipo-auth (NetworkPolicy): senza questa regola la
+    sequenza non e' sicura.
+  - Fase 2: RestClient prende il token da X-Sipo-Token.
+  - Fase 3: i FE passano alla nuova libreria e sipo-auth smette di fare da
+    proxy per i FE Java.
+
+ In entrambe, fino alla dismissione (fase 4):
+  - i BE accettano anche il token tecnico HMAC di oggi (flag
+    sipo.legacy-token.enabled), cosi' i batch e i FE non ancora aggiornati
+    continuano a funzionare;
+  - RestClient usa il token dell'utente solo dove il flag
+    restclient.user-token.enabled e' acceso;
+  - ogni passaggio si puo' annullare per ambiente con un cambio di
+    configurazione.
+
+=============================== FINE DOCUMENTO ================================

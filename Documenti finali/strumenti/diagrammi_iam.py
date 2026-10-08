@@ -11,7 +11,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import diagrammi_comune as G   # noqa: E402
-from diagrammi_comune import F_BLD, F_ITA, F_REG, INK, MUTED, centra, fnt   # noqa: E402
+from diagrammi_comune import (ARROW, F_BLD, F_ITA, F_REG, INK, MUTED,  # noqa: E402
+                               centra, fnt)   # noqa: E402
 
 ROSSO, VERDE, GIALLO, BLU = '#b03a48', '#3f8f5f', '#d9a441', '#2f6bb0'
 
@@ -182,10 +183,108 @@ def scala(dest):
     return 'iam_scala.png'
 
 
+def sipo_auth(dest):
+    """L'architettura scelta: un solo punto di autenticazione, sipo-auth.
+
+    ⚠️ `box()` manda a capo da solo e NON interpreta \n: i sottotitoli su più righe si
+    scrivono a mano sotto il riquadro, altrimenti escono su una riga sola o tagliati.
+    """
+    im, dr = G.tela(1560, 1010, "L’architettura scelta: sipo-auth",
+                    "Un solo componente parla con IAM ed emette il token SIPO. "
+                    "I trentacinque front-end e la shell Angular non conoscono IAM; "
+                    "i back-end verificano una sola firma.")
+
+    G.box(dr, 60, 190, 170, 80, 'grigio', "Browser", "operatore o cittadino")
+    G.box(dr, 268, 190, 180, 80, 'grigio', "Portale", "reverse proxy")
+    centra(dr, "non inietta più l’identità:", fnt(F_ITA, 14), 358, 276, MUTED)
+    centra(dr, "solo x-real-ip e x-client-sn-sipo", fnt(F_ITA, 14), 358, 294, MUTED)
+
+    G.box(dr, 500, 120, 230, 86, 'blu', "35 FE Java", "LOGIN_USER invariato")
+    G.box(dr, 500, 258, 230, 86, 'viola', "Shell Angular", "nessun gettone nel browser")
+
+    bordo, fondo = G.C['verde']
+    dr.rounded_rectangle([790, 110, 1070, 350], radius=14, fill=fondo, outline=bordo, width=3)
+    centra(dr, "sipo-auth", fnt(F_BLD, 24), 930, 128, INK)
+    for k, riga in enumerate((
+            "unico punto di autenticazione",
+            "emette il TOKEN SIPO (RS256)",
+            "espone il JWKS ai back-end",
+            "fa da BFF per la shell Angular")):
+        centra(dr, riga, fnt(F_REG, 16), 930, 170 + k * 26, INK)
+    dr.rounded_rectangle([806, 288, 1054, 330], radius=8, fill='white', outline=bordo, width=2)
+    centra(dr, "HEADER  |  OIDC  |  MSAUTH", fnt(F_BLD, 16), 930, 301, bordo)
+
+    G.box(dr, 1150, 110, 250, 96, 'viola', "IAM di Roma Capitale",
+          "OIDC, un solo client registrato")
+    G.box(dr, 1150, 258, 250, 92, 'giallo', "sipo-profili", "profili per codice fiscale")
+    centra(dr, "→  ANAG_USR", fnt(F_BLD, 16), 1275, 360, MUTED)
+
+    # ⚠️ il riquadro porta DUE righe di sottotitolo: box() ne centra una sola, quindi il
+    # titolo si disegna con box() e le due righe si scrivono sotto, a mano.
+    bordo_r, fondo_r = G.C['rosso']
+    dr.rounded_rectangle([500, 596, 940, 700], radius=14, fill=fondo_r, outline=bordo_r,
+                         width=3)
+    centra(dr, "44 back-end", fnt(F_BLD, 21), 720, 612, INK)
+    centra(dr, "RestSecurity verifica il token con il JWKS", fnt(F_REG, 16), 720, 646, INK)
+    centra(dr, "ROLE_<profiloBe>: le @PreAuthorize non cambiano", fnt(F_REG, 16), 720, 670,
+           INK)
+    G.box(dr, 1010, 596, 390, 104, 'grigio', "All-Anpr  →  ANPR",
+          "operatore e postazione presi dal token")
+
+    for p1, p2, col, et in (
+            ((230, 230), (268, 230), ARROW, None),
+            ((448, 212), (500, 170), '#2f6bb0', "1"),
+            ((448, 250), (500, 294), '#7b5aa6', "1"),
+            ((730, 165), (790, 190), '#3f8f5f', "2"),
+            ((730, 298), (790, 270), '#3f8f5f', "2"),
+            ((1070, 175), (1150, 158), '#7b5aa6', "3"),
+            ((1070, 290), (1150, 300), '#d9a441', "4"),
+            ((880, 350), (720, 596), '#b03a48', "5"),
+            ((940, 648), (1010, 648), ARROW, "6")):
+        G.freccia(dr, p1, p2, col, 3)
+        if et:
+            mx, my = (p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2
+            dr.ellipse([mx - 13, my - 28, mx + 13, my - 2], fill=col)
+            centra(dr, et, fnt(F_BLD, 14), mx, my - 23, 'white')
+
+    passi = (
+        "1  il front-end non ha sessione e manda l’utente a sipo-auth",
+        "2  sipo-auth non ha sessione per lui e lo manda a IAM",
+        "3  l’utente si autentica su IAM; torna un codice, poi il token IAM",
+        "4  sipo-auth chiede i profili per codice fiscale e registra l’accesso",
+        "5  il front-end riceve il TOKEN SIPO e lo usa verso i back-end",
+        "6  da back-end a back-end lo stesso token viene inoltrato",
+    )
+    for k, t in enumerate(passi):
+        dr.text((70, 410 + k * 26), t, font=fnt(F_REG, 17), fill=INK)
+
+    G.banda(dr, 56, 740, 1500, 840, '#b03a48', "I DUE CONFINI CHE REGGONO IL DISEGNO",
+            '#b03a48')
+    dr.text((80, 776),
+            "Il token di IAM non esce mai da sipo-auth: i back-end vedono soltanto il "
+            "token SIPO, firmato da un unico emittente.",
+            font=fnt(F_REG, 17), fill=INK)
+    dr.text((80, 804),
+            "Il browser non riceve mai un gettone: i front-end Java lo tengono in "
+            "sessione, la shell Angular non lo vede affatto.",
+            font=fnt(F_REG, 17), fill=INK)
+
+    for yy, testo in (
+            (880, "Il vocabolario dell’autorizzazione non coincide: i back-end decidono su "
+                  "un solo ruolo, la shell Angular su una lista di abilitazioni."),
+            (914, "Il token deve portare entrambi, altrimenti il menu del back-office non "
+                  "ha su che cosa filtrare.")):
+        dr.ellipse([70, yy - 2, 88, yy + 16], fill='#b03a48')
+        centra(dr, "!", fnt(F_BLD, 14), 79, yy, 'white')
+        dr.text((100, yy), testo, font=fnt(F_BLD, 16), fill='#b03a48')
+    im.save(os.path.join(dest, 'iam_sipoauth.png'))
+    return 'iam_sipoauth.png'
+
+
 if __name__ == '__main__':
     dest = sys.argv[1] if len(sys.argv) > 1 else 'img'
     base = os.path.dirname(os.path.abspath(__file__))
     dest = dest if os.path.isabs(dest) else os.path.join(base, dest)
     os.makedirs(dest, exist_ok=True)
-    for f in (flusso, raccordo, scala):
+    for f in (flusso, raccordo, scala, sipo_auth):
         print('  scritto', f(dest))
