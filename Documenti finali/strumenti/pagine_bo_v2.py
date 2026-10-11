@@ -42,8 +42,9 @@ def mfe(dest):
             "QUATTRO REMOTE — UNA PER AREA, RILASCIABILI SEPARATAMENTE", '#2f6bb0')
     aree = [
         ('Operativa', 'verde', ['Supervisione atti', 'Dettaglio atto',
-                                'Allegati dell’atto', 'Numerazione — richiesta',
-                                'Numerazione — ricerca']),   # v0.9
+                                'Allegati dell’atto', 'Identificativi soggetti',
+                                'Numerazione — richiesta',
+                                'Numerazione — ricerca']),   # v0.9, v0.10
         ('Notifiche', 'giallo', ['Gestione notifiche']),
         ('Configurazione', 'blu', ['UC — elenco', 'UC — dettaglio', 'Catalogo UC',
                                    'Logiche di scelta', 'Dizionari',

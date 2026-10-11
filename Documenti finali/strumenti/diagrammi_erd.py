@@ -158,6 +158,15 @@ TABELLE = [
         ('', 'NOCACHE · ORDER · NOCYCLE'),
         ('', 'creata in anticipo da un job')],
      'la serie: riparte ogni anno'),
+    # v3.40: idSoggettoAnsc del soggetto, ottenuto da R005. I due codici ANPR NON stanno qui:
+    # si scrivono su ANAG_USR.SOGGETTO (ID_SCHEDA_ANPR, ID_UNICO_NAZIONALE), dove esistono già.
+    (4, 'op2', 'blu', 'ANSC_SOGGETTO_IDENTIFICATIVI', [
+        ('PK', 'ID_SOGGETTO_IDENTIFICATIVI'),
+        ('UK', 'ID_SOGGETTO_SIPO (per valore)'),
+        ('', 'ID_ANSC_SOGGETTO (da R005)'),
+        ('', 'COD_ESITO_RICERCA, COD_ESITO_ANPR'),
+        ('', 'codici ANPR → ANAG_USR.SOGGETTO')],
+     'il soggetto in ANSC; ANPR resta in anagrafe'),
     (4, 'op', 'blu', 'ANSC_NOTIFICA', [
         ('PK', 'ID_NOTIFICA'), ('', 'ID_ANSC, genere, stato')], 'il flusso in ingresso'),
 ]
