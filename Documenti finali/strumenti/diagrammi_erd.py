@@ -23,11 +23,12 @@ import diagrammi_comune as G   # noqa: E402
 BASE = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'img')
 
-W, H = 1700, 1454
+W, H = 1700, 1640
 LARG = 350                                  # larghezza di ogni scheda
 COL = {1: 60, 2: 470, 3: 880, 4: 1290}      # ascisse delle quattro colonne
 RIGA = {1: 176, 2: 392, 3: 592, 4: 796}     # ordinate delle quattro righe della configurazione
 OPER = 1046                                 # ordinata della fascia operativa
+OPER2 = 1290                                # v3.38: seconda riga operativa (numerazione)
 CORR_V = {'1-2': 440, '2-3': 850, '3-4': 1260}   # corridoi verticali fra le colonne
 CORR_H = {'1-2': 366, '2-3': 576, '2-3b': 586, 'sotto': 984}  # corridoi orizzontali fra le righe
 
@@ -83,14 +84,26 @@ TABELLE = [
         ('', '3 logica dei campi')], 'i domini di logica'),
     (2, 3, 'giallo', 'ANSC_CFG_VERSIONE', [
         ('PK', 'ID_VERSIONE'), ('', 'COD_STATO: bozza/attiva/storica'),
-        ('FK', '← da CFG_UC, CFG_SEZIONE, CFG_CAMPO,'),
-        ('', '   CFG_FORMULA, ALLEGATI_USECASE'),
-        ('', '   e da STATO_ATTO (timbro storico)')],
-     'la baseline: sei rimandi, frecce omesse'),
+        # ⚠️ v3.35: l'elenco nominava CFG_CAMPO, che dalla v3.2x pende dalla sezione e non
+        # porta ID_VERSIONE, e taceva RICONCILIAZ_DIZIONARI, che invece la referenzia.
+        # Le chiavi esterne sono quelle del DDL; STATO_ATTO la richiama per valore.
+        ('FK', '← CFG_UC, CFG_SEZIONE, CFG_FORMULA'),
+        ('', '   ALLEGATI_ e SOGGETTI_USECASE'),
+        ('', '   RICONCILIAZ_DIZIONARI'),
+        ('', 'per valore: STATO_ATTO (timbro storico)')],
+     'la baseline: sei chiavi esterne, frecce omesse'),
     (3, 3, 'verde', 'ALLEGATI_USECASE', [
         ('PK', 'cd_usecase + ty_allegato'), ('', '+ id_versione'),
         ('', 'ty_presenza, cd_logica'), ('', 'fg_operante, nr_ordinamento')],
      'i documenti richiesti — nomi di Side'),
+    # v3.35: la gemella di ALLEGATI_USECASE, ricevuta da Side il 09/10/2026. Porta i ruoli
+    # (dichiarante, comparente, firmatario) che il mapping di ANSC non dichiara.
+    (3, 4, 'verde', 'SOGGETTI_USECASE', [
+        ('PK', 'cd_usecase + cd_soggetto'), ('', '+ id_versione'),
+        ('', 'ty_soggetto, nm_soggetto, ty_presenza'),
+        ('', 'fg_dichiarante, fg_comparente'),
+        ('', 'fg_firmatario, fg_operante')],
+     'i soggetti dell’UC e il loro ruolo — nomi di Side'),
 
     (4, 3, 'verde', 'RICONCILIAZ_DIZIONARI', [
         ('PK', 'ID_RICONCILIAZIONE'), ('UK', 'DECODIFICA + VALORE_ANSC'),
@@ -103,11 +116,11 @@ TABELLE = [
     (1, 'op', 'blu', 'ANSC_STATO_ATTO', [
         ('PK', 'ID_STATO_ATTO'), ('', 'ID_ATTO_SIPO, ID_MODELLO_ATTO'),
         ('', 'ID_TIPO_EVENTO, ID_TIPO_CONTENUTO'),
-        ('', 'ID_UC_ANSC, COD_LOGICA, COD_ORIGINE_UC'),
-        ('', 'COD_FASE'),
+        ('', 'ID_UC_ANSC, COD_LOGICA'),
+        ('', 'COD_ORIGINE_UC, COD_FASE'),
         ('', 'STATO (replica ANSC), TIPO_ESITO'),
         ('', 'ID_ANSC, NUM_COMUNALE'),
-        ('', 'TXT_PAYLOAD, FLG_EMERGENZA'), ('FK', 'ID_VERSIONE')],
+        ('', 'TXT_PAYLOAD, FLG_EMERGENZA'), ('', 'ID_VERSIONE (per valore)')],
      'l’atto: che cosa è stato deciso, inviato e ottenuto'),
     (2, 'op', 'blu', 'ANSC_LOG_AUDIT', [
         ('PK', 'ID_AUDIT'), ('FK', 'ID_STATO_ATTO'),
@@ -125,6 +138,26 @@ TABELLE = [
         ('', 'TABELLA_SIPO, CAMPO_SIPO'),
         ('UK', 'DECODIFICA — colonna virtuale')],
      'dove vive in SIPO un dominio ANSC'),
+    # ─────────── v3.38: la numerazione comunale, ereditata da Side, più le sequence per
+    # registro e anno decise dal committente. Le sequence non sono tabelle: si disegnano in
+    # grigio, come ALLEGATO, per dire che non sono dello stesso genere.
+    (1, 'op2', 'blu', 'PRENOTAZIONE_ATTI', [
+        ('PK', 'id_prenotazione_atti'), ('', 'ty_evento (registro), nr_anno_atto'),
+        ('', 'nr_id_ansc_da_prenotare'),
+        ('', 'cd_operatore_ e ts_prenotazione')],
+     'la richiesta di numeri — nomi di Side'),
+    (2, 'op2', 'blu', 'DATI_ATTO_ESTERNO', [
+        ('PK', 'id_prenotazione_atti'), ('', '+ nr_atto_comunale'),
+        ('FK', 'id_prenotazione_atti'),
+        ('', 'cd_stato_numero_prenotato (1-4)'),
+        ('', 'id_ansc_collegato, id_atto_sipo')],
+     'ogni numero staccato e la sua sorte'),
+    (3, 'op2', 'grigio', 'SEQ_NUM_COMUNALE_r_aaaa', [
+        ('', 'una per registro e per anno'),
+        ('', 'START 1 · MAXVALUE 99999'),
+        ('', 'NOCACHE · ORDER · NOCYCLE'),
+        ('', 'creata in anticipo da un job')],
+     'la serie: riparte ogni anno'),
     (4, 'op', 'blu', 'ANSC_NOTIFICA', [
         ('PK', 'ID_NOTIFICA'), ('', 'ID_ANSC, genere, stato')], 'il flusso in ingresso'),
 ]
@@ -144,9 +177,12 @@ LEGAMI = [
     ('ALLEGATI_USECASE', 's', ['h:2-3'], 'LOGICHE_DI_SCELTA', 'b', False),
     ('ANSC_CFG_CAMPO', 'b', ['h:2-3b'], 'LOGICHE_DI_SCELTA', 'b', False),
     ('ANSC_LOG_AUDIT', 's', [], 'ANSC_STATO_ATTO', 'd', False),
+    ('DATI_ATTO_ESTERNO', 's', [], 'PRENOTAZIONE_ATTI', 'd', False),
+    ('SEQ_NUM_COMUNALE_r_aaaa', 's', [], 'DATI_ATTO_ESTERNO', 'd', True),
     # riferimenti per valore, senza vincolo di integrità
     ('ANSC_CFG_UC', 'd', [], 'ANSC_ANA_UC', 's', True),
     ('ALLEGATI_USECASE', 'g', ['v:2-3'], 'ANSC_ANA_UC', 'd', True),
+    ('SOGGETTI_USECASE', 's', ['v:2-3'], 'ANSC_ANA_UC', 'd', True),
     ('ANSC_CFG_CAMPO', 'd', [], 'VALORE_DOMINIO', 's', True),
     ('RICONCILIAZ_DIZIONARI', 'g', [], 'VALORE_DOMINIO', 'b', True),
     ('ANSC_CFG_DOMINIO_SIPO', 'g', [], 'RICONCILIAZ_DIZIONARI', 'b', False),
@@ -158,16 +194,16 @@ def disegna(percorso=None):
     percorso = percorso or os.path.join(IMG, 'erd_ansc_usr.png')
     im, dr = G.tela(W, H, 'Schema ANSC_USR',
                     'le tabelle operative sono la base: configurazione e dizionari esistono '
-                    'per metterle in grado di lavorare. In grigio l’unica tabella che non '
-                    'sta in ANSC_USR')
+                    'per metterle in grado di lavorare. In grigio ALLEGATO, che sta in '
+                    'MATR_USR, e le sequence della numerazione')
     G.banda(dr, 40, 140, W - 40, 980, '#3f8f5f',
             'CONFIGURAZIONE — la decide il Comune · REPLICHE — le pubblica ANSC', '#a8801a')
-    G.banda(dr, 40, 1016, W - 40, 1276, '#2f6bb0',
+    G.banda(dr, 40, 1016, W - 40, 1468, '#2f6bb0',
             'OPERATIVE — ciò che accade agli atti', '#25548a')
 
     riq = {}
     for colonna, riga, colore, titolo, righe, nota in TABELLE:
-        y = OPER if riga == 'op' else RIGA[riga]
+        y = OPER if riga == 'op' else OPER2 if riga == 'op2' else RIGA[riga]
         riq[titolo] = G.scheda(dr, COL[colonna], y, LARG, colore, titolo, righe, nota)
 
     def bordo(nome, lato):
@@ -197,9 +233,9 @@ def disegna(percorso=None):
     dr.text((876, 994), 'la configurazione guida ciò che accade agli atti',
             font=G.fnt(G.F_ITA, 17), fill='#25548a')
 
-    G.legenda(dr, 60, 1304, [('verde', 'decise dal Comune'), ('giallo', 'replicate da ANSC'),
+    G.legenda(dr, 60, 1496, [('verde', 'decise dal Comune'), ('giallo', 'replicate da ANSC'),
                              ('viola', 'dizionari'), ('blu', 'operative')])
-    y = 1348
+    y = 1540
     G.linea(dr, [(62, y + 8), (122, y + 8)], G.ARROW, False, 3)
     dr.text((132, y), 'chiave esterna dichiarata nel DDL', font=G.fnt(G.F_REG, 16),
             fill=G.MUTED)

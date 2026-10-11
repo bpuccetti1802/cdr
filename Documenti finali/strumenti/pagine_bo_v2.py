@@ -23,7 +23,7 @@ C = L - 2 * X
 
 # ───────────────────────────────────────────────── 1. composizione a MFE
 def mfe(dest):
-    im, dr = G.tela(1420, 846, "Il back-office come insieme di micro-frontend",
+    im, dr = G.tela(1420, 922, "Il back-office come insieme di micro-frontend",
                     "Quattro unità di rilascio, una per area; le pagine sono rotte a "
                     "caricamento differito dentro ciascuna.")
 
@@ -38,7 +38,7 @@ def mfe(dest):
     G.freccia(dr, (920, 135), (980, 135))
     G.centra(dr, "legge il menu", fnt(F_ITA, 13), 950, 74, MUTED)
 
-    G.banda(dr, 60, 210, 1380, 664, '#2f6bb0',
+    G.banda(dr, 60, 210, 1380, 740, '#2f6bb0',
             "QUATTRO REMOTE — UNA PER AREA, RILASCIABILI SEPARATAMENTE", '#2f6bb0')
     aree = [
         ('Operativa', 'verde', ['Supervisione atti', 'Dettaglio atto',
@@ -46,7 +46,8 @@ def mfe(dest):
         ('Notifiche', 'giallo', ['Gestione notifiche']),
         ('Configurazione', 'blu', ['UC — elenco', 'UC — dettaglio', 'Catalogo UC',
                                    'Logiche di scelta', 'Dizionari',
-                                   'Riconciliazione', 'Versioni']),
+                                   'Riconciliazione', 'Versioni',
+                                   'Allegati per UC', 'Soggetti per UC']),   # v0.8
         ('Servizio', 'grigio', ['Comandi e operazioni', 'Pagine e menu']),
     ]
     x = 90
@@ -62,12 +63,12 @@ def mfe(dest):
         centra(dr, "rotte a caricamento differito", fnt(F_ITA, 13), x + 150, yy + 6, MUTED)
         x += 330
 
-    G.box(dr, 480, 700, 460, 62, 'rosso', "Concentratore all-ansc-sipo",
+    G.box(dr, 480, 776, 460, 62, 'rosso', "Concentratore all-ansc-sipo",
           "l’unico che parla con ANSC: PKCS#12, sessione OTP, firma")
-    G.freccia(dr, (710, 664), (710, 700))
-    G.centra(dr, "API /ansc/v1", fnt(F_ITA, 13), 790, 668, MUTED)
+    G.freccia(dr, (710, 740), (710, 776))
+    G.centra(dr, "API /ansc/v1", fnt(F_ITA, 13), 790, 744, MUTED)
 
-    G.legenda(dr, 60, 796, [('viola', 'ospite'), ('grigio', 'condiviso'),
+    G.legenda(dr, 60, 872, [('viola', 'ospite'), ('grigio', 'condiviso'),
                             ('giallo', 'configurazione'), ('rosso', 'back-end')])
     im.save(os.path.join(dest, 'bo_mfe.png'))
     return 'bo_mfe.png'

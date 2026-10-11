@@ -259,7 +259,8 @@ def uc_dettaglio(dest):
                          sotto='Versione v13 — BOZZA · Modello 01 · Tipo atto 301 · '
                                'Maschera attoMorteTipo01')
     y = W.schede(dr, X, y, C,
-                 ['Dati generali', 'Sezioni', 'Campi', 'Allegati', 'Formule'], attiva=2)
+                 ['Dati generali', 'Sezioni', 'Campi', 'Allegati', 'Soggetti', 'Formule'],
+                 attiva=2)   # v0.8: «Soggetti» (SOGGETTI_USECASE, da Side)
     y = W.riga_campi(dr, X, y, C, [
         ('Sezione', 'Defunto', 'select', 3), ('Solo obbligatori', 'No', 'select', 2),
         ('Senza corrispondenza SIPO', 'Sì', 'select', 3), ('Cerca campo', '', 'testo', 3)])
@@ -561,7 +562,9 @@ def numerazione(dest):
     return W.salva(im, dest, 'bo_numerazione.png')
 
 
-PAGINE = [home, atti, atto, allegati, notifiche, uc_elenco, uc_dettaglio, catalogo,
+# ⚠️ v0.8: «allegati» è rifatta in pagine_bo_v3.py sul processo di Side e non si rigenera
+# più da qui, altrimenti la versione superata sovrascriverebbe bo_allegati.png.
+PAGINE = [home, atti, atto, notifiche, uc_elenco, uc_dettaglio, catalogo,
           logiche, dizionari, riconciliazione, versioni, comandi, numerazione]
 
 if __name__ == '__main__':
