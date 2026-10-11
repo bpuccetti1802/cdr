@@ -42,12 +42,14 @@ def mfe(dest):
             "QUATTRO REMOTE — UNA PER AREA, RILASCIABILI SEPARATAMENTE", '#2f6bb0')
     aree = [
         ('Operativa', 'verde', ['Supervisione atti', 'Dettaglio atto',
-                                'Allegati dell’atto', 'Numerazione comunale']),
+                                'Allegati dell’atto', 'Numerazione — richiesta',
+                                'Numerazione — ricerca']),   # v0.9
         ('Notifiche', 'giallo', ['Gestione notifiche']),
         ('Configurazione', 'blu', ['UC — elenco', 'UC — dettaglio', 'Catalogo UC',
                                    'Logiche di scelta', 'Dizionari',
                                    'Riconciliazione', 'Versioni',
-                                   'Allegati per UC', 'Soggetti per UC']),   # v0.8
+                                   'Allegati per UC', 'Soggetti per UC',
+                                   'Caricamento da file']),   # v0.8, v0.9
         ('Servizio', 'grigio', ['Comandi e operazioni', 'Pagine e menu']),
     ]
     x = 90
@@ -67,6 +69,11 @@ def mfe(dest):
           "l’unico che parla con ANSC: PKCS#12, sessione OTP, firma")
     G.freccia(dr, (710, 740), (710, 776))
     G.centra(dr, "API /ansc/v1", fnt(F_ITA, 13), 790, 744, MUTED)
+    # v0.9: il servizio della numerazione (analisi v3.39), chiamato dall'area operativa
+    G.box(dr, 980, 776, 400, 62, 'rosso', "Servizio num-ansc-sipo",
+          "numerazione comunale: non parla con ANSC")
+    G.freccia(dr, (1180, 740), (1180, 776))
+    G.centra(dr, "API /ansc/v1/numerazione", fnt(F_ITA, 13), 1290, 744, MUTED)
 
     G.legenda(dr, 60, 872, [('viola', 'ospite'), ('grigio', 'condiviso'),
                             ('giallo', 'configurazione'), ('rosso', 'back-end')])

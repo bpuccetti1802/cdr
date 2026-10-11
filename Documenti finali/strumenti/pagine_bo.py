@@ -564,8 +564,10 @@ def numerazione(dest):
 
 # ⚠️ v0.8: «allegati» è rifatta in pagine_bo_v3.py sul processo di Side e non si rigenera
 # più da qui, altrimenti la versione superata sovrascriverebbe bo_allegati.png.
+# ⚠️ v0.9: «numerazione» è rifatta in pagine_bo_v4.py sulle due pagine di Side (richiesta,
+# ricerca e consultazione) e non si rigenera più da qui: bo_numerazione.png resta come storia.
 PAGINE = [home, atti, atto, notifiche, uc_elenco, uc_dettaglio, catalogo,
-          logiche, dizionari, riconciliazione, versioni, comandi, numerazione]
+          logiche, dizionari, riconciliazione, versioni, comandi]
 
 if __name__ == '__main__':
     dest = sys.argv[1] if len(sys.argv) > 1 else 'img'

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Genera SPEC_API_Integrazione-ANSC_v0.1.docx dai contratti OpenAPI dei pod.
+"""Genera SPEC_API_Integrazione-ANSC_v0.2.docx dai contratti OpenAPI dei pod.
 
 Il documento è un artefatto DERIVATO: la fonte autoritativa sono i file .yaml.
 Per aggiornarlo si modificano i contratti e si riesegue questo script.
@@ -13,7 +13,7 @@ from docx.oxml.ns import qn
 
 BASE = '/Users/minimac/Desktop/Comune di Roma'
 TEMPLATE = os.path.join(BASE, 'Template documentale/template_DAD_roma-capitale.docx')
-OUT = os.path.join(BASE, 'Documenti finali/SPEC_API_Integrazione-ANSC_v0.1.docx')
+OUT = os.path.join(BASE, 'Documenti finali/SPEC_API_Integrazione-ANSC_v0.2.docx')
 DATA = os.path.join(BASE, 'Documenti finali')
 
 POD = [
@@ -29,6 +29,10 @@ POD = [
      'Deployment con una o due repliche. Esegue le sole attività non presidiate ammesse: letture '
      'e code. Non forma e non firma atti. La sua realizzabilità è subordinata alla chiusura di '
      'un open point.'),
+    ('num-ansc-sipo', 'Servizio della numerazione comunale', 'ansc-numerazione-v1.yaml',
+     'Deployment stateless, due repliche: la serializzazione degli stacchi sta nella base dati, '
+     'non nel processo. Governa la serie dei numeri comunali per registro e anno. Non parla con '
+     'ANSC e non detiene credenziali verso la piattaforma.'),
 ]
 
 METODI = ('get', 'post', 'put', 'delete', 'patch')
@@ -75,8 +79,8 @@ SCHEDA = {
           'servizi di demand e PMO per le pubbliche amministrazioni locali - terza edizione - '
           'ID 2610 - Lotti 1',
     'Progetto': 'Integrazione SIPO – ANSC',
-    'Data consegna': '20/08/2026',
-    'Versione': '0.1',
+    'Data consegna': '11/10/2026',
+    'Versione': '0.2',
     'Documento': '[codice documento da assegnare]',
     'Codice Area Applicativa': '06',
     'Codice Asset': '[da assegnare]',
@@ -97,6 +101,17 @@ if len(storia.rows) > 1 and len(storia.rows[0].cells) == 4:
             'generato dai contratti OpenAPI dei pod ed è un artefatto derivato: la fonte '
             'autoritativa dei nomi sono i file di contratto.']
     for c, v in zip(r.cells, vals):
+        set_par(c.paragraphs[0], v)
+    import copy
+    nuova = copy.deepcopy(r._tr)
+    r._tr.addnext(nuova)
+    from docx.table import _Row
+    r2 = _Row(nuova, storia)
+    for c, v in zip(r2.cells, ['11/10/2026', '0.2', 'Perimetro; nuovo contratto; verifica',
+                               'Aggiunto il contratto del servizio della numerazione comunale '
+                               '(num-ansc-sipo), introdotto dall’analisi v3.39: stacco dei numeri '
+                               'dalla serie per registro e anno, registrazione a posteriori, '
+                               'stato dei numeri e lettura delle serie con i loro buchi.']):
         set_par(c.paragraphs[0], v)
 
 # ----------------------------------------------------------------------- helper
@@ -178,7 +193,8 @@ p('Il documento specifica le interfacce applicative dei componenti che realizzan
   'fra SIPO e l’Archivio Nazionale dello Stato Civile, secondo lo standard aziendale di '
   'nomenclatura e specifica delle API.')
 p('Copre tutti i componenti previsti dall’architettura: il concentratore operativo, il '
-  'concentratore dei dizionari e il processo di automazione. Il ricevitore delle notifiche è '
+  'concentratore dei dizionari, il processo di automazione e il servizio della numerazione '
+  'comunale. Il ricevitore delle notifiche è '
   'trattato a parte, perché realizza un contratto definito da terzi.')
 p('Il documento è un artefatto derivato. La fonte autoritativa dei nomi sono i contratti '
   'OpenAPI elencati al capitolo sul perimetro: se questo documento e un contratto divergono, è '
@@ -194,7 +210,7 @@ tabella(['ID', 'Documento', 'Contenuto'], [
     ['R2', 'Naming_convention_X_DB_v1.01.docx',
      'Standard gemello per i modelli dati. I nomi dei campi delle rappresentazioni derivano dai '
      'nomi delle colonne secondo la corrispondenza dei prefissi di ruolo.'],
-    ['R3', 'ANALISI_Integrazione-ANSC_v2.6.docx',
+    ['R3', 'ANALISI_Integrazione-ANSC_v3.39.docx',
      'Analisi tecnico-funzionale dell’integrazione. Definisce l’architettura, i componenti, il '
      'modello dati e il modello di esecuzione presidiato che queste interfacce realizzano.'],
     ['R4', 'ansc/docs/openapi/ (R001–R024, R901)',
@@ -456,7 +472,7 @@ tabella(['Codice', 'Componente', 'Condizione', 'Operazioni'],
 
 # ---------------------------------------------------- ricevitore delle notifiche
 h('Il ricevitore delle notifiche', 1)
-p('L’architettura prevede un quarto componente, eventuale: il ricevitore delle notifiche che ANSC '
+p('L’architettura prevede un ulteriore componente, eventuale: il ricevitore delle notifiche che ANSC '
   'invia verso il Comune. Non ha un contratto in questo documento, e la ragione è di merito.')
 p('Lo standard non si applica ai contratti definiti da terzi, che si consumano nella forma in cui '
   'sono pubblicati. Un endpoint che ANSC chiama è esattamente questo: il percorso, il formato del '
@@ -482,7 +498,7 @@ tabella(['Aspetto', 'Requisito'], [
 
 # ------------------------------------------------------- verifica di conformità
 h('Verifica di conformità allo standard', 1)
-p('La lista di controllo prevista dallo standard prima della pubblicazione, applicata ai tre '
+p('La lista di controllo prevista dallo standard prima della pubblicazione, applicata ai quattro '
   'contratti.')
 tabella(['Controllo', 'Esito', 'Nota'], [
     ['Nomi', 'Superato',
@@ -507,8 +523,8 @@ tabella(['Controllo', 'Esito', 'Nota'], [
      'I documenti sono validi rispetto alla specifica OpenAPI. Il controllo automatico di '
      'conformità allo standard non esiste ancora: è un punto aperto dello standard stesso.'],
     ['Versionamento', 'Non applicabile',
-     'Prima emissione: non c’è ancora una versione precedente rispetto a cui valutare '
-     'l’incompatibilità.'],
+     'Tutti i contratti sono alla prima versione maggiore: non c’è ancora una versione '
+     'precedente rispetto a cui valutare l’incompatibilità.'],
     ['Generazione', 'Superato',
      'Il presente documento è generato dai contratti senza errori e senza sezioni vuote.'],
 ], [1.7, 1.0, 3.9])
@@ -543,6 +559,9 @@ tabella(['Nell’analisi', 'In questo documento', 'Perché'], [
      'Il registro delle postazioni si poteva leggere e aggiornare, ma non alimentare.'],
     ['— (assente)', 'contratto del processo di automazione',
      'Il componente esisteva nella topologia senza alcuna interfaccia.'],
+    ['— (assente)', 'contratto del servizio della numerazione comunale',
+     'La numerazione comunale era descritta nell’analisi (tabelle, sequence, percorsi) senza '
+     'alcuna interfaccia: aggiunto nella v0.2.'],
 ], [2.1, 2.2, 2.3])
 
 # ------------------------------------------------------------------ punti aperti

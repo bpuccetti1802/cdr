@@ -1,0 +1,957 @@
+openapi: 3.0.3
+
+info:
+  title: Integrazione SIPO - ANSC — servizio della numerazione comunale
+  version: 1.0.0
+  summary: Stacco dei numeri comunali dalla serie per registro e anno e governo della loro sorte.
+  description: |
+    Interfacce esposte dal componente `num-ansc-sipo`, che governa la **serie dei numeri
+    comunali** degli atti di stato civile: il progressivo che il Comune assegna a ciascun atto e
+    che viaggia nel modello evento verso ANSC.
+
+    Nessun servizio di ANSC attribuisce il numero comunale: la piattaforma lo riceve e lo compone
+    nell'identificativo nazionale. Governare la serie è quindi compito del Comune, e questo
+    componente è il solo luogo in cui la si governa, qualunque sia il percorso con cui l'atto si
+    forma — nelle maschere di SIPO, sulla web app di ANSC, in blocco per il parto plurimo.
+
+    La gestione è ereditata dal sistema Side del Comune di Milano, con le sue tabelle
+    (`PRENOTAZIONE_ATTI`, `DATI_ATTO_ESTERNO`) e i suoi quattro stati del numero. La serie è una
+    sequence Oracle **per registro e per anno**, così che la numerazione riparta ogni anno.
+
+    ## Perché è un componente a sé
+
+    La serie è una risorsa del Comune, non di ANSC: il componente **non parla con ANSC** e non
+    detiene credenziali verso la piattaforma. Ha consumatori propri — il concentratore operativo
+    al momento del deposito, il back-office, le maschere di SIPO per gli atti da formare sulla
+    web app — ed è l'unico punto in cui gli stacchi si serializzano.
+
+    ## Due garanzie che la sequence non dà da sola
+
+    - **Contiguità del blocco**: ogni stacco, singolo o in blocco, è serializzato con un blocco
+      esclusivo sulla tabella dei numeri; i numeri di un parto plurimo escono consecutivi.
+    - **Assenza di buchi**: ogni numero è registrato nella stessa transazione in cui è preso dalla
+      sequence. Un numero mancante fra uno e l'ultimo della serie è un buco e la lettura della
+      serie lo mostra; un numero staccato e non usato non è un buco, è un numero scartato.
+
+    Documentazione di analisi: `ANALISI_Integrazione-ANSC_v3.39.docx`, paragrafo «La
+    numerazione comunale».
+  contact:
+    name: Dipartimento Trasformazione Digitale — Roma Capitale
+  x-componente: num-ansc-sipo
+  x-standard-nomenclatura: Naming_convention_X_API_v1.00.docx
+  x-lingua: it
+
+servers:
+  - url: https://sipo-svil.comune.roma.it
+    description: Ambiente di sviluppo SIPO
+  - url: https://sipo-test.comune.roma.it
+    description: Ambiente di test SIPO
+  - url: https://sipo.comune.roma.it
+    description: Ambiente di esercizio SIPO
+
+tags:
+  - name: prenotazioni
+    description: |
+      Le richieste di numeri. Una richiesta stacca uno o più numeri consecutivi dalla serie di un
+      registro e di un anno e li registra come disponibili.
+  - name: serie
+    description: |
+      Le serie dei numeri, una per registro e per anno, con i loro conteggi e i loro buchi, e i
+      singoli numeri con la loro sorte.
+
+security:
+  - bearerJwt: []
+
+paths:
+
+  /ansc/v1/numerazione/prenotazioni:
+    post:
+      operationId: creaPrenotazione
+      summary: Crea una richiesta di numeri e li stacca dalla serie
+      description: |
+        Stacca uno o più numeri consecutivi dalla serie del registro e dell'anno indicati e li
+        registra nello stato **Disponibile**, insieme alla richiesta che li ha prodotti.
+
+        Si usa in tre percorsi:
+
+        - **atto formato in SIPO**: il concentratore operativo la invoca dopo il pre-filtro e prima
+          del deposito, indicando l'atto di SIPO, perché il modello evento porta il numero;
+        - **atto formato sulla web app**: l'ufficiale la invoca dalla pagina della numerazione
+          prima di validare l'atto sulla web app;
+        - **parto plurimo**: si chiedono in un colpo tanti numeri quanti sono i nati, prima della
+          prenotazione degli identificativi nazionali che li richiede tutti.
+
+        **Riuso del numero legato all'atto.** Se la richiesta indica un atto di SIPO e quell'atto
+        ha già un numero **Disponibile** nella stessa serie — il caso di un deposito respinto e
+        ritentato — l'operazione restituisce quel numero e non ne stacca un altro.
+
+        **Effetti**: crea una richiesta e i suoi numeri, e consuma altrettanti valori della
+        sequence. Gli stacchi sono serializzati: per la durata dell'operazione nessun altro
+        stacco procede, mentre le letture non sono bloccate.
+
+        **Prerequisiti**: la serie dell'anno deve esistere. Lo stacco non crea mai una serie: se
+        manca, fallisce.
+      tags: [prenotazioni]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PrenotazioneRichiesta' }
+            examples:
+              esempioAttoSipo:
+                summary: Un numero per un atto di morte formato in SIPO
+                value:
+                  codRegistro: '2'
+                  numAnno: 2027
+                  numNumeri: 1
+                  idAttoSipo: 4581273
+              esempioGemelli:
+                summary: Tre numeri consecutivi per un parto trigemino
+                value:
+                  codRegistro: '1'
+                  numAnno: 2027
+                  numNumeri: 3
+      responses:
+        '201':
+          description: La richiesta registrata, con i numeri staccati in ordine crescente.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Prenotazione' }
+              examples:
+                esempioGemelliStaccati:
+                  summary: Tre numeri consecutivi
+                  value:
+                    esito: OK
+                    messaggi: []
+                    dati:
+                      idPrenotazione: 90211
+                      codRegistro: '1'
+                      numAnno: 2027
+                      numNumeri: 3
+                      operatore: RSSMRA70A01H501U
+                      dataPrenotazione: '2027-03-14T10:22:05+01:00'
+                      numeri:
+                        - { numAtto: 140, codStato: '1', idAttoSipo: null, idAnsc: null }
+                        - { numAtto: 141, codStato: '1', idAttoSipo: null, idAnsc: null }
+                        - { numAtto: 142, codStato: '1', idAttoSipo: null, idAnsc: null }
+        '200':
+          description: |
+            L'atto indicato aveva già un numero Disponibile nella serie: è restituito quello e
+            nessun valore della sequence è consumato. La rappresentazione è quella della
+            richiesta che lo aveva staccato.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Prenotazione' }
+        '400':
+          description: Registro, anno o quantità non ammessi.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+              examples:
+                esempioAnnoNonAmmesso:
+                  value:
+                    esito: KO
+                    messaggi:
+                      - tipo: ERROR
+                        campo: numAnno
+                        codice: ANNO_NON_AMMESSO
+                        descrizione: Si possono staccare numeri solo dalla serie dell'anno corrente o del precedente
+                    dati: null
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '409':
+          description: La serie non esiste o è esaurita.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+              examples:
+                esempioSerieMancante:
+                  value:
+                    esito: KO
+                    messaggi:
+                      - tipo: ERROR
+                        codice: SERIE_NON_DISPONIBILE
+                        descrizione: La serie del registro 2 per l'anno 2027 non è stata creata
+                    dati: null
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC]
+      x-effetti: |
+        Crea la richiesta e i suoi numeri nello stato Disponibile e consuma altrettanti valori della
+        sequence, nella stessa transazione. Non ripetibile senza effetti, salvo il caso del numero
+        già legato all'atto indicato, che è restituito senza staccarne un altro.
+      x-vincoli: |
+        Gli stacchi sono serializzati. Il chiamante non deve tenere aperte transazioni proprie
+        attorno alla chiamata: il blocco si rilascia solo alla conferma.
+      x-codici-errore:
+        - codice: REGISTRO_NON_VALIDO
+          condizione: Il registro non appartiene alla decodifica ANSC_01.
+        - codice: ANNO_NON_AMMESSO
+          condizione: L'anno non è né il corrente né il precedente.
+        - codice: QUANTITA_NON_AMMESSA
+          condizione: Il numero di valori richiesti è fuori dall'intervallo ammesso, o è maggiore di uno insieme a un atto di SIPO.
+        - codice: SERIE_NON_DISPONIBILE
+          condizione: La sequence del registro e dell'anno non esiste.
+        - codice: SERIE_ESAURITA
+          condizione: La sequence ha raggiunto il valore massimo di cinque cifre.
+        - codice: NUMERAZIONE_INCOERENTE
+          condizione: Il valore preso dalla sequence è già registrato nella serie; lo stacco è annullato e va esaminata la serie.
+
+    get:
+      operationId: elencaPrenotazioni
+      summary: Elenca le richieste di numeri
+      description: |
+        Restituisce le richieste di numeri con i filtri della pagina di ricerca del back-office:
+        registro, anno, operatore, intervallo di date e stato dei numeri.
+
+        Si usa per la ricerca e la consultazione delle richieste, come nella pagina omonima di
+        Side.
+
+        **Effetti**: nessuno.
+      tags: [prenotazioni]
+      parameters:
+        - $ref: '#/components/parameters/CodRegistroFiltro'
+        - $ref: '#/components/parameters/NumAnnoFiltro'
+        - name: operatore
+          in: query
+          required: false
+          description: Codice fiscale dell'operatore che ha fatto la richiesta.
+          schema: { type: string }
+        - name: dataDa
+          in: query
+          required: false
+          description: Limita alle richieste fatte da questo istante in poi.
+          schema: { type: string, format: date-time }
+        - name: dataA
+          in: query
+          required: false
+          description: Limita alle richieste fatte fino a questo istante.
+          schema: { type: string, format: date-time }
+        - $ref: '#/components/parameters/CodStatoFiltro'
+        - $ref: '#/components/parameters/NumPagina'
+        - $ref: '#/components/parameters/NumElementi'
+        - $ref: '#/components/parameters/Ordinamento'
+      responses:
+        '200':
+          description: Elenco paginato delle richieste, dalla più recente, con i loro numeri.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati:
+                        type: object
+                        properties:
+                          prenotazioni:
+                            type: array
+                            description: Le richieste della pagina richiesta.
+                            items: { $ref: '#/components/schemas/Prenotazione' }
+                          navigazione: { $ref: '#/components/schemas/Navigazione' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC, SUPPORTO, AUDITOR]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+  /ansc/v1/numerazione/prenotazioni/{idPrenotazione}:
+    parameters:
+      - $ref: '#/components/parameters/IdPrenotazione'
+    get:
+      operationId: leggiPrenotazione
+      summary: Legge una richiesta di numeri
+      description: |
+        Restituisce una richiesta con i numeri che ha prodotto e lo stato di ciascuno.
+
+        **Effetti**: nessuno.
+      tags: [prenotazioni]
+      responses:
+        '200':
+          description: La richiesta.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Prenotazione' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC, SUPPORTO, AUDITOR]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+  /ansc/v1/numerazione/serie:
+    get:
+      operationId: elencaSerie
+      summary: Elenca le serie dei numeri con i loro conteggi
+      description: |
+        Restituisce le serie, una per registro e per anno, con il prossimo numero, i conteggi per
+        stato e il numero dei buchi.
+
+        Si usa nella pagina della numerazione per vedere a colpo d'occhio lo stato delle serie, e
+        a dicembre per controllare che quelle dell'anno successivo siano state create.
+
+        **Effetti**: nessuno.
+      tags: [serie]
+      parameters:
+        - $ref: '#/components/parameters/NumAnnoFiltro'
+      responses:
+        '200':
+          description: Le serie dell'anno indicato o, senza filtro, dell'anno corrente e del successivo.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati:
+                        type: object
+                        properties:
+                          serie:
+                            type: array
+                            description: Le serie, per anno e registro.
+                            items: { $ref: '#/components/schemas/Serie' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC, SUPPORTO, AMMINISTRATORE, AUDITOR]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+    post:
+      operationId: creaSerie
+      summary: Crea le serie dei cinque registri per un anno
+      description: |
+        Crea, per l'anno indicato, le sequence dei cinque registri che ancora mancano, eseguendo
+        la stessa procedura che il job pianificato esegue ogni 1° dicembre per l'anno successivo.
+
+        Si usa all'installazione, per l'anno in corso, e quando il job non ha creato le serie
+        dell'anno successivo.
+
+        **Effetti**: crea le sequence mancanti. **Ripetibile senza effetti ulteriori**: le serie
+        già esistenti non sono toccate.
+      tags: [serie]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SerieRichiesta' }
+            examples:
+              esempioAnnoSuccessivo:
+                summary: Le serie del 2028
+                value:
+                  numAnno: 2028
+      responses:
+        '200':
+          description: Le cinque serie dell'anno, dopo l'esecuzione.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati:
+                        type: object
+                        properties:
+                          numCreate:
+                            type: integer
+                            description: Quante serie sono state create da questa esecuzione.
+                          serie:
+                            type: array
+                            description: Le cinque serie dell'anno.
+                            items: { $ref: '#/components/schemas/Serie' }
+        '400':
+          description: Anno non ammesso.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [AMMINISTRATORE]
+      x-effetti: |
+        Crea le sequence mancanti dell'anno. Ripetibile senza effetti ulteriori.
+      x-codici-errore:
+        - codice: ANNO_NON_AMMESSO
+          condizione: L'anno non è il corrente né il successivo.
+        - codice: SERIE_CREAZIONE_FALLITA
+          condizione: La procedura di creazione non è riuscita, tipicamente per un privilegio mancante sullo schema.
+
+  /ansc/v1/numerazione/serie/{codRegistro}/{numAnno}:
+    parameters:
+      - $ref: '#/components/parameters/CodRegistro'
+      - $ref: '#/components/parameters/NumAnno'
+    get:
+      operationId: leggiSerie
+      summary: Legge una serie con i suoi buchi
+      description: |
+        Restituisce una serie con il prossimo numero, i conteggi per stato e **l'elenco dei
+        buchi**: i numeri compresi fra uno e l'ultimo valore preso dalla sequence che non
+        risultano registrati.
+
+        Si usa per spiegare un buco: un buco non ha una riga che lo descriva, e questa è l'unica
+        lettura che lo rende visibile.
+
+        **Effetti**: nessuno.
+      tags: [serie]
+      responses:
+        '200':
+          description: La serie.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Serie' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC, SUPPORTO, AMMINISTRATORE, AUDITOR]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+  /ansc/v1/numerazione/serie/{codRegistro}/{numAnno}/numeri:
+    parameters:
+      - $ref: '#/components/parameters/CodRegistro'
+      - $ref: '#/components/parameters/NumAnno'
+    get:
+      operationId: elencaNumeri
+      summary: Elenca i numeri di una serie
+      description: |
+        Restituisce i numeri registrati nella serie con il loro stato, l'atto di SIPO e
+        l'identificativo nazionale a cui sono legati.
+
+        Si usa nella pagina della numerazione e dal concentratore operativo, per ritrovare il
+        numero di un atto.
+
+        **Effetti**: nessuno.
+      tags: [serie]
+      parameters:
+        - $ref: '#/components/parameters/CodStatoFiltro'
+        - name: idAttoSipo
+          in: query
+          required: false
+          description: Limita ai numeri legati a un atto di SIPO.
+          schema: { type: integer, format: int64 }
+        - name: numDa
+          in: query
+          required: false
+          description: Primo numero dell'intervallo.
+          schema: { type: integer, minimum: 1, maximum: 99999 }
+        - name: numA
+          in: query
+          required: false
+          description: Ultimo numero dell'intervallo.
+          schema: { type: integer, minimum: 1, maximum: 99999 }
+        - $ref: '#/components/parameters/NumPagina'
+        - $ref: '#/components/parameters/NumElementi'
+        - $ref: '#/components/parameters/Ordinamento'
+      responses:
+        '200':
+          description: Elenco paginato dei numeri, in ordine crescente.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati:
+                        type: object
+                        properties:
+                          numeri:
+                            type: array
+                            description: I numeri della pagina richiesta.
+                            items: { $ref: '#/components/schemas/Numero' }
+                          navigazione: { $ref: '#/components/schemas/Navigazione' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC, SUPPORTO, AUDITOR]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+    post:
+      operationId: creaNumero
+      summary: Registra a posteriori un numero già usato
+      description: |
+        Registra nella serie un numero che è stato usato **senza essere staccato da SIPO**: lo
+        scenario di Side in cui SIPO non era disponibile e l'atto è stato formato sulla web app
+        con il numero proposto da ANSC.
+
+        Il numero entra nello stato **Utilizzato**, con l'identificativo nazionale dell'atto. La
+        serie resta coerente secondo tre casi, valutati nello stesso blocco esclusivo degli
+        stacchi:
+
+        - il numero è **già registrato**: l'operazione è respinta, perché due atti avrebbero lo
+          stesso numero, ed è un caso da esaminare con l'ufficiale;
+        - il numero è **inferiore al prossimo** della sequence e non è registrato: colma un buco
+          della serie e si registra;
+        - il numero è **uguale o superiore al prossimo**: la sequence si fa avanzare fino a quel
+          numero, così che nessuno stacco successivo lo restituisca. I valori eventualmente
+          scavalcati diventano buchi, visibili nella lettura della serie.
+
+        **Effetti**: crea una richiesta di un numero e il numero nello stato Utilizzato; può far
+        avanzare la sequence.
+      tags: [serie]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NumeroRichiesta' }
+            examples:
+              esempioRientro:
+                summary: Il numero usato sulla web app durante un fermo di SIPO
+                value:
+                  numAtto: 1532
+                  idAnsc: 2027-48123-1532-058091
+      responses:
+        '201':
+          description: Il numero registrato.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Numero' }
+        '400':
+          description: Numero o identificativo nazionale non validi.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '409':
+          description: Il numero è già registrato nella serie.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+              examples:
+                esempioNumeroPresente:
+                  value:
+                    esito: KO
+                    messaggi:
+                      - tipo: ERROR
+                        campo: numAtto
+                        codice: NUMERO_GIA_REGISTRATO
+                        descrizione: Il numero 1532 della serie 2/2027 è già legato all'atto 4581273
+                    dati: null
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC]
+      x-effetti: |
+        Crea una richiesta di un numero e il numero nello stato Utilizzato. Se il numero è uguale o
+        superiore al prossimo della sequence, la fa avanzare. Non ripetibile: la seconda chiamata
+        trova il numero registrato ed è respinta.
+      x-vincoli: |
+        Serializzata con gli stacchi. Da usare solo per numeri effettivamente usati fuori da SIPO:
+        per ottenerne uno nuovo si usa creaPrenotazione.
+      x-codici-errore:
+        - codice: NUMERO_GIA_REGISTRATO
+          condizione: Il numero compare già nella serie.
+        - codice: NUMERO_NON_VALIDO
+          condizione: Il numero è fuori dall'intervallo da 1 a 99999.
+        - codice: ID_ANSC_NON_VALIDO
+          condizione: L'identificativo nazionale non ha la forma anno, numero nazionale, numero comunale, codice ISTAT, o il suo numero comunale differisce da quello indicato.
+
+  /ansc/v1/numerazione/serie/{codRegistro}/{numAnno}/numeri/{numAtto}:
+    parameters:
+      - $ref: '#/components/parameters/CodRegistro'
+      - $ref: '#/components/parameters/NumAnno'
+      - $ref: '#/components/parameters/NumAtto'
+    get:
+      operationId: leggiNumero
+      summary: Legge un numero con la richiesta che lo ha prodotto
+      description: |
+        Restituisce un numero, il suo stato, l'atto e l'identificativo nazionale a cui è legato, e
+        chi e quando lo ha ricongiunto all'atto.
+
+        **Effetti**: nessuno.
+      tags: [serie]
+      responses:
+        '200':
+          description: Il numero.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Numero' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC, SUPPORTO, AUDITOR]
+      x-effetti: Sola lettura, sicura e ripetibile.
+
+    patch:
+      operationId: aggiornaNumero
+      summary: Aggiorna lo stato di un numero e i suoi legami
+      description: |
+        Cambia lo stato di un numero e ne registra i legami con l'atto. Le transizioni ammesse
+        sono quelle di Side:
+
+        - da **1 Disponibile** a **2 Utilizzato**, con l'identificativo nazionale dell'atto che lo
+          ha usato: al deposito riuscito, per mano del concentratore operativo, o per mano
+          dell'ufficiale per un atto formato sulla web app;
+        - da **1 Disponibile** a **3 Scartato**: il numero non sarà usato. Lo scarto è esplicito,
+          perché la serie non tollera numeri abbandonati senza una dichiarazione;
+        - da **2 Utilizzato** a **4 Evento acquisito**, con l'atto di SIPO: l'atto formato
+          altrove è stato agganciato in SIPO.
+
+        Gli stati 3 e 4 sono finali. Un numero Disponibile può anche essere legato a un atto di
+        SIPO senza cambiare stato.
+
+        **Effetti**: aggiorna lo stato e i legami del numero; registra chi e quando lo ha
+        ricongiunto all'atto.
+      tags: [serie]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NumeroAggiornamento' }
+            examples:
+              esempioUtilizzato:
+                summary: Il deposito è riuscito
+                value:
+                  codStato: '2'
+                  idAnsc: 2027-48123-140-058091
+                  idAttoSipo: 4581273
+              esempioScartato:
+                summary: Il numero non sarà usato
+                value:
+                  codStato: '3'
+      responses:
+        '200':
+          description: Il numero aggiornato.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Busta'
+                  - type: object
+                    properties:
+                      dati: { $ref: '#/components/schemas/Numero' }
+        '400':
+          description: Dati mancanti per la transizione richiesta.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+        '401': { $ref: '#/components/responses/NonAutenticato' }
+        '403': { $ref: '#/components/responses/NonAutorizzato' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
+        '409':
+          description: La transizione di stato non è ammessa.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Busta' }
+              examples:
+                esempioTransizione:
+                  value:
+                    esito: KO
+                    messaggi:
+                      - tipo: ERROR
+                        campo: codStato
+                        codice: TRANSIZIONE_NON_AMMESSA
+                        descrizione: Un numero Scartato non può tornare Utilizzato
+                    dati: null
+        '500': { $ref: '#/components/responses/ErroreInterno' }
+      x-ruoli: [USC]
+      x-effetti: |
+        Aggiorna lo stato e i legami del numero e registra l'operatore e l'istante del
+        ricongiungimento. Ripetibile senza effetti ulteriori se lo stato richiesto è già quello
+        corrente con gli stessi legami.
+      x-codici-errore:
+        - codice: TRANSIZIONE_NON_AMMESSA
+          condizione: Lo stato richiesto non è raggiungibile da quello corrente.
+        - codice: DATI_TRANSIZIONE_MANCANTI
+          condizione: Manca l'atto di SIPO per il passaggio a Evento acquisito.
+        - codice: ID_ANSC_NON_VALIDO
+          condizione: L'identificativo nazionale non ha la forma attesa o il suo numero comunale differisce da quello del numero.
+
+components:
+
+  securitySchemes:
+    bearerJwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Token di sessione interno a SIPO. Quando il chiamante è il concentratore operativo, il
+        token è quello dell'operatore, propagato: il numero resta attribuito a chi forma l'atto.
+        Questo componente non costruisce né firma token verso ANSC.
+
+  parameters:
+    IdPrenotazione:
+      name: idPrenotazione
+      in: path
+      required: true
+      description: Identificativo della richiesta di numeri.
+      schema: { type: integer, format: int64 }
+      example: 90211
+    CodRegistro:
+      name: codRegistro
+      in: path
+      required: true
+      description: Registro secondo la decodifica ANSC_01 — 1 nascita, 2 morte, 3 matrimonio, 4 unione civile, 5 cittadinanza.
+      schema: { type: string, enum: ['1', '2', '3', '4', '5'] }
+      example: '2'
+    NumAnno:
+      name: numAnno
+      in: path
+      required: true
+      description: Anno della serie, di quattro cifre.
+      schema: { type: integer, minimum: 2023, maximum: 9999 }
+      example: 2027
+    NumAtto:
+      name: numAtto
+      in: path
+      required: true
+      description: Il numero comunale, da 1 a 99999.
+      schema: { type: integer, minimum: 1, maximum: 99999 }
+      example: 140
+    CodRegistroFiltro:
+      name: codRegistro
+      in: query
+      required: false
+      description: Limita a un registro della decodifica ANSC_01.
+      schema: { type: string, enum: ['1', '2', '3', '4', '5'] }
+    NumAnnoFiltro:
+      name: numAnno
+      in: query
+      required: false
+      description: Limita a un anno.
+      schema: { type: integer, minimum: 2023, maximum: 9999 }
+    CodStatoFiltro:
+      name: codStato
+      in: query
+      required: false
+      description: Limita ai numeri in uno stato — 1 Disponibile, 2 Utilizzato, 3 Scartato, 4 Evento acquisito.
+      schema: { type: string, enum: ['1', '2', '3', '4'] }
+    NumPagina:
+      name: numPagina
+      in: query
+      required: false
+      description: Numero della pagina richiesta, a partire da 1.
+      schema: { type: integer, minimum: 1, default: 1 }
+    NumElementi:
+      name: numElementi
+      in: query
+      required: false
+      description: Numero massimo di elementi per pagina.
+      schema: { type: integer, minimum: 1, maximum: 500, default: 25 }
+    Ordinamento:
+      name: ordinamento
+      in: query
+      required: false
+      description: Campi di ordinamento separati da virgola; il segno meno indica il verso discendente.
+      schema: { type: string }
+      example: -dataPrenotazione
+
+  responses:
+    NonAutenticato:
+      description: Chiamante non autenticato o token scaduto.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+    NonAutorizzato:
+      description: Il ruolo del chiamante non consente l'operazione.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+    NonTrovato:
+      description: La richiesta, la serie o il numero indicati non esistono.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+    ErroreInterno:
+      description: Errore non previsto del componente.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Busta' }
+
+  schemas:
+
+    Busta:
+      type: object
+      description: Busta applicativa comune a tutte le risposte, nella stessa forma del concentratore operativo.
+      required: [esito]
+      properties:
+        esito:
+          type: string
+          enum: [OK, KO]
+          description: Esito applicativo dell'operazione, indipendente dal codice di stato HTTP.
+        messaggi:
+          type: array
+          description: Messaggi diagnostici, di errore o informativi.
+          items: { $ref: '#/components/schemas/Messaggio' }
+        dati:
+          nullable: true
+          description: Il contenuto proprio della risposta.
+
+    Messaggio:
+      type: object
+      description: Singolo messaggio della busta.
+      required: [tipo, codice, descrizione]
+      properties:
+        tipo:
+          type: string
+          enum: [ERROR, WARNING, INFO]
+          description: Gravità del messaggio.
+        campo:
+          type: string
+          nullable: true
+          description: Percorso del campo cui il messaggio si riferisce, se pertinente.
+        codice:
+          type: string
+          description: Codice applicativo stabile, in maiuscolo, nella forma «ambito_condizione».
+        descrizione:
+          type: string
+          description: Testo destinato alle persone.
+
+    Navigazione:
+      type: object
+      description: Dati di navigazione di una collezione paginata.
+      properties:
+        numPagina: { type: integer, description: 'Pagina restituita.' }
+        numElementi: { type: integer, description: 'Elementi per pagina.' }
+        numTotale: { type: integer, description: 'Elementi totali che soddisfano il filtro.' }
+
+    PrenotazioneRichiesta:
+      type: object
+      description: La richiesta di numeri.
+      required: [codRegistro, numAnno, numNumeri]
+      properties:
+        codRegistro:
+          type: string
+          enum: ['1', '2', '3', '4', '5']
+          description: Registro secondo la decodifica ANSC_01. Corrisponde a ty_evento.
+        numAnno:
+          type: integer
+          description: Anno della serie. Il corrente, o il precedente a cavallo d'anno. Corrisponde a nr_anno_atto.
+        numNumeri:
+          type: integer
+          minimum: 1
+          maximum: 999
+          description: Quanti numeri staccare — uno, o tanti quanti i nati di un parto plurimo. Corrisponde a nr_id_ansc_da_prenotare.
+        idAttoSipo:
+          type: integer
+          format: int64
+          nullable: true
+          description: L'atto di SIPO a cui il numero è destinato. Ammesso solo con un numero; se l'atto ne ha già uno Disponibile, si restituisce quello.
+
+    Prenotazione:
+      type: object
+      description: Una richiesta di numeri e i numeri che ha prodotto.
+      properties:
+        idPrenotazione: { type: integer, format: int64, description: 'Identificativo della richiesta. Corrisponde a id_prenotazione_atti.' }
+        codRegistro: { type: string, description: 'Registro secondo la decodifica ANSC_01.' }
+        numAnno: { type: integer, description: 'Anno della serie.' }
+        numNumeri: { type: integer, description: 'Quanti numeri sono stati staccati.' }
+        operatore: { type: string, description: 'Codice fiscale di chi ha fatto la richiesta. Corrisponde a cd_operatore_prenotazione.' }
+        dataPrenotazione: { type: string, format: date-time, description: 'Istante della richiesta. Corrisponde a ts_prenotazione.' }
+        numeri:
+          type: array
+          description: I numeri staccati, in ordine crescente.
+          items: { $ref: '#/components/schemas/Numero' }
+
+    SerieRichiesta:
+      type: object
+      description: La richiesta di creazione delle serie di un anno.
+      required: [numAnno]
+      properties:
+        numAnno:
+          type: integer
+          description: Anno di cui creare le serie dei cinque registri. Il corrente o il successivo.
+
+    Serie:
+      type: object
+      description: Una serie di numeri, per registro e anno.
+      properties:
+        codRegistro: { type: string, description: 'Registro secondo la decodifica ANSC_01.' }
+        numAnno: { type: integer, description: 'Anno della serie.' }
+        flgDisponibile: { type: boolean, description: 'Vero se la sequence della serie esiste.' }
+        numProssimo: { type: integer, nullable: true, description: 'Il prossimo valore che la sequence restituirà.' }
+        numDisponibili: { type: integer, description: 'Numeri nello stato Disponibile.' }
+        numUtilizzati: { type: integer, description: 'Numeri nello stato Utilizzato.' }
+        numScartati: { type: integer, description: 'Numeri nello stato Scartato.' }
+        numAcquisiti: { type: integer, description: 'Numeri nello stato Evento acquisito.' }
+        numBuchi: { type: integer, description: 'Valori fra uno e il precedente del prossimo che non risultano registrati.' }
+        buchi:
+          type: array
+          description: I buchi, nella sola lettura della singola serie.
+          items: { type: integer }
+
+    NumeroRichiesta:
+      type: object
+      description: Un numero usato fuori da SIPO, da registrare nella serie.
+      required: [numAtto, idAnsc]
+      properties:
+        numAtto:
+          type: integer
+          minimum: 1
+          maximum: 99999
+          description: Il numero comunale usato. Corrisponde a nr_atto_comunale.
+        idAnsc:
+          type: string
+          description: L'identificativo nazionale dell'atto che lo ha usato. Corrisponde a id_ansc_collegato.
+        idAttoSipo:
+          type: integer
+          format: int64
+          nullable: true
+          description: L'atto di SIPO, se già agganciato.
+
+    NumeroAggiornamento:
+      type: object
+      description: Il cambio di stato di un numero e i suoi legami.
+      properties:
+        codStato:
+          type: string
+          enum: ['2', '3', '4']
+          description: Lo stato da raggiungere — 2 Utilizzato, 3 Scartato, 4 Evento acquisito. Assente se si lega soltanto l'atto.
+        idAnsc:
+          type: string
+          nullable: true
+          description: L'identificativo nazionale dell'atto che ha usato il numero.
+        idAttoSipo:
+          type: integer
+          format: int64
+          nullable: true
+          description: L'atto di SIPO. Obbligatorio per il passaggio a Evento acquisito.
+
+    Numero:
+      type: object
+      description: Un numero della serie e la sua sorte.
+      properties:
+        numAtto: { type: integer, description: 'Il numero comunale. Corrisponde a nr_atto_comunale.' }
+        codRegistro: { type: string, description: 'Registro della serie. Corrisponde a ty_evento.' }
+        numAnno: { type: integer, description: 'Anno della serie. Corrisponde a nr_anno_atto.' }
+        codStato:
+          type: string
+          enum: ['1', '2', '3', '4']
+          description: 1 Disponibile, 2 Utilizzato, 3 Scartato, 4 Evento acquisito. Corrisponde a cd_stato_numero_prenotato.
+        idPrenotazione: { type: integer, format: int64, description: 'La richiesta da cui il numero proviene.' }
+        idAttoSipo: { type: integer, format: int64, nullable: true, description: "L'atto di SIPO legato al numero." }
+        idAnsc: { type: string, nullable: true, description: "L'identificativo nazionale dell'atto che ha usato il numero." }
+        dataAllineamento: { type: string, format: date-time, nullable: true, description: 'Quando il numero è stato ricongiunto all’atto. Corrisponde a ts_allineamento_ansc_side.' }
+        operatoreAllineamento: { type: string, nullable: true, description: 'Chi lo ha ricongiunto. Corrisponde a cd_operatore_allineamento.' }
