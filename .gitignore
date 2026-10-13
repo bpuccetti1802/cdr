@@ -35,3 +35,7 @@ Richiesta utenza Pitech.pdf
 #    del repository, per materiale che le versioni correnti hanno già sostituito.
 #    Resta sul disco, non viene pubblicato.
 /Documenti finali/Archivio analisi *.zip
+
+# 7. Le impostazioni personali di Claude Code in questo repository: sono di chi
+#    lavora, non del progetto.
+/.claude/settings.local.json

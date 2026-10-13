@@ -610,6 +610,14 @@ def main():
     for codice, testo, compete in PUNTI_NUOVI:
         D.clona_riga(tabella_punti, (codice, testo, compete))
 
+    # =================================================================== frontespizio
+    # ⚠️ La versione non sta solo nella Storia: il template la ripete nel riquadro di
+    # testa e nella testata di pagina. Aggiornare solo la Storia lascia un documento che
+    # si dichiara ancora la versione precedente in copertina — è successo con questa
+    # stessa v0.5, corretta a mano in Word dall'utente.
+    for fatto in D.frontespizio(d, '0.5', 'ANALISI_Identita-Profilazione-IAM_v0.5'):
+        print('  ' + fatto)
+
     # =================================================================== storia
     D.storia(d, '13/10/2026', '0.5',
              'I ruoli (nuovo) · Punti aperti',

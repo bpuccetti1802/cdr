@@ -17,6 +17,7 @@ Trappole già pagate e qui evitate:
 Questo file sta in «Documenti finali/strumenti/» e non nello scratchpad, che è di sessione.
 """
 import copy
+import re
 
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
@@ -379,3 +380,49 @@ def sposta_commenti(sorgente, destinazione):
             sorgente.remove(r)
             destinazione.append(r)
     return ids
+
+
+def frontespizio(doc, versione, nome_documento=None, data=None):
+    """Porta la versione nel frontespizio e nella testata, non solo nella Storia.
+
+    ⚠️ Serve perché la tabella «Storia del Documento» non è l'unico posto in cui la
+    versione è scritta: il template la ripete nel riquadro di testa (righe «Versione» e
+    «Documento») e in una cella della testata di pagina («Codice Documento vX.Y»).
+    Aggiornare solo la Storia produce un documento che si dichiara ancora la versione
+    precedente in copertina — è successo con la v0.5 dell'analisi IAM, e l'utente l'ha
+    corretto a mano in Word.
+
+    Restituisce l'elenco di ciò che ha cambiato, per poterlo stampare.
+    """
+    fatti = []
+
+    for t in doc.tables:
+        for r in t.rows:
+            if len(r.cells) < 2:
+                continue
+            etichetta = r.cells[0].text.strip().lower()
+            if etichetta == 'versione' and r.cells[1].text.strip() != versione:
+                riscrivi_cella(r.cells[1], versione)
+                fatti.append('frontespizio: versione -> %s' % versione)
+            elif etichetta == 'documento' and nome_documento:
+                if r.cells[1].text.strip() != nome_documento:
+                    riscrivi_cella(r.cells[1], nome_documento)
+                    fatti.append('frontespizio: documento -> %s' % nome_documento)
+            elif etichetta == 'data consegna' and data:
+                if r.cells[1].text.strip() != data:
+                    riscrivi_cella(r.cells[1], data)
+                    fatti.append('frontespizio: data consegna -> %s' % data)
+        if fatti:
+            break                      # il riquadro di testa è la prima tabella utile
+
+    for sezione_pagina in doc.sections:
+        for parte in (sezione_pagina.header, sezione_pagina.footer):
+            for t in parte.tables:
+                for r in t.rows:
+                    for c in r.cells:
+                        testo = c.text.strip()
+                        m = re.match(r'^(.*?)v\d+\.\d+$', testo)
+                        if m and not testo.endswith('v' + versione):
+                            riscrivi_cella(c, m.group(1) + 'v' + versione)
+                            fatti.append('testata: %r -> v%s' % (testo, versione))
+    return fatti
