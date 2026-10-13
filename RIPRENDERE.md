@@ -92,6 +92,12 @@ produce esattamente il conflitto che si vuole evitare.
 accettata la licenza Xcode (`sudo xcodebuild -license accept`). È lo stesso motivo per cui
 `brew install` fallisce.
 
+⚠️ **Il 13/10/2026 il controllo qui sopra falliva**: `docx`, `openpyxl`, `yaml` e `PIL` mancavano
+su tutti gli interpreti della macchina. Si rimedia con
+`python3 -m pip install --user python-docx openpyxl pillow pyyaml`. Per **leggere** un `.docx` (e
+contarne capitoli, tabelle, figure, commenti e punti aperti) basta invece la libreria standard,
+`zipfile` + `xml.etree`: utile quando serve solo verificare, non generare.
+
 Pillow dev'essere arm64. Se dà `incompatible architecture`:
 
 ```bash
@@ -116,13 +122,13 @@ eccezione di `workbook_nascite_morte.py`.
 
 | Documento | Versione | Commenti di Word | Punti aperti |
 |---|---|---:|---|
-| `ANALISI_Integrazione-ANSC` | **v3.31** | 22 | 67 (OP-01…OP-67) |
-| `DISEGNO_Back-Office_ANSC` | **v0.6** | 6 | 22 (BO-1…BO-22) |
+| `ANALISI_Integrazione-ANSC` | **v3.40** | 17 | 74 (OP-01…OP-74) |
+| `DISEGNO_Back-Office_ANSC` | **v0.10** | 2 | 32 (BO-1…BO-32) |
 | `ANALISI_Front-End-Angular` | **v0.6** | — | 16 (OP-FE-1…OP-FE-16) |
-| `ANALISI_Identita-Profilazione-IAM` | **v0.3** | — | 19 (PI-01…PI-19) |
+| `ANALISI_Identita-Profilazione-IAM` | **v0.4** | — | 23 (PI-01…PI-23) |
 | `ASIS_Autenticazione-Profilazione_SIPO` | **v0.2** | — | 12 (PA-1…PA-12) + 21 rilievi |
 | `PROCEDURA_Formazione-Atto_SIPO-ANSC` | v0.1 | — | — |
-| `SPEC_API_Integrazione-ANSC` | v0.1 | — | PS-1…PS-7 |
+| `SPEC_API_Integrazione-ANSC` | **v0.2** | — | PS-1…PS-7 |
 
 ⚠️ **Due documenti si rimandano a vicenda e vanno letti insieme**: il disegno del
 back-office descrive le pagine (campi, bottoni, tabelle sottese), l'analisi del front-end

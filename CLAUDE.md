@@ -26,7 +26,14 @@ Non ci sono build/lint/test. Il "prodotto" sono documenti `.docx`/`.xlsx`. Lingu
 
 ## Come leggere/scrivere i file (comandi utili)
 
-Sono disponibili `python-docx` (1.2.0), `openpyxl` (3.1.5), **`PyYAML`** e **`Pillow` (PIL, 11.3.0 arm64)**. I
+Sono disponibili `python-docx` (1.2.0), `openpyxl` (3.1.5), **`PyYAML`** e **`Pillow` (PIL, 11.3.0 arm64)** —
+⚠️ **ma controllalo prima di cominciare**: il 13/10/2026 mancavano su tutti e tre gli interpreti della
+macchina (`import docx` → `ModuleNotFoundError`), e nessun generatore parte senza
+(`python3 -m pip install --user python-docx openpyxl pillow pyyaml`). ⚠️ Per **leggere** un `.docx`
+basta comunque la libreria standard — `zipfile` + `xml.etree` su `word/document.xml`, stili italiani
+`Titolo1`/`Titolo2`, figure = occorrenze di `<pic:pic`, commenti = `<w:comment ` in `word/comments.xml`
+(non `<w:comments`, che è la radice) — e tanto basta per contare capitoli, tabelle, figure e punti
+aperti senza installare nulla. I
 `.docx`/`.xlsx` sono binari zip: non modificarli con Edit/sed — usa Python. **`python3` è arm64
 (3.9, `/usr/bin/python3`)**: la wheel di Pillow deve essere arm64. Se `from PIL import Image` desse
 `incompatible architecture (x86_64)`, reinstallare la wheel giusta con
@@ -50,6 +57,13 @@ Note pratiche apprese su questo workspace:
   lo stile di origine — **reimposta sempre `np.style`** dopo l'inserimento, altrimenti righe di
   contenuto finiscono come `Heading` e inquinano il TOC.
 - Il TOC del template è un campo Word: si aggiorna aprendo il file in Word (F9), non da script.
+- ⚠️ **Per sapere se una versione ha perso commenti, confronta autore + testo, NON gli `w:id`**: gli
+  identificativi di `word/comments.xml` vengono **rinumerati** a ogni salvataggio, quindi un diff per id
+  dichiara «persi» anche i commenti che ci sono ancora (ci sono cascato l'08/10). Il conteggio che i
+  generatori stampano («commenti di Word conservati: 22 → 16») è un **conteggio, non un guardiano**:
+  `ha_commenti()` protegge le righe che gli si passano, non il documento intero. Un calo può essere
+  legittimo — i 6 dell'analisi il 07/10 e i 4 del back-office li ha chiusi l'utente in Word — ma va
+  accertato, non dedotto.
 - Un file `~$*.docx` nella cartella indica che il documento è **aperto in Word** → non
   sovrascrivibile finché non viene chiuso.
 - Nel tracciamento `.xlsx`, aggiungendo una riga con `openpyxl` lo stile **non** si eredita: copiare
@@ -122,6 +136,21 @@ Note pratiche apprese su questo workspace:
   (dentro `{ ... }` o dopo `chiave:`): rompono il parsing. Correttore riusabile: `fix_yaml.py`
   (quota descrizioni in linea, scalari a blocco e voci `- { codice: ... }`) — **perso** con lo
   scratchpad, da riscrivere in `strumenti/` se riserve.
+- ⚠️ **`grep` DALLA RADICE DEL REPOSITORY NON VEDE I SORGENTI APPLICATIVI.** Il `grep` di questa
+  sessione è ugrep con `--ignore-files`, che rispetta il `.gitignore` — e il `.gitignore` esclude
+  `/common/`, `/front-end/`, `/back-end/`, `/sipo-root/`, `/cross/`, `/ansc/`, `/anpr-9.2.9/`. Quindi
+  `grep -r "x" .` dà **zero risultati** sul codice e sembra che la cosa non esista. **Passare sempre i
+  percorsi espliciti** (`grep -rn "x" common back-end front-end`) oppure `command grep`. Ci ho perso
+  due giri il 13/10/2026.
+- ⚠️ **I PDF del committente non sono greppabili**: font con sottoinsiemi e stringhe esadecimali (il
+  manuale IAM ha 14 CMap `ToUnicode`). `poppler` **è stato installato il 13/10/2026** (`pdftotext`,
+  `pdftoppm`), ma per non dipenderne c'è **`strumenti/estrai_pdf.py`**: usa `pdftotext -layout` se c'è e
+  altrimenti decodifica i CMap da sé, **con la sola libreria standard**. `--cerca TERMINE` riporta il
+  numero di pagina in entrambe le modalità. ⚠️ Dentro: l'ordine degli oggetti PDF **non è** l'ordine
+  delle pagine (va risolto l'albero `/Root → /Pages → /Kids`), i CMap **non sono compressi** mentre i
+  contenuti sì, e una mappa `codice → carattere` **unica per documento non funziona** (67 codici in
+  conflitto fra i font del manuale IAM: `iv-portal-groups` diventa `iQ-porPMl-groups`) — va tenuta
+  **per font**.
 - I `.docx`/`.xlsx` **binari non sono raggiungibili da `grep`**: per cercare un termine in tutto il
   workspace serve estrarre l'XML dallo zip (attenzione: `sed` fallisce con *illegal byte sequence*
   su questi file — usare Python). Nel codice Java, valutare anche l'accesso via **reflection**
@@ -209,7 +238,9 @@ ANSC · 4. Architettura · 5. Deployment K8s · 6. Porting K8s di SIPO · 7. Dis
 **17. Schede dei servizi ANSC per lo sviluppo (NUOVO v3.6, 23 sezioni di 2° livello)** ·
 18. Decisioni (PC-1/2/3/5/7/8/9/**10**) · 19. Sicurezza · 20. Open Point · 21. Back-office · 22. Roadmap · App. A (DDL: operative, configurazione, **dizionari**) · **App. B (dalla v2.7 = INVENTARIO
 delle 45 operazioni, generato dai contratti OpenAPI: convenzioni, contratti e governo, inventario per
-componente, corrispondenza servizi ANSC, «che cosa è cambiato»)**. Stato doc: **24 cap., 126 tabelle, 20 immagini, 52 OP**.
+componente, corrispondenza servizi ANSC, «che cosa è cambiato»)**. Stato doc **alla v3.13**: 24 cap., 126 tabelle, 20 immagini, 52 OP. ⚠️ **Alla v3.40 corrente:
+24 capitoli, 136 tabelle, 34 figure, 74 OP, 17 commenti di Word** — e i titoli dei capitoli non sono
+più quelli elencati qui sotto: fa fede il documento.
 ⚠️ **Concentratori = 2, unità di deployment nuove = 3** (i due concentratori + il **processo di
 automazione**) + ricevitore notifiche (eventuale, OP-03) + broker (opzionale). La tab. «Componenti»
 (§4.3) elenca i componenti **logici** e ha la colonna «Unità di deployment autonoma» che li distingue
@@ -710,7 +741,7 @@ servizio, non solo nel nostro modello); (c) gli identificativi **non sono densi*
 testo, non aggiunge nulla. **Da riportare** nella pagina «Dizionari ANSC» del disegno e nel capitolo dei
 dizionari dell'analisi, dove oggi il tracciato è citato ma non riportato per intero.
 
-**Prossimi passi (Open Point, 52 voci)** — ⚠️ **prima di aggiungerne uno, contare le righe della tabella
+**Prossimi passi (Open Point, 74 voci nella v3.40)** — ⚠️ **prima di aggiungerne uno, contare le righe della tabella
 OP nel .docx**: la numerazione è arrivata a OP-52 e non coincide più con quanto scritto qui in passato.
 **OP-01 CHIUSO** (firma USC richiesta, per atto, OTP, non
 automatizzabile — l'errore v1.0 nasce dall'aver progettato senza chiuderlo). **OP-14** mappatura
@@ -842,12 +873,14 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   dizionario `CONF_*`/`CFG_*`, 7.3 91 entità di dominio — escluse temp `GTT_*`/`TMP_*`,
   bonifica `BON_*`, log, deprecate). v0.3 aggiunge in coda a 7.2 il segnaposto sulla codifica
   degli stati esteri (DV-32). Versioni precedenti: v0.1, v0.2.
-- **`DAD_Area-Stato-Civile_TRACCIAMENTO-DA-VERIFICARE_v0.7.xlsx`** — checklist dei segnaposto
-  (sezione, cosa manca, sorgente attesa, priorità, stato): **36 voci**, 33 «Da fornire» +
-  3 «Parziale (v0.2)»; 26 Alta / 9 Media / 1 Bassa. Il foglio `Legenda` riporta i conteggi e va
+- **`DAD_Area-Stato-Civile_TRACCIAMENTO-DA-VERIFICARE_v0.8.xlsx`** — checklist dei segnaposto
+  (sezione, cosa manca, sorgente attesa, priorità, stato): **37 voci (DV-01…DV-37)**, 34 «Da
+  fornire» + 3 parziali; **26 Alta / 10 Media / 1 Bassa**. Il foglio `Legenda` riporta i conteggi e va
   tenuto allineato al foglio `DA VERIFICARE` (**ricalcolarli dalle righe, non a mano**).
   Versioni precedenti: v0.1 (30 voci), v0.2 (31), v0.3 (32 — DV-32), v0.4 (34 — DV-33/34),
-  v0.5 (35 — DV-35), v0.6 (DV-35 → Alta).
+  v0.5 (35 — DV-35), v0.6 (DV-35 → Alta), v0.7 (36 voci — DV-36 comuni cessati nelle tendine);
+  **v0.8** aggiunge **DV-37** (chiamata REST con nome di servizio privo della barra iniziale, nel
+  ramo del procuratore di `disableDifficoltaForNotDichiarante`).
 - **`STUDIO_Client-ANPR_v0.4.docx`** — quadro esaustivo del client ANPR (funzioni, payload,
   utilizzo reale, anomalie A1–A6). v0.2 aggiunge il capitolo sul proxy REST; v0.3 quello sui
   **canali di ingresso** dei dati ANPR; v0.4 gli **esempi di invocazione** tratti dal codice.
@@ -857,7 +890,15 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
 - **`MAPPA_Decessi_Schermate-Servizi-Tabelle_v0.2.docx`** — reverse-engineering dell'area Decessi:
   schermata → servizio FE → endpoint BE → tabelle, con **vista invertita** tabella → schermate/servizi
   (v0.2). Ogni riga ha riferimenti `file:riga`. Precedente: v0.1 (senza vista invertita).
-- **`ANALISI_Integrazione-ANSC_v3.13.docx`** — analisi tecnico-funzionale del **nuovo** componente per
+- **`MAPPA_Nascite_`**, **`MAPPA_Matrimoni_`** e **`MAPPA_Unioni-Civili_Schermate-Servizi-Tabelle_v0.1.docx`**
+  — le altre tre aree, con lo **stesso impianto** della MAPPA Decessi (scopo e legenda, architettura
+  di massima, `Repository → Entità → Tabella → Schema`, endpoint di back-end per controller,
+  schermata → servizio, vista invertita). Ordine di grandezza: **nascite** 32 tabelle e ~90 endpoint
+  su 20 controller di `nascita-be` (`GestioneAttoNascitaContoller` da solo ne ha 37) · **matrimoni**
+  27 tabelle e ~175 endpoint su 18 controller di `matrim-be` · **unioni civili** 14 tabelle e 24
+  endpoint su 5 controller di `unioni-be`. ⚠️ Non erano citate in questo file fino al 13/10/2026:
+  **prima di rifare la ricognizione di un'area, controlla se la MAPPA esiste già**.
+- **`ANALISI_Integrazione-ANSC_v3.40.docx`** (12/10/2026, **corrente**) — analisi tecnico-funzionale del **nuovo** componente per
   la scrittura SIPO→ANSC (progettuale, non reverse-engineering). **È la base di lavoro corrente**:
   si modifica **il file reale** via python-docx, NON rigenerandolo da script (si perderebbero le edit
   manuali dell'utente). Impianto, struttura e numeri sono descritti sopra, in «Stato attuale del lavoro».
@@ -906,9 +947,16 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   v3.11 (allegati richiesti dall'UC — `ANSC_CFG_ALLEGATO`, importati dal mapping;
   schermata «Campi e allegati per UC»; OP-50/51),
   v3.12 (rigenerato l'ERD di §8.1, che era fermo alla v3.10 e non conteneva `ANSC_CFG_ALLEGATO`),
-  **v3.13 (corrente: revisione della parte di configurazione — il cap. 9 si apre con la definizione
+  v3.13 (revisione della parte di configurazione — il cap. 9 si apre con la definizione
   del **modello evento** e si chiude con le fonti, la catena completa Modello→payload e la procedura
-  di revisione della mappatura; corrette in §8.4 le formulazioni «per operazione»; OP-52)**.
+  di revisione della mappatura; corrette in §8.4 le formulazioni «per operazione»; OP-52).
+  ⚠️ **Dalla v3.14 in avanti lo storico non si ripete qui**: le versioni v3.14→v3.19 hanno un blocco
+  dedicato sopra, e **v3.20→v3.40 sono raccontate in «Stato attuale del lavoro»**, che è l'unico
+  posto da aggiornare quando esce una versione nuova. In sintesi: v3.22–3.29 fasi, logiche di scelta
+  e atti a testo libero · v3.30–3.34 dizionari, `ALLEGATO` in `MATR_USR`, `ANSC_CFG_DOMINIO_SIPO` ·
+  v3.35–3.37 `SOGGETTI_USECASE` e processo degli allegati adottato da Side · v3.38–3.39 numerazione
+  comunale e microservizio `num-ansc-sipo` · **v3.40 (corrente)** `ANSC_SOGGETTO_IDENTIFICATIVI` e
+  atomicità dei codici ANPR.
 - **`MAPPATURA_Campi_ANSC-SIPO_v0.2.xlsx`** — l'inventario di **tutto** il dominio: 63.531 righe di
   mappatura, 374 UC, 4.620 percorsi del modello evento, più i fogli Allegati (1.569), Formule (2.200),
   Non risolti (i 44 di OP-52) e **Dizionario SIPO** (3.804 campi di maschera → colonna, di cui 3.724 non
@@ -1181,22 +1229,100 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   ridotto a tre righe aggregate; ora porta l'inventario delle **diciassette pagine** del back-office con i
   loro componenti di libreria. Corretti i conteggi («venticinque schermate», «cinque funzioni da
   costruire») e l'elenco dei micro-frontend, che non comprendeva mfOperation. 16 punti aperti.
-- **`DISEGNO_Back-Office_ANSC_v0.6.docx`** (04/10/2026, **corrente**) — il disegno del back-office pagina
-  per pagina: **16 pagine**, ciascuna con wireframe, scopo, **tabelle sottese** e **campi, colonne e
-  azioni**. Porta **6 commenti di Word** e **22 punti aperti (BO-1…BO-22)**. Capitoli propri: la cornice
-  (testata e piè di pagina), il **registro delle pagine e del menu** (4 tabelle `ANSC_CFG_APPLICAZIONE`/
+- **`DISEGNO_Back-Office_ANSC_v0.10.docx`** (12/10/2026, **corrente**) — il disegno del back-office pagina
+  per pagina: **20 pagine** + postazioni, ciascuna con wireframe, scopo, **tabelle sottese** e **campi,
+  colonne e azioni**. **12 capitoli, 61 tabelle, 30 figure, 2 commenti di Word** e **32 punti aperti
+  (BO-1…BO-32)**; copertura di **21 tabelle** del modello + `ANAG_USR.SOGGETTO` in lettura. Capitoli
+  propri: la cornice
+  (testata e piè di pagina), **«Il codice di sessione verso ANSC»** (dalla v0.7), il **registro delle
+  pagine e del menu** (4 tabelle `ANSC_CFG_APPLICAZIONE`/
   `_PAGINA`/`_PAGINA_ABILITAZ`/`_TEMA`), la copertura del modello dati, le indicazioni per Kubernetes.
-  Wireframe: `strumenti/wireframe_bo.py` (primitive) + `pagine_bo.py` e `pagine_bo_v2.py` (le pagine).
+  ⚠️ **I commenti di Word sono 2, non 6**: quattro sono stati chiusi lavorando sul file.
+  Wireframe: `strumenti/wireframe_bo.py` (primitive) + `pagine_bo.py`, `pagine_bo_v2.py`,
+  **`pagine_bo_v3.py`** (allegati, soggetti e caricamento da file, v0.8), **`pagine_bo_v4.py`**
+  (numerazione, v0.9), **`pagine_bo_v5.py`** (identificativi dei soggetti, v0.10); ogni versione ha il
+  suo `strumenti/bo_v0_N.py`. ⚠️ **`pagine_bo.py` non rigenera più `bo_allegati.png` né
+  `bo_numerazione.png`**: le figure di quelle pagine vengono dai moduli nuovi. Il merito delle versioni
+  v0.8→v0.10 (processo degli allegati di Side, le due pagine della numerazione, la pagina degli
+  identificativi dei soggetti) è in «Stato attuale del lavoro».
   ⚠️ **Figure e piè di pagina sono una coppia**: la v0.6 ha dovuto risostituire **tutte e 18 le figure**,
   rimaste al piè di pagina a tre colonne dopo che la primitiva era stata riscritta — rigenerare i PNG non
   aggiorna il `.docx`, serve riscriverne il blob. ⚠️ Si legge insieme all'analisi del front-end: qui le
   pagine, lì i componenti ([R2] ↔ [F8]).
-- **`ANALISI_Identita-Profilazione-IAM_v0.3.docx`** (02/10/2026, **corrente**) — il documento unico su
+- **`ANALISI_Identita-Profilazione-IAM_v0.5.docx`** (13/10/2026, **corrente**) — il documento unico su
   identità, profilazione e IAM, che accorpa l'AS-IS e le due analisi del committente. Il TO-BE è una
   **scala di soluzioni S0…S4** dalla più conservativa alla più coerente, con dentro S3 la variante del
   **BFF**. ⚠️ **S0 non è un'alternativa: è il pavimento** — nessuna delle altre chiude i servizi che oggi
-  rispondono senza gettone. 19 punti aperti (PI-01…PI-19). Script `strumenti/genera_identita_iam.py`,
-  `v0_2_iam_soluzioni.py`, `v0_3_iam_bff.py`; figure `strumenti/diagrammi_iam.py img`.
+  rispondono senza gettone. **6 capitoli, 25 tabelle, 7 figure, 23 punti aperti (PI-01…PI-23)**. Script
+  `strumenti/genera_identita_iam.py`,
+  `v0_2_iam_soluzioni.py`, `v0_3_iam_bff.py`, **`v0_4_iam_scelte.py`**; figure
+  `strumenti/diagrammi_iam.py img`.
+  **v0.4** = verifica di congruenza con la cartella **`Sorgenti Documentali/Interazione IAM/`**
+  (manuale di integrazione applicativa IAM, `sso-provider-communication.pdf`, manuale operativo
+  RDE_COEC, `Analisi_Incrociata_IAM_Profilazione.txt`, `Processo_Autenticazione_sipo-auth.txt`) +
+  nuovo **cap. 6 «Scelte effettuate»** (10 sottocapitoli), che recepisce in termini operativi il
+  processo dettato dal committente: **`sipo-auth` è il solo punto di autenticazione di SIPO** — parla
+  con IAM in OIDC, emette il **token SIPO**, espone il **JWKS** con cui i back-end ne verificano la
+  firma e fa da **BFF per la shell Angular**; nuovo **`sipo-profili`** (estensione di AnagrafeBE,
+  raggiungibile solo da sipo-auth) per ruoli/aree/funzionalità a partire dal codice fiscale; i **35
+  front-end Java si configurano, non si riscrivono** (LOGIN_USER in sessione resta, il token accanto e
+  **mai nel browser**); il **portale resta reverse proxy ma non inietta più l'identità** (solo
+  `x-real-ip` e `x-client-sn-sipo`). ⚠️ **`profiloBe` nel token esiste per non toccare le
+  `@PreAuthorize`**, che ragionano su **un ruolo solo**: nel solo StatoCivileBE sono **393**; la lista
+  completa dei ruoli viaggia accanto. ⚠️ **Il vocabolario dell'autorizzazione non coincide**: i
+  back-end decidono su un ruolo, la libreria Angular su `user.abilitazioni`, e **il token SIPO non
+  porta le abilitazioni** — senza, il menu del back-office ANSC (che poggia su
+  `ANSC_CFG_PAGINA_ABILITAZ`) non ha su che cosa filtrare. **Due sequenze di adozione**: A = la
+  libreria diventa client OIDC (35 rilasci, ~55-75 gg/uomo) · B = sipo-auth fa da proxy davanti ai
+  front-end (nessuna modifica ai FE, ~35-50 gg/uomo) — ⚠️ **la B senza una NetworkPolicy che impedisca
+  di raggiungere i front-end scavalcando sipo-auth non è sicura e non va adottata**.
+  ⚠️ **Verifiche fatte sulle fonti, non riprese dalle analisi del fornitore** (sono quelle che hanno
+  cambiato il testo): «management» **non è un servizio di IAM** — le 57 occorrenze nel manuale sono il
+  titolo del documento stesso (Identity and Access **Management**) → **PI-05 chiuso**; `iv_pg_*` /
+  `iv_dg_*` / `iv_ass_*` **non esistono** (0 occorrenze: persona giuridica e delega stanno solo negli
+  header `IV-PG-*` e `IV-DG-*`, «abbr. assistito» non compare mai) — il committente ha chiesto di
+  descrivere comunque la fase 3 in forma affermativa, quindi il rilievo **resta nei punti aperti, non
+  nel corpo**; in OIDC **non esiste alcun claim di gruppo o ruolo** (`iv-portal-groups` è solo header);
+  `getRuoloBe()` nei front-end = **4.781** occorrenze; AnprClient = **59 dichiarazioni nei pom su 41
+  moduli di back-end** (non «trenta»); `msAuth` esiste nella libreria Angular
+  (`AuthenticationIAMGuard`) **non nel manuale IAM**, e nella libreria non è richiamato da nessuno.
+  ⚠️ **v0.5 (`strumenti/v0_5_iam_ruoli.py`) — IL CAPITOLO SUI RUOLI. Verificato sul manuale [F4]
+  (Ed. 16 del 23/06/2025): IAM porta GRUPPI, non ruoli applicativi.** In modalità header la Tabella 2
+  ha **`iv-portal-groups`** = «elenco dei gruppi LDAP», usabili «**macroscopicamente**» per dire se
+  l'utente è abilitato a una funzione o a un'applicazione; in **OIDC gli scope pubblicati sono due e
+  non contengono i gruppi** (`profile` = iv_user/iv_nome/iv_cognome/iv_codfis/iv_email ·
+  `tipo_utente` = iv_tipoutente). ⚠️ **PI-06 CHIUSO in positivo**: «il codice fiscale dell'utente
+  viene **garantito** nella variabile `iv-codfis`» — decisione dell'utente: **si prende dall'header**.
+  ⚠️ **In OIDC il `sub` di un dipendente NON è il CF**: è `nome.cognome`; il CF è il claim
+  `iv_codfis`. ⚠️ **`sysgroup` non è in Tabella 2** (SIPO dipende da un header non documentato → in
+  OIDC diventa `iv_tipoutente`). ⚠️ Esiste **`ws.comune.roma.it`** per back-end e SPA, con le stesse
+  header-variables purché il client inoltri i cookie (§3.1.1) — alternativa a OIDC per l'Angular.
+  ⚠️ **Formato di `iv-portal-groups`**: gruppi separati da **virgola**, componenti del DN da
+  **backslash-virgola** — uno `split(",")` ingenuo dà **8 pezzi invece di 2**: serve `(?<!\\),`.
+  **ARGOMENTO CHE DECIDE**: i gruppi potrebbero sostituire al massimo l'**appartenenza**, mai la
+  **capacità** — nessun gruppo LDAP saprà mai che un ruolo può usare una funzionalità di un'area,
+  quindi il livello nuovo serve **in ogni scenario**.
+  **Meccanismo proposto**: nuova **`CONF_RUOLO_FUNZIONALITA`** (ruolo × area × funzionalità,
+  `FLG_PREDEFINITA`) in **ANAG_USR** — ⚠️ con la convenzione del **vecchio** mondo, non [R5]: la
+  nomenclatura la detta lo schema che ospita; `R_UTENTI_RUOLI` diventa una **proiezione** e guadagna
+  **`COD_ORIGINE`** (DERIVATA/AGGIUNTA/RIMOSSA, stessa primitiva di `ANSC_CFG_CAMPO`) +
+  **`FLG_PRINCIPALE`**. ⚠️ **Il contratto a runtime NON cambia**: i 35 FE e le 3.360 `@PreAuthorize`
+  restano intatti, il ruolo diventa unità di **amministrazione** e la riga per utente resta unità di
+  **esecuzione**. Matrice iniziale **ricavata dai dati** con una query di scoperta e soglie
+  **10 %/90 %** (deciso dall'utente; la banda centrale la decide il funzionario) + **report di
+  differenza** prima di cambiare regime. ⚠️ **`getRuoli().get(0)` ricorre 4.829 volte** e gli ID dei
+  ruoli esistenti vanno da 1 a 8: i ruoli nuovi prendono **ID alto**, e un `ORDER BY FLG_PRINCIPALE`
+  rende deterministici quei 4.829 punti **senza toccarne nessuno**. `isMultiProfilo` è dichiarato e
+  **mai usato**. ⚠️ **PI-27 APERTO di proposito**: una matrice di capacità o due (entrambe riportate
+  per esteso, su richiesta dell'utente). Nuovi **PI-24…PI-28**; la duplicazione del jar è già RI-28.
+- **`Documenti finali/verifica-header-iam/`** — la pagina di diagnosi da innestare in un FE Thymeleaf
+  per sapere che cosa IAM manda **davvero** (il manuale la suggerisce in §3.2):
+  `VerificaHeaderIamController.java` + `verificaHeaderIam.html` + `README.md`. Spenta per difetto
+  (`@ConditionalOnProperty`: senza la property il bean non esiste), valori **mascherati** salvo
+  `?completo=1`, `Authorization`/`Cookie` mai stampati, ogni apertura a WARN. Confronta header e
+  sessione e mostra i ruoli **nell'ordine vero**, segnalando il primo. ⚠️ **Non compilata**: su questa
+  macchina non c'è un JRE (`java_home` non trova nulla); verificata a parte la sola logica dello
+  split dei gruppi.
 - **`ASIS_Autenticazione-Profilazione_SIPO_v0.2.docx`** — la ricognizione dello stato di fatto:
   ⚠️ **due sicurezze che convivono**, quella delle **persone** debole (SIPO non autentica, si fida di
   header di portale, permesso per utente e non per ruolo) e quella delle **macchine** matura
@@ -1215,10 +1341,15 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   la prassi · ritardare la firma a fine giornata · distinguere per tipo di errore. Chiude con le
   **quattro funzioni oggi mancanti** (maschere di caricamento documenti, campi solo-ANSC, consegna
   del codice di sessione con tempo residuo, stato ANSC nelle maschere di ricerca e dettaglio).
-- **`SPEC_API_Integrazione-ANSC_v0.1.docx`** + **`ansc-v1.yaml`**, **`ansc-dizionari-v1.yaml`**,
-  **`ansc-automazione-v1.yaml`**, **`genera-spec-api.py`** — specifica delle API di tutti i pod secondo
-  `Naming_convention_X_API_v1.00.docx`. **I `.yaml` sono la fonte autoritativa**; il `.docx` (10 cap., ~980
-  paragrafi, 211 tabelle, 45 operazioni, 29 codici di errore) è **generato** e non va editato a mano.
+- **`SPEC_API_Integrazione-ANSC_v0.2.docx`** + **`ansc-v1.yaml`**, **`ansc-dizionari-v1.yaml`**,
+  **`ansc-automazione-v1.yaml`**, **`ansc-numerazione-v1.yaml`**, **`genera-spec-api.py`** — specifica
+  delle API di tutti i pod secondo
+  `Naming_convention_X_API_v1.00.docx`. **I `.yaml` sono la fonte autoritativa**; il `.docx` (10 cap.,
+  262 tabelle) è **generato** e non va editato a mano. ⚠️ **Dalla v0.2 le operazioni sono 57 su quattro
+  contratti** (`ansc-v1` 34 · `ansc-dizionari-v1` **8** · `ansc-automazione-v1` 5 ·
+  **`ansc-numerazione-v1` 10**, il contratto di `num-ansc-sipo` della v3.39): le «45 operazioni»
+  citate altrove in questo file sono il conto della v0.1, che fra l'altro contava 6 operazioni dei
+  dizionari quando il contratto ne aveva già 8.
   Copre le schede di operazione complete, i modelli di dati per pod, l'elenco unico dei codici di errore, la
   lista di controllo di conformità, gli interventi di allineamento rispetto alla v2.6 e i punti aperti
   PS-1…PS-7. Cfr. il blocco «SPECIFICA DELLE API DI TUTTI I POD» in «Stato attuale del lavoro».
