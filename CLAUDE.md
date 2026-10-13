@@ -1249,7 +1249,7 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   rimaste al piè di pagina a tre colonne dopo che la primitiva era stata riscritta — rigenerare i PNG non
   aggiorna il `.docx`, serve riscriverne il blob. ⚠️ Si legge insieme all'analisi del front-end: qui le
   pagine, lì i componenti ([R2] ↔ [F8]).
-- **`ANALISI_Identita-Profilazione-IAM_v0.5.docx`** (13/10/2026, **corrente**) — il documento unico su
+- **`ANALISI_Identita-Profilazione-IAM_v0.6.docx`** (13/10/2026, **corrente**) — il documento unico su
   identità, profilazione e IAM, che accorpa l'AS-IS e le due analisi del committente. Il TO-BE è una
   **scala di soluzioni S0…S4** dalla più conservativa alla più coerente, con dentro S3 la variante del
   **BFF**. ⚠️ **S0 non è un'alternativa: è il pavimento** — nessuna delle altre chiude i servizi che oggi
@@ -1315,6 +1315,46 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   rende deterministici quei 4.829 punti **senza toccarne nessuno**. `isMultiProfilo` è dichiarato e
   **mai usato**. ⚠️ **PI-27 APERTO di proposito**: una matrice di capacità o due (entrambe riportate
   per esteso, su richiesta dell'utente). Nuovi **PI-24…PI-28**; la duplicazione del jar è già RI-28.
+  ⚠️ **v0.6 (`strumenti/v0_6_iam_armonia.py`) — IL CAPITOLO 6 RIVISTO SU TRE PUNTI** chiesti
+  dall'utente: (a) l'impianto deve valere **per entrambe le generazioni di front-end** (35 Thymeleaf
+  da ritoccare + Angular nuovo), con confronto voce per voce e **quattro esclusioni motivate** — due
+  emittenti di token, gettone nel browser, OIDC FE per FE, modalità header sulle chiamate che fa il
+  **browser**; (b) il **token nelle intestazioni tratta per tratta**; (c) **l'armonizzazione col BFF**.
+  ⚠️ **IL FATTO CHE RENDE L'INTERVENTO PROPORZIONATO**: `Authorization: Bearer` è **già**
+  l'intestazione di oggi — cambiano **chi firma** (HMAC comune → RS256 di sipo-auth) e **che cosa c'è
+  dentro** (utenza tecnica → persona), non il trasporto: è per questo che le 4.781 chiamate non si
+  toccano. Il token SIPO verso i FE in sequenza B viaggia in **`X-Sipo-Token`**, ⚠️ **mai in una
+  `iv-*`** (quelle sono dell'Access Manager e il perimetro le riscrive).
+  **Cinque regole di igiene**: il perimetro **cancella** `iv-*` e `X-Sipo-Token` in arrivo dal client ·
+  i FE accettano traffico solo dal perimetro · niente token in query string (finisce nei log) · niente
+  cookie leggibile da script · nome di intestazione riservato.
+  ⚠️ **VINCOLO DI DIMENSIONE, e revisione di una mia raccomandazione**: il manuale chiede di ridurre
+  le variabili di intestazione «a quelle strettamente indispensabili» **per limitarne la dimensione**;
+  un token è 1-2 KB, con `abilitazioni[]` inline cresce con le righe di `R_UTENTI_RUOLI` dell'utente, e
+  oltre gli **8 KB** tipici il proxy rompe **tutte** le chiamate di quella persona. Quindi **dove stanno
+  le abilitazioni si decide su una MISURA, non su un principio** (misurare l'utente con più righe);
+  se sono molte, nel token restano ruoli+profilo e le abilitazioni si leggono una volta da `/identita`.
+  ⚠️ **L'IDEA CHE ARMONIZZA I DUE MONDI**: **il mondo Thymeleaf è già un BFF per costruzione** — la
+  pagina la compone il server, il gettone sta nella sessione, il browser ha solo `JSESSIONID`.
+  Armonizzare non è rendere il vecchio simile al nuovo: è **dare al nuovo la proprietà che il vecchio
+  ha già**, enunciata come vincolo verificabile — *il gettone non attraversa mai il browser*. Due
+  conseguenze: i 35 FE **non hanno bisogno di un BFF** (gli manca solo che il token nella sessione ci
+  sia), e **la sequenza B è il BFF applicato al vecchio** (sipo-auth davanti ai FE fa per loro il
+  mestiere del BFF) — le due sequenze non sono una per mondo.
+  **Otto buone pratiche del BFF**, e la terza è quella che si dimentica: ⚠️ **il BFF INTRODUCE il
+  problema CSRF** (con l'autorizzazione in un cookie il browser la allega anche a richieste partite da
+  un altro sito; col token in intestazione non esisteva) → **PI-29**. Più: uno per **shell** non per
+  micro-frontend · cookie `Secure`/`HttpOnly`/`SameSite=Lax` · inoltro dei **soli percorsi dichiarati**
+  (non un proxy generico) · sessione fuori dalla memoria · manifesto dei remote dalla stessa origine ·
+  sonda di prontezza indipendente da IAM · interfaccia commutabile header→OIDC. ⚠️ **Il BFF non è il
+  posto della logica applicativa**: appena traduce payload o aggrega è un secondo back-end non
+  dichiarato. Nuovo **PI-30** = se i BE di SIPO possano stare sul dominio che l'ente dedica a back-end
+  e SPA (stesse variabili di intestazione, purché il client inoltri i cookie): se sì, **il mondo nuovo
+  può partire in modalità header** senza attendere OIDC. 30 punti aperti.
+  ⚠️ Rimosse **due intestazioni vuote** che producevano due righe bianche nell'indice (l'indice si
+  genera dagli stili, non dal testo). Nuova primitiva **`docx_comune.frontespizio()`**: la versione non
+  sta solo nella Storia — il template la ripete nel riquadro di testa e nella testata di pagina, dove
+  era rimasta indietro di due versioni.
 - **`Documenti finali/verifica-header-iam/`** — la pagina di diagnosi da innestare in un FE Thymeleaf
   per sapere che cosa IAM manda **davvero** (il manuale la suggerisce in §3.2):
   `VerificaHeaderIamController.java` + `verificaHeaderIam.html` + `README.md`. Spenta per difetto
