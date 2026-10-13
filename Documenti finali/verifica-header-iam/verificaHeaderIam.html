@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Verifica delle variabili di header IAM</title>
+    <style>
+        body { font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+               margin: 24px; color: #1b1b1b; max-width: 1100px; }
+        h1 { font-size: 20px; margin: 0 0 4px; }
+        h2 { font-size: 15px; margin: 28px 0 8px; padding-bottom: 4px;
+             border-bottom: 1px solid #d8d8d8; }
+        p.nota { color: #555; font-size: 13px; margin: 2px 0 16px; }
+        table { border-collapse: collapse; width: 100%; font-size: 13px; }
+        th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid #ececec;
+                 vertical-align: top; }
+        th { background: #f5f5f5; font-weight: 600; width: 230px; }
+        td.v { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+               word-break: break-all; }
+        .assente { color: #a4001c; font-weight: 600; }
+        .ok { color: #1a6b2f; font-weight: 600; }
+        .avviso { background: #fff6e0; border-left: 4px solid #e0a300;
+                  padding: 10px 14px; font-size: 13px; margin: 0 0 20px; }
+        .pulsanti { margin: 16px 0 0; font-size: 13px; }
+        a { color: #0b4f9e; }
+    </style>
+</head>
+<body>
+
+<h1>Verifica delle variabili di header IAM</h1>
+<p class="nota">Pagina di diagnosi. Risponde a tre domande: il codice fiscale arriva
+    nell'header anche per i dipendenti, i gruppi LDAP arrivano a SIPO, e i dati
+    dell'header coincidono con quelli che SIPO legge dal database.</p>
+
+<div class="avviso">
+    <strong>Da spegnere dopo la verifica.</strong> La pagina stampa dati personali e
+    non deve restare attiva in produzione: si disattiva togliendo
+    <code>verifica.header.iam.abilitata=true</code>. Ogni apertura è registrata nel log
+    applicativo. I valori sono mascherati per difetto.
+</div>
+
+<h2>1. Le variabili attese</h2>
+<p class="nota">La disponibilità di ciascuna variabile dipende dalla policy che IAM ha
+    configurato per questa applicazione: «ASSENTE» non significa che IAM non la sappia,
+    significa che a SIPO non la manda.</p>
+<table>
+    <tr th:each="e : ${attese}">
+        <th th:text="${e.key}">iv-user</th>
+        <td class="v">
+            <span th:text="${e.value}"
+                  th:classappend="${e.value == 'ASSENTE' or e.value == 'PRESENTE MA VUOTO'} ? 'assente' : 'ok'">—</span>
+        </td>
+    </tr>
+</table>
+
+<h2>2. I gruppi LDAP</h2>
+<p class="nota">Da <code>iv-portal-groups</code>. Il nome del gruppo è il
+    <code>cn=</code>; fra parentesi quadre c'è il path LDAP completo da cui è stato
+    ricavato.</p>
+<table>
+    <tr th:if="${gruppi.isEmpty()}">
+        <th>esito</th>
+        <td class="v assente">nessun gruppo: la variabile non arriva oppure è vuota</td>
+    </tr>
+    <tr th:each="g, s : ${gruppi}">
+        <th th:text="'gruppo ' + ${s.count}">gruppo 1</th>
+        <td class="v" th:text="${g}">—</td>
+    </tr>
+    <tr th:if="${grezzoGruppi != null}">
+        <th>valore grezzo</th>
+        <td class="v" th:text="${grezzoGruppi}">—</td>
+    </tr>
+</table>
+
+<h2>3. Header a confronto con la sessione</h2>
+<p class="nota">La colonna «sessione» è ciò che <code>ProfilazioneUtente</code> ha messo
+    in <code>LOGIN_USER</code>: per i dipendenti viene da <code>UTENTI</code>, non
+    dall'header. «DIVERGONO» non è necessariamente un errore, ma va capito prima di
+    scegliere quale delle due fonti fa fede.</p>
+<table>
+    <tr th:each="e : ${confronto}">
+        <th th:text="${e.key}">codice fiscale</th>
+        <td class="v" th:text="${e.value}">—</td>
+    </tr>
+</table>
+
+<h2>4. Che cosa SIPO ha in sessione</h2>
+<table>
+    <tr th:each="e : ${sessione}">
+        <th th:text="${e.key}">username</th>
+        <td class="v" th:text="${e.value}">—</td>
+    </tr>
+</table>
+
+<h2>5. Tutti gli header della richiesta</h2>
+<table>
+    <tr th:each="e : ${tutti}">
+        <th th:text="${e.key}">nome</th>
+        <td class="v" th:text="${e.value}">valore</td>
+    </tr>
+</table>
+
+<p class="pulsanti">
+    <a th:href="@{/verificaHeaderIam.txt}">la stessa cosa in testo semplice</a>
+    &nbsp;·&nbsp;
+    <span th:if="${!inChiaro}">
+        <a th:href="@{/verificaHeaderIam(completo=1)}">mostra i valori in chiaro</a>
+        (solo su ambienti di collaudo)
+    </span>
+    <span th:if="${inChiaro}">
+        <a th:href="@{/verificaHeaderIam}">torna ai valori mascherati</a>
+    </span>
+</p>
+
+</body>
+</html>

@@ -165,10 +165,14 @@ def tabella(doc, prima, righe, modello, larghezze=None):
         for j, val in enumerate(riga):
             p = t.cell(i, j).paragraphs[0]
             p.alignment = GIUST
-            r = p.add_run(str(val))
-            r.font.size = Pt(9)
-            if i == 0:
-                r.bold = True
+            # ⚠️ Anche nelle celle i ** vanno interpretati: scriverli come testo
+            # lasciava gli asterischi in pagina (succedeva fino al 13/10/2026, e si
+            # vedeva solo riaprendo il documento).
+            for txt, bold in (segmenta('', str(val)) if '**' in str(val)
+                              else [(str(val), False)]):
+                r = p.add_run(txt)
+                r.font.size = Pt(9)
+                r.bold = bold or i == 0
     if larghezze:
         for j, w in enumerate(larghezze):
             for riga in t.rows:
