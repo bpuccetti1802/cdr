@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Visibilita">
+
+    <select id="GET_ALL_VISIBILITA_FILTERED">
+        SELECT DISTINCT e
+        FROM VisibilitaEntity e
+        LEFT JOIN FETCH e.dipendenza
+        WHERE
+        <if test="special == null">
+            <if test="id != null">
+                e.id = :id AND
+            </if>
+            <if test="idDipendenza != null">
+                e.idDipendenza = :idDipendenza AND
+            </if>
+            <if test="nmTabella != null">
+                <if test="nmTabellaSearchType.equals('LIKE')">
+                    lower(e.nmTabella) LIKE concat(lower(:nmTabella), '%') AND
+                </if>
+                <if test="nmTabellaSearchType.equals('EQUALS')">
+                    lower(e.nmTabella) = lower(:nmTabella) AND
+                </if>
+            </if>
+            <if test="nmColonna != null">
+                <if test="nmColonnaSearchType.equals('LIKE')">
+                    lower(e.nmColonna) LIKE concat(lower(:nmColonna), '%') AND
+                </if>
+                <if test="nmColonnaSearchType.equals('EQUALS')">
+                    lower(e.nmColonna) = lower(:nmColonna) AND
+                </if>
+            </if>
+            <if test="dsValore != null">
+                <if test="dsValoreSearchType.equals('LIKE')">
+                    lower(e.dsValore) LIKE concat(lower(:dsValore), '%') AND
+                </if>
+                <if test="dsValoreSearchType.equals('EQUALS')">
+                    lower(e.dsValore) = lower(:dsValore) AND
+                </if>
+            </if>
+            <if test="dsVisibilita != null">
+                <if test="dsVisibilitaSearchType.equals('LIKE')">
+                    lower(e.dsVisibilita) LIKE concat(lower(:dsVisibilita), '%') AND
+                </if>
+                <if test="dsVisibilitaSearchType.equals('EQUALS')">
+                    lower(e.dsVisibilita) = lower(:dsVisibilita) AND
+                </if>
+            </if>
+            <if test="dsBreve != null">
+                <if test="dsBreveSearchType.equals('LIKE')">
+                    lower(e.dsBreve) LIKE concat(lower(:dsBreve), '%') AND
+                </if>
+                <if test="dsBreveSearchType.equals('EQUALS')">
+                    lower(e.dsBreve) = lower(:dsBreve) AND
+                </if>
+            </if>
+        </if>
+        <if test="special != null">
+            (
+                lower(e.nmTabella) LIKE concat('%', lower(:special), '%') OR
+                lower(e.nmColonna) LIKE concat('%', lower(:special), '%') OR
+                lower(e.dsValore) LIKE concat('%', lower(:special), '%') OR
+                lower(e.dsVisibilita) LIKE concat('%', lower(:special), '%') OR
+                lower(e.dsBreve) LIKE concat('%', lower(:special), '%')
+            ) AND
+        </if>
+        1=1
+        ORDER BY
+        <if test="sort != null">
+            <if test="nmTabellaSort != null">
+                e.nmTabella ${nmTabellaSort},
+            </if>
+            <if test="nmColonnaSort != null">
+                e.nmColonna ${nmColonnaSort},
+            </if>
+            <if test="dsValoreSort != null">
+                e.dsValore ${dsValoreSort},
+            </if>
+            <if test="dsVisibilitaSort != null">
+                e.dsVisibilita ${dsVisibilitaSort},
+            </if>
+            <if test="dsBreveSort != null">
+                e.dsBreve ${dsBreveSort},
+            </if>
+            <if test="idDipendenzaSort != null">
+                e.idDipendenza ${idDipendenzaSort},
+            </if>
+        </if>
+        e.id ASC
+    </select>
+
+    <select id="GET_ALL_VISIBILITA_FILTERED_COUNT">
+        SELECT count(*)
+        FROM VisibilitaEntity e
+        WHERE
+        <if test="special == null">
+            <if test="id != null">
+                e.id = :id AND
+            </if>
+            <if test="idDipendenza != null">
+                e.idDipendenza = :idDipendenza AND
+            </if>
+            <if test="nmTabella != null">
+                <if test="nmTabellaSearchType.equals('LIKE')">
+                    lower(e.nmTabella) LIKE concat(lower(:nmTabella), '%') AND
+                </if>
+                <if test="nmTabellaSearchType.equals('EQUALS')">
+                    lower(e.nmTabella) = lower(:nmTabella) AND
+                </if>
+            </if>
+            <if test="nmColonna != null">
+                <if test="nmColonnaSearchType.equals('LIKE')">
+                    lower(e.nmColonna) LIKE concat(lower(:nmColonna), '%') AND
+                </if>
+                <if test="nmColonnaSearchType.equals('EQUALS')">
+                    lower(e.nmColonna) = lower(:nmColonna) AND
+                </if>
+            </if>
+            <if test="dsValore != null">
+                <if test="dsValoreSearchType.equals('LIKE')">
+                    lower(e.dsValore) LIKE concat(lower(:dsValore), '%') AND
+                </if>
+                <if test="dsValoreSearchType.equals('EQUALS')">
+                    lower(e.dsValore) = lower(:dsValore) AND
+                </if>
+            </if>
+            <if test="dsVisibilita != null">
+                <if test="dsVisibilitaSearchType.equals('LIKE')">
+                    lower(e.dsVisibilita) LIKE concat(lower(:dsVisibilita), '%') AND
+                </if>
+                <if test="dsVisibilitaSearchType.equals('EQUALS')">
+                    lower(e.dsVisibilita) = lower(:dsVisibilita) AND
+                </if>
+            </if>
+            <if test="dsBreve != null">
+                <if test="dsBreveSearchType.equals('LIKE')">
+                    lower(e.dsBreve) LIKE concat(lower(:dsBreve), '%') AND
+                </if>
+                <if test="dsBreveSearchType.equals('EQUALS')">
+                    lower(e.dsBreve) = lower(:dsBreve) AND
+                </if>
+            </if>
+        </if>
+        <if test="special != null">
+            (
+                lower(e.nmTabella) LIKE concat('%', lower(:special), '%') OR
+                lower(e.nmColonna) LIKE concat('%', lower(:special), '%') OR
+                lower(e.dsValore) LIKE concat('%', lower(:special), '%') OR
+                lower(e.dsVisibilita) LIKE concat('%', lower(:special), '%') OR
+                lower(e.dsBreve) LIKE concat('%', lower(:special), '%')
+            ) AND
+        </if>
+        1=1
+    </select>
+</mapper>

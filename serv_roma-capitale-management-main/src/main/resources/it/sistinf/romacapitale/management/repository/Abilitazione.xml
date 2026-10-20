@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Abilitazione">
+
+    <select id="GET_ALL_ABILITAZIONI_FILTERED">
+        SELECT e
+        FROM AbilitazioneEntity e
+        WHERE
+        <if test="special == null">
+        <if test="descAbilitazione != null">
+            <if test="descAbilitazioneSearchType.equals('LIKE')">
+                lower(e.descAbilitazione) LIKE concat(lower(:descAbilitazione), '%') AND
+            </if>
+            <if test="descAbilitazioneSearchType.equals('EQUALS')">
+                lower(e.descAbilitazione) = lower(:descAbilitazione) AND
+            </if>
+        </if>
+        <if test="cdAmbito != null">
+            <if test="cdAmbitoSearchType.equals('LIKE')">
+                lower(e.cdAmbito) LIKE concat(lower(:cdAmbito), '%') AND
+            </if>
+            <if test="cdAmbitoSearchType.equals('EQUALS')">
+                lower(e.cdAmbito) = lower(:cdAmbito) AND
+            </if>
+        </if>
+        <if test="cdApplicazione != null">
+            <if test="cdApplicazioneSearchType.equals('LIKE')">
+                lower(e.cdApplicazione) LIKE concat(lower(:cdApplicazione), '%') AND
+            </if>
+            <if test="cdApplicazioneSearchType.equals('EQUALS')">
+                lower(e.cdApplicazione) = lower(:cdApplicazione) AND
+            </if>
+        </if>
+        </if>
+        <if test="special != null">
+            lower(e.cdAmbito) LIKE concat('%', lower(:special), '%') OR
+            lower(e.cdApplicazione) LIKE concat('%', lower(:special), '%') OR
+            lower(e.descAbilitazione) LIKE concat('%', lower(:special), '%') AND
+        </if>
+        1=1
+        ORDER BY
+        <if test="sort != null">
+            <if test="abilitazioneSort != null">
+                p.abilitazione ${abilitazioneSort},
+            </if>
+        </if>
+        e.cdAmbito ASC
+    </select>
+
+    <select id="GET_ALL_ABILITAZIONI_FILTERED_COUNT">
+        SELECT count(*)
+        FROM AbilitazioneEntity e
+        WHERE
+        <if test="special == null">
+            <if test="descAbilitazione != null">
+                <if test="descAbilitazioneSearchType.equals('LIKE')">
+                    lower(e.descAbilitazione) LIKE concat(lower(:descAbilitazione), '%') AND
+                </if>
+                <if test="descAbilitazioneSearchType.equals('EQUALS')">
+                    lower(e.descAbilitazione) = lower(:descAbilitazione) AND
+                </if>
+            </if>
+            <if test="cdAmbito != null">
+                <if test="cdAmbitoSearchType.equals('LIKE')">
+                    lower(e.cdAmbito) LIKE concat(lower(:cdAmbito), '%') AND
+                </if>
+                <if test="cdAmbitoSearchType.equals('EQUALS')">
+                    lower(e.cdAmbito) = lower(:cdAmbito) AND
+                </if>
+            </if>
+            <if test="cdApplicazione != null">
+                <if test="cdApplicazioneSearchType.equals('LIKE')">
+                    lower(e.cdApplicazione) LIKE concat(lower(:cdApplicazione), '%') AND
+                </if>
+                <if test="cdApplicazioneSearchType.equals('EQUALS')">
+                    lower(e.cdApplicazione) = lower(:cdApplicazione) AND
+                </if>
+            </if>
+        </if>
+        <if test="special != null">
+            lower(e.cdAmbito) LIKE concat('%', lower(:special), '%') OR
+            lower(e.cdApplicazione) LIKE concat('%', lower(:special), '%') OR
+            lower(e.descAbilitazione) LIKE concat('%', lower(:special), '%') AND
+        </if>
+        1=1
+    </select>
+
+    <select id="GET_ABILITAZIONE_BY_COD_ABILITAZIONE">
+        SELECT e
+        FROM AbilitazioneEntity e
+        WHERE
+        lower(e.cdAmbito) = lower(:cdAmbito) AND
+        lower(e.cdApplicazione) = lower(:cdApplicazione) AND
+        lower(e.cdAbilitazione) = lower(:cdAbilitazione)
+    </select>
+
+
+</mapper>

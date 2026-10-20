@@ -1,0 +1,316 @@
+# Change Log - Branch: develop
+
+Push del: 2026-02-04 12:50:48Z
+Autore: davidetravaglini
+Descrizione: deploy rancher
+
+---
+
+
+Push del: 2026-02-04 13:30:32Z
+Autore: davidetravaglini
+Descrizione: fix env management + deploy rancher
+
+---
+
+
+Push del: 2026-02-04 18:36:33Z
+Autore: davidetravaglini
+Descrizione: fix env cdCloud
+
+---
+
+
+Push del: 2026-02-05 15:54:54Z
+Autore: davidetravaglini
+Descrizione: fix chiamate
+
+---
+
+
+Push del: 2026-02-05 16:19:03Z
+Autore: davidetravaglini
+Descrizione: fix env
+
+---
+
+
+Push del: 2026-02-05 16:22:15Z
+Autore: davidetravaglini
+Descrizione: rideploy
+
+---
+
+
+Push del: 2026-02-05 16:31:13Z
+Autore: davidetravaglini
+Descrizione: rideploy rancher
+
+---
+
+
+Push del: 2026-02-05 19:39:06Z
+Autore: davidetravaglini
+Descrizione: gestione flgTokenReduced
+
+---
+
+
+Push del: 2026-02-05 19:49:38Z
+Autore: davidetravaglini
+Descrizione: Fix annotation
+
+---
+
+
+Push del: 2026-02-16 09:12:26Z
+Autore: jenkinsadm
+Descrizione: aggiornamento dipendenze
+
+---
+
+
+Push del: 2026-02-16 12:38:51Z
+Autore: davidetravaglini
+Descrizione: catch errore chiamata
+
+---
+
+
+Push del: 2026-02-16 12:50:41Z
+Autore: davidetravaglini
+Descrizione: rideploy
+
+---
+
+
+Push del: 2026-02-16 14:58:26Z
+Autore: davidetravaglini
+Descrizione: rideploy
+
+---
+
+
+Push del: 2026-02-17 13:42:49Z
+Autore: jenkinsadm
+Descrizione: truststore
+
+---
+
+
+Push del: 2026-02-17 15:44:37Z
+Autore: davidetravaglini
+Descrizione: fix trustore
+
+---
+
+
+Push del: 2026-02-17 16:00:29Z
+Autore: davidetravaglini
+Descrizione: rideploy
+
+---
+
+
+Push del: 2026-02-17 16:43:11Z
+Autore: davidetravaglini
+Descrizione: test certificato
+
+---
+
+
+Push del: 2026-02-17 16:48:51Z
+Autore: davidetravaglini
+Descrizione: rideploy
+
+---
+
+
+Push del: 2026-02-17 16:58:53Z
+Autore: davidetravaglini
+Descrizione: test certificato 2
+
+---
+
+
+Push del: 2026-02-17 17:03:35Z
+Autore: davidetravaglini
+Descrizione: test 3
+
+---
+
+
+Push del: 2026-02-17 18:25:20Z
+Autore: davidetravaglini
+Descrizione: test 4
+
+---
+
+
+Push del: 2026-02-17 20:22:46Z
+Autore: davidetravaglini
+Descrizione: fix certificato client
+
+---
+
+
+Push del: 2026-02-17 21:24:16Z
+Autore: davidetravaglini
+Descrizione: host forwarding
+
+---
+
+
+Push del: 2026-02-19 13:12:41Z
+Autore: davidetravaglini
+Descrizione: Gestione doppio token
+
+---
+
+
+Push del: 2026-02-19 13:17:41Z
+Autore: davidetravaglini
+Descrizione: rimossa riga per test
+
+---
+
+
+Push del: 2026-02-19 13:26:43Z
+Autore: davidetravaglini
+Descrizione: rideploy
+
+---
+
+
+Push del: 2026-02-19 18:27:42Z
+Autore: davidetravaglini
+Descrizione: rideploy
+
+---
+
+
+Push del: 2026-02-23 10:24:19Z
+Autore: davidetravaglini
+Descrizione: rideploy
+
+---
+
+
+Push del: 2026-02-23 11:09:20Z
+Autore: davidetravaglini
+Descrizione: fix risposte chunked
+
+---
+
+
+Push del: 2026-02-23 11:26:11Z
+Autore: davidetravaglini
+Descrizione: fix eof
+
+---
+
+
+Push del: 2026-02-23 12:49:03Z
+Autore: davidetravaglini
+Descrizione: prova fix
+
+---
+
+
+Push del: 2026-02-23 12:56:40Z
+Autore: davidetravaglini
+Descrizione: rideploy
+
+---
+
+
+Push del: 2026-02-23 13:23:28Z
+Autore: davidetravaglini
+Descrizione: rideploy
+
+---
+
+
+Push del: 2026-02-24 19:51:38Z
+Autore: davidetravaglini
+Descrizione: fix per archiviazione
+
+---
+
+
+Push del: 2026-02-24 20:04:22Z
+Autore: davidetravaglini
+Descrizione: fix
+
+---
+
+
+Push del: 2026-02-25 03:09:51Z
+Autore: davidetravaglini
+Descrizione: Prova fix response headers
+
+---
+
+
+Push del: 2026-03-02 14:00:35Z
+Autore: davidetravaglini
+Descrizione: rideploy
+
+---
+
+
+Push del: 2026-03-02 14:07:28Z
+Autore: davidetravaglini
+Descrizione: rideploy
+
+---
+
+
+Push del: 2026-03-02 15:51:31Z
+Autore: davidetravaglini
+Descrizione: rd
+
+---
+
+
+Push del: 2026-03-03 17:34:27Z
+Autore: davidetravaglini
+Descrizione: rimossa propagazione cookie
+
+---
+
+
+Push del: 2026-03-03 18:23:20Z
+Autore: davidetravaglini
+Descrizione: modifica per ekass e ecass
+
+---
+
+
+Push del: 2026-03-05 12:51:21Z
+Autore: davidetravaglini
+Descrizione: fix authorization
+
+---
+
+
+Push del: 2026-03-05 13:58:19Z
+Autore: davidetravaglini
+Descrizione: Fix typo
+
+---
+
+
+Push del: 2026-03-05 17:54:06Z
+Autore: davidetravaglini
+Descrizione: rest template conf
+
+---
+
+
+Push del: 2026-03-06 11:16:42Z
+Autore: davidetravaglini
+Descrizione: rimossa fix
+
+---
+

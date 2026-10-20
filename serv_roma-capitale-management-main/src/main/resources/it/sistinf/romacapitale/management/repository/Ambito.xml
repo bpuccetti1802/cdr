@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Ambito">
+
+    <select id="GET_ALL_AMBITI_FILTERED">
+        SELECT e
+        FROM AmbitoEntity e
+        WHERE
+        <if test="special == null">
+        <if test="cdAmbito != null">
+            <if test="cdAmbitoSearchType.equals('EQUALS')">
+                lower(e.id) = lower(:cdAmbito) AND
+            </if>
+        </if>
+        <if test="dsAmbito != null">
+            <if test="dsAmbitoSearchType.equals('EQUALS')">
+                lower(e.dsAmbito) = lower(:dsAmbito) AND
+            </if>
+        </if>
+        </if>
+        <if test="special != null">
+            lower(e.id) LIKE concat('%', lower(:special), '%') OR
+            lower(e.dsAmbito) LIKE concat('%', lower(:special), '%') AND
+        </if>
+        1=1
+        ORDER BY
+        <if test="sort != null">
+            <if test="keySort != null">
+                e.id ${keySort},
+            </if>
+            <if test="cdAmbitoSort != null">
+                e.ambito.id ${cdAmbitoSort},
+            </if>
+        </if>
+        e.id ASC
+    </select>
+    
+    
+    
+        <select id="GET_ALL_AMBITI_FILTERED_COUNT">
+        SELECT count(*)
+        FROM AmbitoEntity e
+         WHERE
+            <if test="special == null">
+                <if test="cdAmbito != null">
+                    <if test="cdAmbitoSearchType.equals('EQUALS')">
+                        lower(e.id) = lower(:cdAmbito) AND
+                    </if>
+                </if>
+                <if test="dsAmbito != null">
+                    <if test="dsAmbitoSearchType.equals('EQUALS')">
+                        lower(e.dsAmbito) = lower(:dsAmbito) AND
+                    </if>
+                </if>
+            </if>
+            <if test="special != null">
+                lower(e.id) LIKE concat('%', lower(:special), '%') OR
+                lower(e.dsAmbito) LIKE concat('%', lower(:special), '%') AND
+            </if>
+        1=1
+    </select>
+
+</mapper>

@@ -1,0 +1,1142 @@
+
+# Change Log - Branch: develop
+
+Push del: 2025-09-30 12:50:50Z
+Autore: davidepanettieri
+Descrizione: aggiunta selezione struttura
+
+---
+
+Push del: 2025-09-30 15:18:16Z
+Autore: davidepanettieri
+Descrizione: aggiunto env management url
+
+---
+
+Push del: 2025-09-30 16:48:39Z
+Autore: davidepanettieri
+Descrizione: fix env con configmap
+
+---
+
+Push del: 2025-09-30 18:20:34Z
+Autore: davidepanettieri
+Descrizione: aggiunto servizio di decodifica
+
+---
+
+Push del: 2025-09-30 18:50:57Z
+Autore: davidepanettieri
+Descrizione: aggiunti parametri env auth
+
+---
+
+Push del: 2025-09-30 19:04:24Z
+Autore: davidepanettieri
+Descrizione: Fix LoginV1
+
+---
+
+Push del: 2025-09-30 19:10:33Z
+Autore: davidepanettieri
+Descrizione: Fix LoginV1 boolean
+
+---
+
+Push del: 2025-10-01 13:32:32Z
+Autore: davidepanettieri
+Descrizione: fix properties
+
+---
+
+Push del: 2025-10-01 17:44:32Z
+Autore: davidepanettieri
+Descrizione: aggiunta callback Gerico
+
+---
+
+Push del: 2025-10-01 18:23:15Z
+Autore: davidepanettieri
+Descrizione: fix cdAmbito IAM
+
+---
+
+Push del: 2025-10-02 09:18:42Z
+Autore: davidepanettieri
+Descrizione: test cookie
+
+---
+
+Push del: 2025-10-02 10:24:46Z
+Autore: davidepanettieri
+Descrizione: test redirect
+
+---
+
+Push del: 2025-10-02 11:28:37Z
+Autore: davidepanettieri
+Descrizione: test cookie
+
+---
+
+Push del: 2025-10-02 11:39:11Z
+Autore: davidepanettieri
+Descrizione: test cookie
+
+---
+
+Push del: 2025-10-02 12:41:19Z
+Autore: davidepanettieri
+Descrizione: test cookie
+
+---
+
+Push del: 2025-10-02 12:58:02Z
+Autore: davidepanettieri
+Descrizione: fix cookie
+
+---
+
+Push del: 2025-10-02 17:03:11Z
+Autore: davidepanettieri
+Descrizione: refactor login IAM e decodifica
+
+---
+
+Push del: 2025-10-02 17:14:44Z
+Autore: davidepanettieri
+Descrizione: trigger deploy
+
+---
+
+Push del: 2025-10-03 12:58:16Z
+Autore: davidepanettieri
+Descrizione: aggiunta callback get-bo
+
+---
+
+Push del: 2025-10-03 15:21:16Z
+Autore: davidepanettieri
+Descrizione: aggiunto claim IV-USER
+
+---
+
+Push del: 2025-10-06 18:02:19Z
+Autore: davidepanettieri
+Descrizione: aggiunto endpoint logout
+
+---
+
+Push del: 2025-10-07 13:25:54Z
+Autore: davidepanettieri
+Descrizione: aggiornata SecurityConfiguration publicUrls
+
+---
+
+Push del: 2025-10-07 18:59:00Z
+Autore: davidepanettieri
+Descrizione: fix seleziona struttura
+
+---
+
+Push del: 2025-10-07 19:05:42Z
+Autore: davidepanettieri
+Descrizione: fix seleziona struttura token
+
+---
+
+Push del: 2025-10-07 19:38:31Z
+Autore: davidepanettieri
+Descrizione: fix NomeStruttura
+
+---
+
+Push del: 2025-10-07 19:52:13Z
+Autore: davidepanettieri
+Descrizione: fix listaStruttura
+
+---
+
+Push del: 2025-10-09 10:15:15Z
+Autore: davidepanettieri
+Descrizione: fix audit autenticazione
+
+---
+
+Push del: 2025-10-21 12:22:28Z
+Autore: davidepanettieri
+Descrizione: fix abilitazioni e username utente Login IAM
+
+---
+
+Push del: 2025-10-21 12:58:56Z
+Autore: davidepanettieri
+Descrizione: fix profileUser loginIAM
+
+---
+
+Push del: 2025-10-22 18:55:45Z
+Autore: salvatoreleonardopizzuto
+Descrizione: Fix bug propagazione token piattaforma batch
+
+---
+
+Push del: 2025-10-27 18:52:23Z
+Autore: davidepanettieri
+Descrizione: aggiunto endpoint refresh token
+
+---
+
+Push del: 2025-10-28 19:20:52Z
+Autore: davidepanettieri
+Descrizione: fix cookie decodifica
+
+---
+
+Push del: 2025-10-29 18:01:14Z
+Autore: davidepanettieri
+Descrizione: fix payload null decodifica
+
+---
+
+Push del: 2025-10-29 18:05:44Z
+Autore: davidepanettieri
+Descrizione: fix payload null decodifica
+
+---
+
+Push del: 2025-10-29 18:19:27Z
+Autore: davidepanettieri
+Descrizione: fix payload null decodifica
+
+---
+
+Push del: 2025-11-05 18:15:21Z
+Autore: davidepanettieri
+Descrizione: fix decodifica seleziona struttura tributi
+
+---
+
+Push del: 2025-11-10 11:40:26Z
+Autore: davidepanettieri
+Descrizione: implementato login con cookie, fix parametro cookie samesite
+
+---
+
+Push del: 2025-11-10 11:57:52Z
+Autore: davidepanettieri
+Descrizione: fix cookie domain ekaas
+
+---
+
+Push del: 2025-11-10 19:15:33Z
+Autore: lucianalexandrulemnariu
+Descrizione: redeploy
+
+---
+
+Push del: 2025-11-11 11:34:34Z
+Autore: davidepanettieri
+Descrizione: fix aggiunto header login
+
+---
+
+Push del: 2025-11-13 18:08:33Z
+Autore: davidepanettieri
+Descrizione: test loginIam
+
+---
+
+Push del: 2025-11-14 16:45:14Z
+Autore: davidepanettieri
+Descrizione: implementato code challenge
+
+---
+
+Push del: 2025-11-14 16:56:10Z
+Autore: davidepanettieri
+Descrizione: code challenge
+
+---
+
+Push del: 2025-11-14 17:35:15Z
+Autore: davidepanettieri
+Descrizione: Login IAM test 
+
+---
+
+Push del: 2025-11-14 17:58:26Z
+Autore: davidepanettieri
+Descrizione: Login IAM test
+
+---
+
+Push del: 2025-11-14 18:42:47Z
+Autore: davidepanettieri
+Descrizione: Login IAM fix accessTokenUrl
+
+---
+
+Push del: 2025-11-14 19:07:40Z
+Autore: davidepanettieri
+Descrizione: login IAM fix
+
+---
+
+Push del: 2025-11-14 19:24:28Z
+Autore: davidepanettieri
+Descrizione: login IAM fix
+
+---
+
+Push del: 2025-11-14 19:44:53Z
+Autore: davidepanettieri
+Descrizione: Login IAM fix properties
+
+---
+
+Push del: 2025-11-14 20:04:51Z
+Autore: davidepanettieri
+Descrizione: Login IAM fix code_verifier
+
+---
+
+Push del: 2025-11-14 20:30:47Z
+Autore: davidepanettieri
+Descrizione: Login IAM test
+
+---
+
+Push del: 2025-11-14 21:02:26Z
+Autore: davidepanettieri
+Descrizione: Login IAM fix method callback
+
+---
+
+Push del: 2025-11-17 19:32:16Z
+Autore: davidepanettieri
+Descrizione: Fix IAM e configurazione gestione simulator
+
+---
+
+Push del: 2025-11-17 21:04:14Z
+Autore: davidepanettieri
+Descrizione: fix config IAM/Simulator
+
+---
+
+Push del: 2025-11-17 21:10:13Z
+Autore: davidepanettieri
+Descrizione: fix issuer IAM Simulator
+
+---
+
+Push del: 2025-11-18 12:32:24Z
+Autore: davidepanettieri
+Descrizione: fix method callback IAM
+
+---
+
+Push del: 2025-11-18 14:18:16Z
+Autore: davidepanettieri
+Descrizione: test proxy auth
+
+---
+
+Push del: 2025-11-18 16:17:10Z
+Autore: davidepanettieri
+Descrizione: test proxy auth
+
+---
+
+Push del: 2025-11-18 16:42:47Z
+Autore: davidepanettieri
+Descrizione: fix id token IAM
+
+---
+
+Push del: 2025-11-19 10:40:03Z
+Autore: davidepanettieri
+Descrizione: fix id token IAM
+
+---
+
+Push del: 2025-11-19 11:33:59Z
+Autore: davidepanettieri
+Descrizione: fix cookie IAM
+
+---
+
+Push del: 2025-11-19 12:14:14Z
+Autore: davidepanettieri
+Descrizione: fix cookie IAM
+
+---
+
+Push del: 2025-11-19 18:02:43Z
+Autore: davidepanettieri
+Descrizione: fix cookie IAM
+
+---
+
+Push del: 2025-11-21 11:08:28Z
+Autore: davidepanettieri
+Descrizione: Fix selezionaStruttura profileUser abilitazioni
+
+---
+
+Push del: 2025-12-01 17:06:34Z
+Autore: davidepanettieri
+Descrizione: Fix domain cookie idClient
+
+---
+
+Push del: 2025-12-01 19:30:32Z
+Autore: davidepanettieri
+Descrizione: config IAM get-bo
+
+---
+
+Push del: 2025-12-05 16:34:21Z
+Autore: davidepanettieri
+Descrizione: config IAM test scopes
+
+---
+
+Push del: 2025-12-05 16:46:20Z
+Autore: davidepanettieri
+Descrizione: config IAM test scopes
+
+---
+
+Push del: 2025-12-05 17:14:15Z
+Autore: davidepanettieri
+Descrizione: config IAM test scopes
+
+---
+
+Push del: 2025-12-10 15:01:22Z
+Autore: davidepanettieri
+Descrizione: config IAM test scopes
+
+---
+
+Push del: 2025-12-10 19:11:40Z
+Autore: davidepanettieri
+Descrizione: scope iam
+
+---
+
+Push del: 2025-12-10 20:09:07Z
+Autore: davidepanettieri
+Descrizione: aggiunto useHomeUri
+
+---
+
+Push del: 2025-12-10 20:45:02Z
+Autore: davidepanettieri
+Descrizione: aggiunto homeServiceGetFo
+
+---
+
+Push del: 2025-12-11 12:35:36Z
+Autore: davidepanettieri
+Descrizione: aggiunta properties scope2
+
+---
+
+Push del: 2025-12-11 13:12:36Z
+Autore: davidepanettieri
+Descrizione: test scope openid
+
+---
+
+Push del: 2025-12-11 14:03:06Z
+Autore: davidepanettieri
+Descrizione: test scope anagrafica
+
+---
+
+Push del: 2025-12-11 14:25:03Z
+Autore: davidepanettieri
+Descrizione: test scope profile
+
+---
+
+Push del: 2025-12-11 14:45:32Z
+Autore: davidepanettieri
+Descrizione: test scope persona giuridica
+
+---
+
+Push del: 2025-12-11 16:12:06Z
+Autore: davidepanettieri
+Descrizione: test scope persona giuridica e profile
+
+---
+
+Push del: 2025-12-11 16:54:03Z
+Autore: davidepanettieri
+Descrizione: test scope attributi delega e assistito
+
+---
+
+Push del: 2025-12-11 18:25:42Z
+Autore: davidepanettieri
+Descrizione: test iam mapping nuovi scopes
+
+---
+
+Push del: 2025-12-11 18:42:22Z
+Autore: davidepanettieri
+Descrizione: fix version management integration
+
+---
+
+Push del: 2025-12-11 19:03:27Z
+Autore: davidepanettieri
+Descrizione: fix utente persona giuridica IAM
+
+---
+
+Push del: 2025-12-11 19:38:36Z
+Autore: davidepanettieri
+Descrizione: fix utente persona giuridica
+
+---
+
+Push del: 2025-12-15 13:53:40Z
+Autore: davidepanettieri
+Descrizione: aggiunti scopes GET-BO
+
+---
+
+Push del: 2025-12-15 19:17:03Z
+Autore: davidepanettieri
+Descrizione: aggiunti nuovi claims IAM al CurrentUser
+
+---
+
+Push del: 2025-12-16 13:08:25Z
+Autore: davidepanettieri
+Descrizione: rimosso homeServiceGetBo
+
+---
+
+Push del: 2025-12-18 16:25:25Z
+Autore: davidepanettieri
+Descrizione: aggiunte configurazioni gerico e gecos
+
+---
+
+Push del: 2025-12-18 16:56:12Z
+Autore: davidepanettieri
+Descrizione: fix callback gerico
+
+---
+
+Push del: 2026-01-02 14:24:31Z
+Autore: robertdanieleavorschi
+Descrizione: aggiunte configurazioni bo tributi iam
+
+---
+
+Push del: 2026-01-02 14:49:46Z
+Autore: robertdanieleavorschi
+Descrizione: aggiunto endpoint simulazione login iam bo tributi
+
+---
+
+Push del: 2026-01-02 16:07:10Z
+Autore: robertdanieleavorschi
+Descrizione: corretti indirizzi iam tributi
+
+---
+
+Push del: 2026-01-12 18:12:53Z
+Autore: davidepanettieri
+Descrizione: test login IAM eidas
+
+---
+
+
+Push del: 2026-01-13 16:21:13Z
+Autore: robertdanieleavorschi
+Descrizione: corrette configurazioni iam simulator gescan
+
+---
+
+
+Push del: 2026-01-13 16:33:11Z
+Autore: robertdanieleavorschi
+Descrizione: corretto redirect iam gescan
+
+---
+
+
+Push del: 2026-01-13 17:05:52Z
+Autore: robertdanieleavorschi
+Descrizione: adeguata home uri redirect gescan
+
+---
+
+
+Push del: 2026-01-14 19:53:07Z
+Autore: davidepanettieri
+Descrizione: Gestione token ridotto
+
+---
+
+
+Push del: 2026-01-15 18:41:18Z
+Autore: davidepanettieri
+Descrizione: Fix gestione token ridotto
+
+---
+
+
+Push del: 2026-01-15 19:08:57Z
+Autore: davidepanettieri
+Descrizione: Fix header AUTHORIZATION console FE ekaas
+
+---
+
+
+Push del: 2026-01-16 13:00:06Z
+Autore: davidepanettieri
+Descrizione: Ridotto limite token a 2KB
+
+---
+
+
+Push del: 2026-01-16 18:52:10Z
+Autore: davidepanettieri
+Descrizione: fix seleziona struttura token ridotto
+
+---
+
+
+Push del: 2026-01-16 19:07:34Z
+Autore: davidepanettieri
+Descrizione: test login senza Authorization
+
+---
+
+
+Push del: 2026-01-16 19:43:55Z
+Autore: davidepanettieri
+Descrizione: fix profileUserVO sessionID
+
+---
+
+
+Push del: 2026-01-16 20:00:51Z
+Autore: davidepanettieri
+Descrizione: fix setFgListaStrutture
+
+---
+
+
+Push del: 2026-01-19 10:45:32Z
+Autore: davidepanettieri
+Descrizione: Fix CorsConfiguration
+
+---
+
+
+Push del: 2026-01-19 11:17:20Z
+Autore: davidepanettieri
+Descrizione: Fix cors configuration https
+
+---
+
+
+Push del: 2026-01-19 11:40:13Z
+Autore: davidepanettieri
+Descrizione: test cors
+
+---
+
+
+Push del: 2026-01-20 10:34:55Z
+Autore: davidepanettieri
+Descrizione: reset cors config
+
+---
+
+
+Push del: 2026-01-20 12:17:20Z
+Autore: davidepanettieri
+Descrizione: log cors configuration
+
+---
+
+
+Push del: 2026-01-20 18:51:27Z
+Autore: davidepanettieri
+Descrizione: test callback get_fo
+
+---
+
+
+Push del: 2026-01-20 19:17:29Z
+Autore: davidepanettieri
+Descrizione: fix callback get_fo
+
+---
+
+
+Push del: 2026-01-20 19:49:33Z
+Autore: davidepanettieri
+Descrizione: fix callback IAM
+
+---
+
+
+Push del: 2026-01-21 11:16:37Z
+Autore: davidepanettieri
+Descrizione: fix callback IAM simulator params
+
+---
+
+
+Push del: 2026-01-21 15:00:52Z
+Autore: davidepanettieri
+Descrizione: aggiunta property jwtMaxLenght
+
+---
+
+
+Push del: 2026-01-22 20:22:43Z
+Autore: davidepanettieri
+Descrizione: Aggiunto parametro di ambiente auth COOKIE_MAX_LENGHT
+
+---
+
+
+Push del: 2026-01-23 12:13:54Z
+Autore: davidepanettieri
+Descrizione: trigger deploy
+
+---
+
+
+Push del: 2026-01-25 18:04:08Z
+Autore: jenkinsadm
+Descrizione: fix decodifica con token ridotto
+
+---
+
+
+Push del: 2026-01-25 18:19:08Z
+Autore: jenkinsadm
+Descrizione: fix decodifica con token ridotto
+
+---
+
+
+Push del: 2026-01-27 13:44:20Z
+Autore: davidepanettieri
+Descrizione: aggiunta lista profili utente in decodifica
+
+---
+
+
+Push del: 2026-01-27 14:06:42Z
+Autore: davidepanettieri
+Descrizione: Fix Exception chiamata management decodifica
+
+---
+
+
+Push del: 2026-01-27 18:01:45Z
+Autore: davidepanettieri
+Descrizione: riavvio cors
+
+---
+
+
+Push del: 2026-01-27 18:09:29Z
+Autore: davidepanettieri
+Descrizione: deploy
+
+---
+
+
+Push del: 2026-01-27 19:28:42Z
+Autore: davidepanettieri
+Descrizione: aggiunte properties cors auth
+
+---
+
+
+Push del: 2026-01-28 16:43:04Z
+Autore: davidepanettieri
+Descrizione: test cors auth IAM
+
+---
+
+
+Push del: 2026-01-28 17:28:10Z
+Autore: davidepanettieri
+Descrizione: cors Configurations auth IAM
+
+---
+
+
+Push del: 2026-01-28 18:00:22Z
+Autore: davidepanettieri
+Descrizione: fix path cors Configurations
+
+---
+
+
+Push del: 2026-01-28 18:47:23Z
+Autore: davidepanettieri
+Descrizione: aggiunto authCorsConfigurationSource per callback OIDC
+
+---
+
+
+Push del: 2026-01-28 19:14:50Z
+Autore: davidepanettieri
+Descrizione: Config IAM tributi_bo
+
+---
+
+
+Push del: 2026-01-28 19:30:00Z
+Autore: davidepanettieri
+Descrizione: Fix path callback oidc_bo_tributi
+
+---
+
+
+Push del: 2026-01-28 19:44:17Z
+Autore: davidepanettieri
+Descrizione: Fix callback POST oidc_bo_tributi
+
+---
+
+
+Push del: 2026-01-29 09:38:52Z
+Autore: robertdanieleavorschi
+Descrizione: corretta configurazione iam simulator tributi bo
+
+---
+
+
+Push del: 2026-02-02 11:28:24Z
+Autore: robertdanieleavorschi
+Descrizione: corrette configurazioni iam simulator gecos
+
+---
+
+
+Push del: 2026-02-06 11:52:47Z
+Autore: davidepanettieri
+Descrizione: Aggiunta configurazione IAM GECOS
+
+---
+
+
+Push del: 2026-02-06 12:35:15Z
+Autore: davidepanettieri
+Descrizione: Rinominato WebConfig Auth
+
+---
+
+
+Push del: 2026-02-06 18:41:23Z
+Autore: davidepanettieri
+Descrizione: deploy
+
+---
+
+
+Push del: 2026-02-10 14:11:34Z
+Autore: davidepanettieri
+Descrizione: Fix password loginSist Oauth
+
+---
+
+
+Push del: 2026-02-10 18:07:10Z
+Autore: davidepanettieri
+Descrizione: merge abilitazioni-struttura-get
+
+---
+
+
+Push del: 2026-02-10 18:57:47Z
+Autore: davidepanettieri
+Descrizione: Fix seleziona struttura GET-BO
+
+---
+
+
+Push del: 2026-02-10 19:30:26Z
+Autore: davidepanettieri
+Descrizione: redeploy
+
+---
+
+
+Push del: 2026-02-12 18:16:59Z
+Autore: davidepanettieri
+Descrizione: refactor properties IAM
+
+---
+
+
+Push del: 2026-02-13 16:03:24Z
+Autore: davidepanettieri
+Descrizione: fix properties IAM gecos bo
+
+---
+
+
+Push del: 2026-02-16 18:09:23Z
+Autore: davidepanettieri
+Descrizione: Fix createIamProfileUserVO GET-BO
+
+---
+
+
+Push del: 2026-02-16 18:25:20Z
+Autore: davidepanettieri
+Descrizione: Fix createIamProfileUserVO GET-BO
+
+---
+
+
+Push del: 2026-02-16 19:14:00Z
+Autore: davidepanettieri
+Descrizione: Fix seleziona struttura abilitazioni GET-BO
+
+---
+
+
+Push del: 2026-02-17 11:03:11Z
+Autore: davidepanettieri
+Descrizione: deploy config
+
+---
+
+
+Push del: 2026-02-17 11:13:25Z
+Autore: davidepanettieri
+Descrizione: redeploy trigger
+
+---
+
+
+Push del: 2026-02-17 11:44:12Z
+Autore: davidepanettieri
+Descrizione: cookie domain rancher
+
+---
+
+
+Push del: 2026-02-17 13:00:24Z
+Autore: davidepanettieri
+Descrizione: Fix IAM GET-BO cdAmbito
+
+---
+
+
+Push del: 2026-02-18 21:21:13Z
+Autore: davidetravaglini
+Descrizione: avanzamento versione auth integration
+
+---
+
+
+Push del: 2026-02-23 11:22:00Z
+Autore: davidepanettieri
+Descrizione: fix decodidifica payload vuoto
+
+---
+
+
+Push del: 2026-02-24 17:46:20Z
+Autore: davidepanettieri
+Descrizione: fix logout preprod
+
+---
+
+
+Push del: 2026-02-24 18:27:33Z
+Autore: davidepanettieri
+Descrizione: log headers logout
+
+---
+
+
+Push del: 2026-02-24 19:30:54Z
+Autore: davidepanettieri
+Descrizione: fix domain logout IAM
+
+---
+
+
+Push del: 2026-02-24 19:52:33Z
+Autore: davidepanettieri
+Descrizione: log debug logout IAM
+
+---
+
+
+Push del: 2026-02-24 20:14:00Z
+Autore: davidepanettieri
+Descrizione: fix parseCookiesFromHeaders logout
+
+---
+
+
+Push del: 2026-02-24 20:36:59Z
+Autore: davidepanettieri
+Descrizione: Fix e pulizia Logout IAM
+
+---
+
+
+Push del: 2026-02-26 17:15:25Z
+Autore: davidepanettieri
+Descrizione: Aggiunto endpoint decode-iam-token
+
+---
+
+
+Push del: 2026-03-01 23:10:41Z
+Autore: jenkinsadm
+Descrizione: aggiornamento common per cache
+
+---
+
+
+Push del: 2026-03-02 17:42:11Z
+Autore: davidepanettieri
+Descrizione: Fix redirect servizioScelto IAM FO
+
+---
+
+
+Push del: 2026-03-03 20:36:26Z
+Autore: davidepanettieri
+Descrizione: Aggiunto getUtenteAndAbilitazioniByCodFiscale per IAM
+
+---
+
+
+Push del: 2026-03-03 21:26:15Z
+Autore: davidepanettieri
+Descrizione: Fix valorizzazione codFiscale loginVO IAM
+
+---
+
+
+Push del: 2026-03-04 19:12:20Z
+Autore: davidepanettieri
+Descrizione: Fix Trim Codfiscale e superuser GET-BO
+
+---
+
+
+Push del: 2026-03-04 19:49:02Z
+Autore: davidepanettieri
+Descrizione: Fix errore refresh decodifica GET-BO
+
+---
+
+
+Push del: 2026-03-04 20:07:23Z
+Autore: davidepanettieri
+Descrizione: Fix errore decodifica GET-BO superuser
+
+---
+
+
+Push del: 2026-03-05 10:38:30Z
+Autore: davidepanettieri
+Descrizione: Fix errore decodifica 401
+
+---
+
+
+Push del: 2026-03-05 10:51:07Z
+Autore: davidepanettieri
+Descrizione: Fix errore decodifica 401
+
+---
+
+
+Push del: 2026-03-05 11:20:41Z
+Autore: davidepanettieri
+Descrizione: Fix eidas IAM
+
+---
+
+
+Push del: 2026-03-05 19:34:12Z
+Autore: davidepanettieri
+Descrizione: test redirect eidas IAM
+
+---
+
+
+Push del: 2026-03-05 20:14:59Z
+Autore: davidepanettieri
+Descrizione: test eidas IAM
+
+---
+
+
+Push del: 2026-03-05 20:46:44Z
+Autore: davidepanettieri
+Descrizione: Fix decodifica eidas IAM
+
+---
+
+
+Push del: 2026-03-05 21:09:52Z
+Autore: davidepanettieri
+Descrizione: Fix decodifica eidas IAM
+
+---
+
+
+Push del: 2026-03-06 12:55:51Z
+Autore: davidepanettieri
+Descrizione: Aggiunti log IAM
+
+---
+
+
+Push del: 2026-03-06 18:56:29Z
+Autore: davidepanettieri
+Descrizione: Test log query param callback
+
+---
+
+
+Push del: 2026-03-13 19:18:57Z
+Autore: davidepanettieri
+Descrizione: fix logout IAM prod
+
+---
+
+
+Push del: 2026-03-13 19:40:05Z
+Autore: davidepanettieri
+Descrizione: fix decodifica idClient
+
+---
+
+
+Push del: 2026-03-16 17:25:25Z
+Autore: davidepanettieri
+Descrizione: aggiunti scopes tributi_fo
+
+---
+

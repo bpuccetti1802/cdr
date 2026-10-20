@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Avviso">
+
+    <select id="GET_ALL_AVVISI_FILTERED">
+        SELECT a
+        FROM AvvisoEntity a
+        WHERE
+        <if test="cdAmbito != null">
+            a.cdAmbito = :cdAmbito AND
+        </if>
+        <if test="cdApplicazione != null">
+            a.cdApplicazione = :cdApplicazione AND
+        </if>
+        <if test="dsTitoloAvviso != null">
+            <if test="dsTitoloAvvisoSearchType != null and dsTitoloAvvisoSearchType.equals('LIKE')">
+                lower(a.dsTitoloAvviso) LIKE concat(lower(:dsTitoloAvviso), '%') AND
+            </if>
+            <if test="dsTitoloAvvisoSearchType != null and dsTitoloAvvisoSearchType.equals('EQUALS')">
+                lower(a.dsTitoloAvviso) = lower(:dsTitoloAvviso) AND
+            </if>
+        </if>
+        <if test="nmPriorita != null">
+            a.nmPriorita = :nmPriorita AND
+        </if>
+        1=1
+        ORDER BY
+        <if test="sort != null">
+            <if test="cdAmbitoSort != null">
+                a.cdAmbito ${cdAmbitoSort},
+            </if>
+            <if test="nmPrioritaSort != null">
+                a.nmPriorita ${nmPrioritaSort},
+            </if>
+            <if test="dtInizioSort != null">
+                a.dtInizio ${dtInizioSort},
+            </if>
+        </if>
+        a.cdAmbito ASC, a.nmPriorita ASC
+    </select>
+
+    <select id="GET_ALL_AVVISI_FILTERED_COUNT">
+        SELECT count(*)
+        FROM AvvisoEntity a
+        WHERE
+        <if test="cdAmbito != null">
+            a.cdAmbito = :cdAmbito AND
+        </if>
+        <if test="cdApplicazione != null">
+            a.cdApplicazione = :cdApplicazione AND
+        </if>
+        <if test="dsTitoloAvviso != null">
+            <if test="dsTitoloAvvisoSearchType != null and dsTitoloAvvisoSearchType.equals('LIKE')">
+                lower(a.dsTitoloAvviso) LIKE concat(lower(:dsTitoloAvviso), '%') AND
+            </if>
+            <if test="dsTitoloAvvisoSearchType != null and dsTitoloAvvisoSearchType.equals('EQUALS')">
+                lower(a.dsTitoloAvviso) = lower(:dsTitoloAvviso) AND
+            </if>
+        </if>
+        <if test="nmPriorita != null">
+            a.nmPriorita = :nmPriorita AND
+        </if>
+        1=1
+    </select>
+
+    <select id="GET_AVVISI_ATTIVI_BY_AMBITO_APPLICAZIONE">
+        SELECT a
+        FROM AvvisoEntity a
+        WHERE (
+        (a.cdAmbito = :cdAmbito AND a.cdApplicazione = :cdApplicazione)
+        OR a.cdAmbito = '00'
+        )
+        AND a.flAttivo = true
+        AND CURRENT_TIMESTAMP BETWEEN a.dtInizio AND a.dtFine
+        ORDER BY a.cdAmbito ASC, a.nmPriorita ASC
+    </select>
+
+    <select id="GET_AVVISI_ATTIVI_BY_AMBITO_APPLICAZIONE_COUNT">
+        SELECT count(*)
+        FROM AvvisoEntity a
+        WHERE (
+        (a.cdAmbito = :cdAmbito AND a.cdApplicazione = :cdApplicazione)
+        OR a.cdAmbito = '00'
+        )
+        AND a.flAttivo = true
+        AND CURRENT_TIMESTAMP BETWEEN a.dtInizio AND a.dtFine
+    </select>
+
+</mapper>

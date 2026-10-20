@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Configurazione">
+
+    <select id="GET_ALL_PARAM_BY_APLICATION_AND_AMBITO">
+        SELECT e
+        FROM ConfigurazioneEntity e
+        WHERE
+        (e.id.cdAmbito = :cdAmbito AND e.id.cdApplicazione = :cdApplicazione)
+        OR
+        (e.id.cdAmbito = '00' AND e.id.cdApplicazione = '')
+    </select>
+    
+</mapper>

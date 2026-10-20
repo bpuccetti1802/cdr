@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Utente">
+
+    <select id="GET_UTENTE_BY_CODICEFISCALE">
+        SELECT e
+        FROM UtenteEntity e
+        WHERE
+        lower(e.codiceFiscale) = lower(:codiceFiscale)
+    </select>
+
+    <select id="GET_UTENTE_BY_USERNAME">
+        SELECT e
+        FROM UtenteEntity e
+        WHERE
+        lower(e.username) = lower(:username)
+    </select>
+
+    <select id="GET_ALL_UTENTI_FILTERED">
+        SELECT DISTINCT e
+        FROM UtenteEntity e
+        LEFT JOIN FETCH e.utentePerProfiloList
+        WHERE
+        <if test="username != null">
+            <if test="usernameSearchType.equals('LIKE')">
+                lower(e.username) LIKE concat(lower(:username), '%') AND
+            </if>
+            <if test="usernameSearchType.equals('EQUALS')">
+                lower(e.username) = lower(:username) AND
+            </if>
+        </if>
+        <if test="nome != null">
+            <if test="nomeSearchType.equals('LIKE')">
+                lower(e.nome) LIKE concat(lower(:nome), '%') AND
+            </if>
+            <if test="nomeSearchType.equals('EQUALS')">
+                lower(e.nome) = lower(:nome) AND
+            </if>
+        </if>
+        <if test="cognome != null">
+            <if test="cognomeSearchType.equals('LIKE')">
+                lower(e.cognome) LIKE concat(lower(:cognome), '%') AND
+            </if>
+            <if test="cognomeSearchType.equals('EQUALS')">
+                lower(e.cognome) = lower(:cognome) AND
+            </if>
+        </if>
+        <if test="codiceFiscale != null">
+            <if test="codiceFiscaleSearchType.equals('LIKE')">
+                lower(e.codiceFiscale) LIKE concat(lower(:codiceFiscale), '%') AND
+            </if>
+            <if test="codiceFiscaleSearchType.equals('EQUALS')">
+                lower(e.codiceFiscale) = lower(:codiceFiscale) AND
+            </if>
+        </if>
+        1=1
+        ORDER BY
+        <if test="sort != null">
+            <if test="usernameSort != null">
+                e.username ${usernameSort},
+            </if>
+            <if test="nomeSort != null">
+                e.nome ${nomeSort},
+            </if>
+            <if test="cognomeSort != null">
+                e.cognome ${cognomeSort},
+            </if>
+            <if test="codiceFiscaleSort != null">
+                e.codiceFiscale ${codiceFiscaleSort},
+            </if>
+
+        </if>
+        e.id ASC
+    </select>
+
+    <select id="GET_ALL_UTENTI_FILTERED_COUNT">
+        SELECT count(*)
+        FROM UtenteEntity e
+        WHERE
+        <if test="username != null">
+            <if test="usernameSearchType.equals('LIKE')">
+                lower(e.username) LIKE concat(lower(:username), '%') AND
+            </if>
+            <if test="usernameSearchType.equals('EQUALS')">
+                lower(e.username) = lower(:username) AND
+            </if>
+        </if>
+        <if test="nome != null">
+            <if test="nomeSearchType.equals('LIKE')">
+                lower(e.nome) LIKE concat(lower(:nome), '%') AND
+            </if>
+            <if test="nomeSearchType.equals('EQUALS')">
+                lower(e.nome) = lower(:nome) AND
+            </if>
+        </if>
+        <if test="cognome != null">
+            <if test="cognomeSearchType.equals('LIKE')">
+                lower(e.cognome) LIKE concat(lower(:cognome), '%') AND
+            </if>
+            <if test="cognomeSearchType.equals('EQUALS')">
+                lower(e.cognome) = lower(:cognome) AND
+            </if>
+        </if>
+        <if test="codiceFiscale != null">
+            <if test="codiceFiscaleSearchType.equals('LIKE')">
+                lower(e.codiceFiscale) LIKE concat(lower(:codiceFiscale), '%') AND
+            </if>
+            <if test="codiceFiscaleSearchType.equals('EQUALS')">
+                lower(e.codiceFiscale) = lower(:codiceFiscale) AND
+            </if>
+        </if>
+        1=1
+    </select>
+
+</mapper>

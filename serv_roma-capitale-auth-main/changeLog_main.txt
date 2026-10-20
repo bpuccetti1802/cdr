@@ -1,0 +1,78 @@
+
+# Change Log - Branch: main
+
+Push del: 2025-10-13 21:25:22Z
+Autore: davidetravaglini
+Descrizione: Rilascio nuova versione
+
+---
+
+Push del: 2026-02-09 18:04:38Z
+Autore: lorenzobaldi
+Descrizione: deploy nuova versione
+
+---
+
+
+Push del: 2026-02-09 18:31:08Z
+Autore: lorenzobaldi
+Descrizione: fix cookie domain produzione deploy
+
+---
+
+
+Push del: 2026-02-28 15:46:25Z
+Autore: jenkinsadm
+Descrizione: ultima versione in prod
+
+---
+
+
+Push del: 2026-03-02 08:27:15Z
+Autore: jenkinsadm
+Descrizione: aggiornamento common
+
+---
+
+
+Push del: 2026-03-02 18:05:21Z
+Autore: davidepanettieri
+Descrizione: Fix redirect servizioScelto IAM FO
+
+---
+
+
+Push del: 2026-03-04 15:59:36Z
+Autore: davidepanettieri
+Descrizione: Aggiunto getUtenteAndAbilitazioniByCodFiscale per IAM
+
+---
+
+
+Push del: 2026-03-06 19:42:48Z
+Autore: davidepanettieri
+Descrizione: merge superUser e fix decodifica
+
+---
+
+
+Push del: 2026-03-13 19:17:18Z
+Autore: davidepanettieri
+Descrizione: fix logout IAM prod
+
+---
+
+
+Push del: 2026-03-16 12:35:12Z
+Autore: davidepanettieri
+Descrizione: fix decodifica idClient
+
+---
+
+
+Push del: 2026-03-16 18:32:18Z
+Autore: davidepanettieri
+Descrizione: aggiunti scopes tributi_fo
+
+---
+

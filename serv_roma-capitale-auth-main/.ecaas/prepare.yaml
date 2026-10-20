@@ -1,0 +1,39 @@
+- task:
+    name: define_repo_name
+    run:
+      exec: export repo_name="rcms-ecaas"
+
+- task:
+    name: define_group_name
+    run:
+      exec: export group_name="pipelines"
+
+- task:
+    name: define_template_location
+    run:
+      exec: export repo_url="https://gitlab.ecaas.datacenter.comune.roma/rc-ms-platform/$group_name/$repo_name.git"
+   
+- task:
+    name: define_target_repo
+    run:
+      exec: export target_repo="" #specify -b branch-name (default value: master)
+
+- task:
+    name: define_ecaas_project_branch
+    run:
+      exec: export ECAAS_PROJECT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+   
+- task:
+    name: clone_pipeline_template 
+    run:
+      exec: cd $ECAAS_PROJECT_DIR && git config --global http.sslverify false && git clone $target_repo $repo_url
+
+- task:
+    name: copy_pipeline_files 
+    run:
+      exec: cp -a -f $repo_name/.ecaas/* .ecaas  
+      
+- task: 
+    name: end 
+
+    

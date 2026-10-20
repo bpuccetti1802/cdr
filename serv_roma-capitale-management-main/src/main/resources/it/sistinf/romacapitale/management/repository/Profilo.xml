@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Profilo">
+
+    <select id="GET_ALL_PROFILI_FILTERED">
+        SELECT e
+        FROM ProfiloEntity e
+        WHERE
+        <if test="special == null">
+        <if test="descrizione != null">
+            <if test="descrizioneSearchType.equals('LIKE')">
+                lower(e.descrizione) LIKE concat(lower(:descrizione), '%') AND
+            </if>
+            <if test="descrizioneSearchType.equals('EQUALS')">
+                lower(e.descrizione) = lower(:descrizione) AND
+            </if>
+        </if>
+        <if test="idProfilo != null">
+            e.id = : idProfilo AND
+        </if>
+        <if test="cdAmbito != null">
+            <if test="cdAmbitoSearchType.equals('EQUALS')">
+                lower(e.cdAmbito) = lower(:cdAmbito) AND
+            </if>
+        </if>
+        <if test="cdApplicazione != null">
+            <if test="cdApplicazioneSearchType.equals('EQUALS')">
+                lower(e.cdApplicazione) = lower(:cdApplicazione) AND
+            </if>
+        </if>
+        <if test="fgProfiloDefault != null">
+            e.fgProfiloDefault = :fgProfiloDefault AND
+        </if>
+        <if test="timestampInserimentoDa != null">
+            CAST(e.timestampInserimento as date) >= CAST( :timestampInserimentoDa AS date ) AND
+        </if>
+        <if test="timestampInserimentoA != null">
+            cast(e.timestampInserimento as date) &lt;= CAST( :timestampInserimentoA AS date ) AND
+        </if>
+        </if>
+        <if test="special != null">
+            lower(CAST(e.id AS string)) LIKE concat('%', lower(:special), '%') OR
+            lower(e.cdAmbito) LIKE concat('%', lower(:special), '%') OR
+            lower(e.cdApplicazione) LIKE concat('%', lower(:special), '%') OR
+            lower(e.descrizione) LIKE concat('%', lower(:special), '%') AND
+        </if>
+        1=1
+        ORDER BY
+        <if test="sort != null">
+            <if test="descrizioneSort != null">
+                e.descrizione ${descrizioneSort},
+            </if>
+        </if>
+        e.id ASC
+    </select>
+
+    <select id="GET_ALL_PROFILI_FILTERED_COUNT">
+        SELECT count(*)
+        FROM ProfiloEntity e
+        WHERE
+        <if test="special == null">
+            <if test="descrizione != null">
+                <if test="descrizioneSearchType.equals('LIKE')">
+                    lower(e.descrizione) LIKE concat(lower(:descrizione), '%') AND
+                </if>
+                <if test="descrizioneSearchType.equals('EQUALS')">
+                    lower(e.descrizione) = lower(:descrizione) AND
+                </if>
+            </if>
+            <if test="idProfilo != null">
+                e.id = : idProfilo AND
+            </if>
+            <if test="cdAmbito != null">
+                <if test="cdAmbitoSearchType.equals('EQUALS')">
+                    lower(e.cdAmbito) = lower(:cdAmbito) AND
+                </if>
+            </if>
+            <if test="cdApplicazione != null">
+                <if test="cdApplicazioneSearchType.equals('EQUALS')">
+                    lower(e.cdApplicazione) = lower(:cdApplicazione) AND
+                </if>
+            </if>
+            <if test="fgProfiloDefault != null">
+                e.fgProfiloDefault = :fgProfiloDefault AND
+            </if>
+            <if test="timestampInserimentoDa != null">
+                CAST(e.timestampInserimento as date) >= CAST( :timestampInserimentoDa AS date ) AND
+            </if>
+            <if test="timestampInserimentoA != null">
+                cast(e.timestampInserimento as date) &lt;= CAST( :timestampInserimentoA AS date ) AND
+            </if>
+        </if>
+        <if test="special != null">
+            lower(CAST(e.id AS string)) LIKE concat('%', lower(:special), '%') OR
+            lower(e.cdAmbito) LIKE concat('%', lower(:special), '%') OR
+            lower(e.cdApplicazione) LIKE concat('%', lower(:special), '%') OR
+            lower(e.descrizione) LIKE concat('%', lower(:special), '%') AND
+        </if>
+        1=1
+    </select>
+
+    <select id="GET_PROFILI_BY_APPLICAZIONE">
+        SELECT e
+        FROM ProfiloEntity e
+        WHERE
+        e.cdAmbito = :cdAmbito AND
+        e.cdApplicazione = :cdApplicazione
+        ORDER BY
+        e.cdRuoloProfilo ASC
+    </select>
+
+</mapper>

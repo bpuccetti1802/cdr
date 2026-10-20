@@ -1,0 +1,57 @@
+# Change Log - Branch: main
+
+Push del: 2026-02-28 17:58:22Z
+Autore: jenkinsadm
+Descrizione: Installazione in produzione
+
+---
+
+
+Push del: 2026-03-02 15:08:00Z
+Autore: jenkinsadm
+Descrizione: sembra non sostituire le env
+
+---
+
+
+Push del: 2026-03-03 17:43:41Z
+Autore: davidetravaglini
+Descrizione: Rimossa propagazione cookie
+
+---
+
+
+Push del: 2026-03-06 14:15:21Z
+Autore: davidetravaglini
+Descrizione: Merge from develop
+
+---
+
+
+Push del: 2026-03-18 18:36:28Z
+Autore: davidetravaglini
+Descrizione: Rimosso origin dagli headers
+
+---
+
+
+Push del: 2026-03-18 18:52:36Z
+Autore: davidetravaglini
+Descrizione: rideploy
+
+---
+
+
+Push del: 2026-03-18 18:57:29Z
+Autore: davidetravaglini
+Descrizione: Aumentata versione management integration
+
+---
+
+
+Push del: 2026-03-24 14:11:03Z
+Autore: salvatoreleonardopizzuto
+Descrizione: Aggiornamento dipendenza common
+
+---
+

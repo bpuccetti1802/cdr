@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Applicazione">
+
+    <select id="GET_ALL_APPLICAZIONI_FILTERED">
+        SELECT e
+        FROM ApplicazioneEntity e
+        WHERE
+        <if test="special == null">
+            <if test="cdAmbito != null">
+                <if test="cdAmbitoSearchType.equals('EQUALS')">
+                    lower(e.id.cdAmbito) = lower(:cdAmbito) AND
+                </if>
+            </if>
+            <if test="cdApplicazione != null">
+                <if test="cdApplicazioneSearchType.equals('EQUALS')">
+                    lower(e.id.cdApplicazione) = lower(:cdApplicazione) AND
+                </if>
+            </if>
+            <if test="cdCloud != null">
+                <if test="cdCloudSearchType.equals('EQUALS')">
+                    lower(e.cdCloud) = lower(:cdCloud) AND
+                </if>
+            </if>
+            <if test="dsService != null">
+                <if test="dsServiceSearchType.equals('EQUALS')">
+                    lower(e.dsService) = lower(:dsService) AND
+                </if>
+            </if>
+            <if test="dsLabel != null">
+                <if test="dsLabelSearchType.equals('EQUALS')">
+                    lower(e.dsLabel) = lower(:dsLabel) AND
+                </if>
+            </if>
+            <if test="dsApplicazione != null">
+                <if test="dsApplicazioneSearchType.equals('EQUALS')">
+                    lower(e.dsApplicazione) = lower(:dsApplicazione) AND
+                </if>
+            </if>
+            <if test="nmOrdine != null">
+                <if test="nmOrdineSearchType.equals('EQUALS')">
+                    lower(e.nmOrdine) = lower(:nmOrdine) AND
+                </if>
+            </if>
+            <if test="idApplicazioneSa != null">
+                <if test="idApplicazioneSaSearchType.equals('EQUALS')">
+                    lower(e.idApplicazioneSa) = lower(:idApplicazioneSa) AND
+                </if>
+            </if>
+            <if test="cdAmbitoPadre != null">
+                <if test="cdAmbitoPadreSearchType.equals('EQUALS')">
+                    lower(e.applicazionePadre.id.cdAmbito) = lower(:cdAmbitoPadre) AND
+                </if>
+            </if>
+            <if test="cdApplicazionePadre != null">
+                <if test="cdApplicazionePadreSearchType.equals('EQUALS')">
+                    lower(e.applicazionePadre.id.cdApplicazione) = lower(:cdApplicazionePadre) AND
+                </if>
+            </if>
+            <if test="dsContextRoot != null">
+                e.dsContextRoot = :dsContextRoot AND
+            </if>
+        </if>
+        <if test="special != null">
+            lower(e.id.cdAmbito) LIKE concat('%', lower(:special), '%') OR
+            lower(e.id.cdApplicazione) LIKE concat('%', lower(:special), '%') OR
+            lower(e.dsApplicazione) LIKE concat('%', lower(:special), '%') AND
+        </if>
+        1=1
+        ORDER BY
+        <if test="sort != null">
+            <if test="keySort != null">
+                e.id ${keySort},
+            </if>
+            <if test="cdAmbitoSort != null">
+                e.ambito.id ${cdAmbitoSort},
+            </if>
+        </if>
+        e.id ASC
+    </select>
+
+    <select id="GET_ALL_APPLICAZIONI_FILTERED_COUNT">
+        SELECT count(*)
+        FROM ApplicazioneEntity e
+        WHERE
+        <if test="special == null">
+            <if test="cdAmbito != null">
+                <if test="cdAmbitoSearchType.equals('EQUALS')">
+                    lower(e.id.cdAmbito) = lower(:cdAmbito) AND
+                </if>
+            </if>
+            <if test="cdApplicazione != null">
+                <if test="cdApplicazioneSearchType.equals('EQUALS')">
+                    lower(e.id.cdApplicazione) = lower(:cdApplicazione) AND
+                </if>
+            </if>
+            <if test="cdCloud != null">
+                <if test="cdCloudSearchType.equals('EQUALS')">
+                    lower(e.cdCloud) = lower(:cdCloud) AND
+                </if>
+            </if>
+            <if test="dsService != null">
+                <if test="dsServiceSearchType.equals('EQUALS')">
+                    lower(e.dsService) = lower(:dsService) AND
+                </if>
+            </if>
+            <if test="dsLabel != null">
+                <if test="dsLabelSearchType.equals('EQUALS')">
+                    lower(e.dsLabel) = lower(:dsLabel) AND
+                </if>
+            </if>
+            <if test="dsApplicazione != null">
+                <if test="dsApplicazioneSearchType.equals('EQUALS')">
+                    lower(e.dsApplicazione) = lower(:dsApplicazione) AND
+                </if>
+            </if>
+            <if test="nmOrdine != null">
+                <if test="nmOrdineSearchType.equals('EQUALS')">
+                    lower(e.nmOrdine) = lower(:nmOrdine) AND
+                </if>
+            </if>
+            <if test="idApplicazioneSa != null">
+                <if test="idApplicazioneSaSearchType.equals('EQUALS')">
+                    lower(e.idApplicazioneSa) = lower(:idApplicazioneSa) AND
+                </if>
+            </if>
+            <if test="cdAmbitoPadre != null">
+                <if test="cdAmbitoPadreSearchType.equals('EQUALS')">
+                    lower(e.applicazionePadre.id.cdAmbito) = lower(:cdAmbitoPadre) AND
+                </if>
+            </if>
+            <if test="cdApplicazionePadre != null">
+                <if test="cdApplicazionePadreSearchType.equals('EQUALS')">
+                    lower(e.applicazionePadre.id.cdApplicazione) = lower(:cdApplicazionePadre) AND
+                </if>
+            </if>
+            <if test="dsContextRoot != null">
+                e.dsContextRoot = :dsContextRoot AND
+            </if>
+        </if>
+        <if test="special != null">
+            lower(e.id.cdAmbito) LIKE concat('%', lower(:special), '%') OR
+            lower(e.id.cdApplicazione) LIKE concat('%', lower(:special), '%') OR
+            lower(e.dsApplicazione) LIKE concat('%', lower(:special), '%') AND
+        </if>
+        1=1
+    </select>
+
+    <select id="GET_ALL_APPLICAZIONI_FIGLIE">
+        SELECT e
+        FROM ApplicazioneEntity e
+        WHERE
+        e.cdAmbitoPadre = :cdAmbito AND
+        e.cdApplicazionePadre = :cdApplicazione
+    </select>
+
+</mapper>

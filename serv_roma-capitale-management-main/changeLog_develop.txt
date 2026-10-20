@@ -1,0 +1,359 @@
+
+# Change Log - Branch: develop
+
+Push del: 2025-09-18 09:56:25Z
+Autore: davidetravaglini
+Descrizione: Descrizione non inserita
+
+---
+
+Push del: 2025-09-18 10:13:57Z
+Autore: davidetravaglini
+Descrizione: Descrizione non inserita
+
+---
+
+Push del: 2025-09-18 10:16:06Z
+Autore: davidetravaglini
+Descrizione: Descrizione non inserita
+
+---
+
+Push del: 2025-09-18 10:52:15Z
+Autore: davidetravaglini
+Descrizione: Descrizione non inserita
+
+---
+
+Push del: 2025-09-18 17:04:49Z
+Autore: robertdanieleavorschi
+Descrizione: Allineamento ambienti 0.0.6
+
+---
+
+Push del: 2025-09-18 17:10:12Z
+Autore: robertdanieleavorschi
+Descrizione: Allineamento ambienti 0.0.6
+
+---
+
+Push del: 2025-09-18 17:14:38Z
+Autore: robertdanieleavorschi
+Descrizione: Allineamento ambienti 0.0.6
+
+---
+
+Push del: 2025-09-18 17:17:26Z
+Autore: robertdanieleavorschi
+Descrizione: Allineamento ambienti 0.0.6
+
+---
+
+Push del: 2025-09-18 17:20:59Z
+Autore: robertdanieleavorschi
+Descrizione: Allineamento ambienti 0.0.6
+
+---
+
+Push del: 2025-09-18 17:28:54Z
+Autore: robertdanieleavorschi
+Descrizione: inserito file settings per pipeline rancher
+
+---
+
+Push del: 2025-09-23 15:30:21Z
+Autore: robertdanieleavorschi
+Descrizione: aggiornato configmap
+
+---
+
+Push del: 2025-09-30 12:47:09Z
+Autore: davidepanettieri
+Descrizione: rilascio per selezione struttura
+
+---
+
+Push del: 2025-10-08 09:42:55Z
+Autore: tizianosapienza
+Descrizione: Implementazione Gestione Avvisi
+
+---
+
+Push del: 2025-10-09 15:41:14Z
+Autore: lucianalexandrulemnariu
+Descrizione: aggiungo cors su app.properties
+
+---
+
+Push del: 2025-10-09 16:00:29Z
+Autore: lucianalexandrulemnariu
+Descrizione: fix security
+
+---
+
+Push del: 2025-10-09 16:48:03Z
+Autore: lucianalexandrulemnariu
+Descrizione: fixin rollin
+
+---
+
+Push del: 2025-10-28 11:50:35Z
+Autore: salvatoreleonardopizzuto
+Descrizione: Implementate liste ruoli e utenti per ruolo
+
+---
+
+Push del: 2025-11-10 18:51:57Z
+Autore: salvatoreleonardopizzuto
+Descrizione: Implementata funzionalità recupero lista visibilità utente
+
+---
+
+Push del: 2025-11-18 16:37:34Z
+Autore: alessandrotaormina
+Descrizione: triggerpipe per nuove credenziali nel secret
+
+---
+
+Push del: 2025-11-27 15:38:41Z
+Autore: jenkinsadm
+Descrizione: swagger/openAPI
+
+
+---
+
+Push del: 2025-12-11 19:07:05Z
+Autore: robertdanieleavorschi
+Descrizione: aggiunta nuova configurazione secret cosap
+
+---
+
+Push del: 2025-12-17 12:14:16Z
+Autore: robertdanieleavorschi
+Descrizione: corretta estrazione funzioni operatore
+
+---
+
+Push del: 2026-01-07 07:16:01Z
+Autore: jenkinsadm
+Descrizione: inserite nuove variabili tab-sir
+
+---
+
+
+Push del: 2026-01-13 10:11:13Z
+Autore: robertdanieleavorschi
+Descrizione: adeguata chiamata funzioni operatore per tributi
+
+---
+
+
+Push del: 2026-01-15 18:54:27Z
+Autore: davidepanettieri
+Descrizione: aggiornamento management-integration
+
+---
+
+
+Push del: 2026-02-09 12:12:08Z
+Autore: martaleonardi
+Descrizione: Riavvio
+
+---
+
+
+Push del: 2026-02-10 17:58:01Z
+Autore: davidepanettieri
+Descrizione: merge abilitazioni-struttura-get
+
+---
+
+
+Push del: 2026-02-13 21:21:59Z
+Autore: jenkinsadm
+Descrizione: Deploy solo su rancher per adeguamento roma-capitale-env
+
+---
+
+
+Push del: 2026-02-13 21:47:38Z
+Autore: jenkinsadm
+Descrizione: fix error
+
+---
+
+
+Push del: 2026-02-13 23:58:33Z
+Autore: jenkinsadm
+Descrizione: fix
+
+---
+
+
+Push del: 2026-02-14 00:13:37Z
+Autore: jenkinsadm
+Descrizione: fix
+
+---
+
+
+Push del: 2026-02-16 08:16:09Z
+Autore: jenkinsadm
+Descrizione: Aggiornamento dependencies e configurazione
+
+---
+
+
+Push del: 2026-02-16 12:58:45Z
+Autore: davidepanettieri
+Descrizione: fix abilitazioni list
+
+---
+
+
+Push del: 2026-02-17 18:07:43Z
+Autore: davidepanettieri
+Descrizione: Fix list abilitazioni
+
+---
+
+
+Push del: 2026-02-18 21:24:13Z
+Autore: davidetravaglini
+Descrizione: Aggiunto servizio internal
+
+---
+
+
+Push del: 2026-02-19 12:37:24Z
+Autore: francescomurador
+Descrizione: spostamento archiviazione su internal
+
+---
+
+
+Push del: 2026-02-19 13:02:21Z
+Autore: francescomurador
+Descrizione: NUOVE API SPROTETTE
+
+---
+
+
+Push del: 2026-02-19 13:47:53Z
+Autore: davidepanettieri
+Descrizione: redeploy
+
+---
+
+
+Push del: 2026-02-23 11:17:57Z
+Autore: davidepanettieri
+Descrizione: aggiunte crud abilitazione
+
+---
+
+
+Push del: 2026-02-23 11:55:37Z
+Autore: davidepanettieri
+Descrizione: fix sequence per abilitazione
+
+---
+
+
+Push del: 2026-02-26 15:27:31Z
+Autore: davidepanettieri
+Descrizione: deploy nuove implementazioni CRUD
+
+---
+
+
+Push del: 2026-02-27 14:29:06Z
+Autore: davidepanettieri
+Descrizione: Aggiunto filtro special su list profilo
+
+---
+
+
+Push del: 2026-02-28 17:04:31Z
+Autore: jenkinsadm
+Descrizione: ultima versione in prod
+
+---
+
+
+Push del: 2026-03-01 23:14:04Z
+Autore: jenkinsadm
+Descrizione: aggiornamento dipendenze per cache
+
+---
+
+
+Push del: 2026-03-03 20:25:03Z
+Autore: davidepanettieri
+Descrizione: Aggiunto getUtenteAndAbilitazioniByCodFiscale per IAM
+
+---
+
+
+Push del: 2026-03-05 17:37:56Z
+Autore: francescomurador
+Descrizione: rilascio utenti Pietro Aceto
+
+---
+
+
+Push del: 2026-03-05 18:16:39Z
+Autore: davidepanettieri
+Descrizione: deploy crud utente
+
+---
+
+
+Push del: 2026-03-05 18:30:01Z
+Autore: davidepanettieri
+Descrizione: deploy management
+
+---
+
+
+Push del: 2026-03-12 14:24:18Z
+Autore: davidepanettieri
+Descrizione: deploy crud management
+
+---
+
+
+Push del: 2026-03-19 16:26:35Z
+Autore: davidepanettieri
+Descrizione: fix login eidas sportelli fo
+
+---
+
+
+Push del: 2026-03-19 18:08:29Z
+Autore: francescomurador
+Descrizione: cache utils per la manutenzione
+
+---
+
+
+Push del: 2026-03-20 11:56:55Z
+Autore: robertdanieleavorschi
+Descrizione: riavvio ambiente
+
+---
+
+
+Push del: 2026-03-20 12:17:13Z
+Autore: robertdanieleavorschi
+Descrizione: riavvio
+
+---
+
+
+Push del: 2026-03-20 16:34:46Z
+Autore: francescomurador
+Descrizione: crud menù e crud visibilità/struttura
+
+---
+

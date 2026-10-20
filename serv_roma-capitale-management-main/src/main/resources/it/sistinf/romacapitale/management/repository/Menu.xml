@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="MENU">
+
+    <select id="GET_ALL_MENU_FILTERED">
+        SELECT e
+        FROM MenuEntity e
+        WHERE
+        <if test="special == null">
+            <if test="id != null">
+                e.id = :id AND
+            </if>
+            <if test="cdMenu != null">
+                <if test="cdMenuSearchType.equals('LIKE')">
+                    lower(e.cdMenu) LIKE concat(lower(:cdMenu), '%') AND
+                </if>
+                <if test="cdMenuSearchType.equals('EQUALS')">
+                    lower(e.cdMenu) = lower(:cdMenu) AND
+                </if>
+            </if>
+            <if test="dsMenu != null">
+                <if test="dsMenuSearchType.equals('LIKE')">
+                    lower(e.dsMenu) LIKE concat(lower(:dsMenu), '%') AND
+                </if>
+                <if test="dsMenuSearchType.equals('EQUALS')">
+                    lower(e.dsMenu) = lower(:dsMenu) AND
+                </if>
+            </if>
+        </if>
+        <if test="special != null">
+            lower(CAST(e.id AS string)) LIKE concat('%', lower(:special), '%') OR
+            lower(e.cdMenu) LIKE concat('%', lower(:special), '%') OR
+            lower(e.dsMenu) LIKE concat('%', lower(:special), '%') AND
+        </if>
+        1=1
+        ORDER BY
+        <if test="sort != null">
+            <if test="cdMenu != null">
+                e.cdMenu ${cdMenuSort},
+            </if>
+            <if test="dsMenuSort != null">
+                e.dsMenu ${dsMenuSort},
+            </if>
+        </if>
+        e.id ASC
+    </select>
+
+    <select id="GET_ALL_MENU_FILTERED_COUNT">
+        SELECT count(*)
+        FROM MenuEntity e
+        WHERE
+        <if test="special == null">
+            <if test="id != null">
+                e.id = :id AND
+            </if>
+            <if test="cdMenu != null">
+                <if test="cdMenuSearchType.equals('LIKE')">
+                    lower(e.cdMenu) LIKE concat(lower(:cdMenu), '%') AND
+                </if>
+                <if test="cdMenuSearchType.equals('EQUALS')">
+                    lower(e.cdMenu) = lower(:cdMenu) AND
+                </if>
+            </if>
+            <if test="dsMenu != null">
+                <if test="dsMenuSearchType.equals('LIKE')">
+                    lower(e.dsMenu) LIKE concat(lower(:dsMenu), '%') AND
+                </if>
+                <if test="dsMenuSearchType.equals('EQUALS')">
+                    lower(e.dsMenu) = lower(:dsMenu) AND
+                </if>
+            </if>
+        </if>
+        <if test="special != null">
+            lower(CAST(e.id AS string)) LIKE concat('%', lower(:special), '%') OR
+            lower(e.cdMenu) LIKE concat('%', lower(:special), '%') OR
+            lower(e.dsMenu) LIKE concat('%', lower(:special), '%') AND
+        </if>
+        1=1
+    </select>
+</mapper>

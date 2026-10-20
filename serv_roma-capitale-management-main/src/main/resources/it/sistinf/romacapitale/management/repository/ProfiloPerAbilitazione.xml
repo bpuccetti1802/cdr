@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="UtentePerProfilo">
+
+    <delete id="DELETE_ALL_PROFILO_PER_ABILITAZIONE_BY_ID_PROFILO">
+        DELETE
+        FROM ProfiloPerAbilitazioneEntity e
+        WHERE
+        e.id.idProfilo = :idProfilo
+    </delete>
+
+    <select id="GET_ALL_PROFILO_PER_ABILITAZIONE_BY_PROFILO_LIST">
+        SELECT e
+        FROM ProfiloPerAbilitazioneEntity e
+        WHERE
+        e.id.idProfilo in <foreach item="item" index="index" collection="idProfiloList" open="(" separator="," close=")">${item}</foreach>
+    </select>
+
+</mapper>

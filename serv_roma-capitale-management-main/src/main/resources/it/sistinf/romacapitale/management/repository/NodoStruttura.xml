@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="NodoStruttura">
+
+    <select id="GET_NODO_STRUTTURA_BY_COD_NODO">
+        SELECT e
+        FROM NodoStrutturaEntity e
+        WHERE
+        lower(e.cdNodo) = lower(:cdNodo)
+    </select>
+
+    <select id="GET_NODO_STRUTTURA_BY_NOME_NODO">
+        SELECT e
+        FROM NodoStrutturaEntity e
+        WHERE
+        lower(e.nmNodo) = lower(:nmNodo)
+    </select>
+
+    <select id="GET_NODO_STRUTTURA_BY_ID_STRUTTURA">
+        SELECT e
+        FROM NodoStrutturaEntity e
+        WHERE
+        e.idStruttura = :idStruttura
+    </select>
+
+    <select id="GET_ALL_NODO_STRUTTURA_FILTERED">
+        SELECT DISTINCT e
+        FROM NodoStrutturaEntity e
+        WHERE
+        <if test="id != null">
+            e.id = :id AND
+        </if>
+        <if test="idStruttura != null">
+            e.idStruttura = :idStruttura AND
+        </if>
+        <if test="idNodoPadre != null">
+            e.idNodoPadre = :idNodoPadre AND
+        </if>
+        <if test="cdNodo != null">
+            <if test="cdNodoSearchType.equals('LIKE')">
+                lower(e.cdNodo) LIKE concat(lower(:cdNodo), '%') AND
+            </if>
+            <if test="cdNodoSearchType.equals('EQUALS')">
+                lower(e.cdNodo) = lower(:cdNodo) AND
+            </if>
+        </if>
+        <if test="nmNodo != null">
+            <if test="nmNodoSearchType.equals('LIKE')">
+                lower(e.nmNodo) LIKE concat(lower(:nmNodo), '%') AND
+            </if>
+            <if test="nmNodoSearchType.equals('EQUALS')">
+                lower(e.nmNodo) = lower(:nmNodo) AND
+            </if>
+        </if>
+        <if test="dsNodo != null">
+            <if test="dsNodoSearchType.equals('LIKE')">
+                lower(e.dsNodo) LIKE concat(lower(:dsNodo), '%') AND
+            </if>
+            <if test="dsNodoSearchType.equals('EQUALS')">
+                lower(e.dsNodo) = lower(:dsNodo) AND
+            </if>
+        </if>
+        1=1
+        ORDER BY
+        <if test="sort != null">
+            <if test="cdNodoSort != null">
+                e.cdNodo ${cdNodoSort},
+            </if>
+            <if test="nmNodoSort != null">
+                e.nmNodo ${nmNodoSort},
+            </if>
+            <if test="dsNodoSort != null">
+                e.dsNodo ${dsNodoSort},
+            </if>
+        </if>
+        e.id ASC
+    </select>
+
+    <select id="GET_ALL_NODO_STRUTTURA_FILTERED_COUNT">
+        SELECT count(*)
+        FROM NodoStrutturaEntity e
+        WHERE
+        <if test="id != null">
+            e.id = :id AND
+        </if>
+        <if test="idStruttura != null">
+            e.idStruttura = :idStruttura AND
+        </if>
+        <if test="idNodoPadre != null">
+            e.idNodoPadre = :idNodoPadre AND
+        </if>
+        <if test="cdNodo != null">
+            <if test="cdNodoSearchType.equals('LIKE')">
+                lower(e.cdNodo) LIKE concat(lower(:cdNodo), '%') AND
+            </if>
+            <if test="cdNodoSearchType.equals('EQUALS')">
+                lower(e.cdNodo) = lower(:cdNodo) AND
+            </if>
+        </if>
+        <if test="nmNodo != null">
+            <if test="nmNodoSearchType.equals('LIKE')">
+                lower(e.nmNodo) LIKE concat(lower(:nmNodo), '%') AND
+            </if>
+            <if test="nmNodoSearchType.equals('EQUALS')">
+                lower(e.nmNodo) = lower(:nmNodo) AND
+            </if>
+        </if>
+        <if test="dsNodo != null">
+            <if test="dsNodoSearchType.equals('LIKE')">
+                lower(e.dsNodo) LIKE concat(lower(:dsNodo), '%') AND
+            </if>
+            <if test="dsNodoSearchType.equals('EQUALS')">
+                lower(e.dsNodo) = lower(:dsNodo) AND
+            </if>
+        </if>
+        1=1
+    </select>
+</mapper>
