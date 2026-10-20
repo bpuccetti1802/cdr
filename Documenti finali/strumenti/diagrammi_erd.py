@@ -135,14 +135,14 @@ TABELLE = [
         ('PK', 'ID_DOMINIO_SIPO'),
         ('', 'ID_DOMINIO + NM_DOMINIO (il dominio)'),
         ('', 'SCHEMA_SIPO (facoltativo)'),
-        ('', 'TABELLA_SIPO, CAMPO_SIPO'),
+        ('', 'TABELLA_SIPO (tabella di decodifica)'),
         ('UK', 'DECODIFICA — colonna virtuale')],
      'dove vive in SIPO un dominio ANSC'),
-    # ─────────── v3.38: la numerazione comunale, ereditata da Side, più le sequence per
-    # registro e anno decise dal committente. Le sequence non sono tabelle: si disegnano in
+    # ─────────── v3.38: la numerazione comunale, ereditata da Side, più la sequence decisa dal
+    # committente. v3.41: una sola serie per anno, senza registro, numero a sei cifre. Le sequence non sono tabelle: si disegnano in
     # grigio, come ALLEGATO, per dire che non sono dello stesso genere.
     (1, 'op2', 'blu', 'PRENOTAZIONE_ATTI', [
-        ('PK', 'id_prenotazione_atti'), ('', 'ty_evento (registro), nr_anno_atto'),
+        ('PK', 'id_prenotazione_atti'), ('', 'nr_anno_atto (la serie)'),
         ('', 'nr_id_ansc_da_prenotare'),
         ('', 'cd_operatore_ e ts_prenotazione')],
      'la richiesta di numeri — nomi di Side'),
@@ -152,9 +152,9 @@ TABELLE = [
         ('', 'cd_stato_numero_prenotato (1-4)'),
         ('', 'id_ansc_collegato, id_atto_sipo')],
      'ogni numero staccato e la sua sorte'),
-    (3, 'op2', 'grigio', 'SEQ_NUM_COMUNALE_r_aaaa', [
-        ('', 'una per registro e per anno'),
-        ('', 'START 1 · MAXVALUE 99999'),
+    (3, 'op2', 'grigio', 'SEQ_NUM_COMUNALE_aaaa', [
+        ('', 'una per anno, tutti i registri'),
+        ('', 'START 1 · MAXVALUE 999999'),
         ('', 'NOCACHE · ORDER · NOCYCLE'),
         ('', 'creata in anticipo da un job')],
      'la serie: riparte ogni anno'),
@@ -187,7 +187,7 @@ LEGAMI = [
     ('ANSC_CFG_CAMPO', 'b', ['h:2-3b'], 'LOGICHE_DI_SCELTA', 'b', False),
     ('ANSC_LOG_AUDIT', 's', [], 'ANSC_STATO_ATTO', 'd', False),
     ('DATI_ATTO_ESTERNO', 's', [], 'PRENOTAZIONE_ATTI', 'd', False),
-    ('SEQ_NUM_COMUNALE_r_aaaa', 's', [], 'DATI_ATTO_ESTERNO', 'd', True),
+    ('SEQ_NUM_COMUNALE_aaaa', 's', [], 'DATI_ATTO_ESTERNO', 'd', True),
     # riferimenti per valore, senza vincolo di integrità
     ('ANSC_CFG_UC', 'd', [], 'ANSC_ANA_UC', 's', True),
     ('ALLEGATI_USECASE', 'g', ['v:2-3'], 'ANSC_ANA_UC', 'd', True),

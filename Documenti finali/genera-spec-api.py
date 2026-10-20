@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Genera SPEC_API_Integrazione-ANSC_v0.2.docx dai contratti OpenAPI dei pod.
+"""Genera SPEC_API_Integrazione-ANSC_v0.3.docx dai contratti OpenAPI dei pod.
 
 Il documento è un artefatto DERIVATO: la fonte autoritativa sono i file .yaml.
 Per aggiornarlo si modificano i contratti e si riesegue questo script.
@@ -13,7 +13,7 @@ from docx.oxml.ns import qn
 
 BASE = '/Users/minimac/Desktop/Comune di Roma'
 TEMPLATE = os.path.join(BASE, 'Template documentale/template_DAD_roma-capitale.docx')
-OUT = os.path.join(BASE, 'Documenti finali/SPEC_API_Integrazione-ANSC_v0.2.docx')
+OUT = os.path.join(BASE, 'Documenti finali/SPEC_API_Integrazione-ANSC_v0.3.docx')
 DATA = os.path.join(BASE, 'Documenti finali')
 
 POD = [
@@ -31,7 +31,7 @@ POD = [
      'un open point.'),
     ('num-ansc-sipo', 'Servizio della numerazione comunale', 'ansc-numerazione-v1.yaml',
      'Deployment stateless, due repliche: la serializzazione degli stacchi sta nella base dati, '
-     'non nel processo. Governa la serie dei numeri comunali per registro e anno. Non parla con '
+     'non nel processo. Governa la serie annuale dei numeri comunali, unica per tutti i registri. Non parla con '
      'ANSC e non detiene credenziali verso la piattaforma.'),
 ]
 
@@ -79,8 +79,8 @@ SCHEDA = {
           'servizi di demand e PMO per le pubbliche amministrazioni locali - terza edizione - '
           'ID 2610 - Lotti 1',
     'Progetto': 'Integrazione SIPO – ANSC',
-    'Data consegna': '11/10/2026',
-    'Versione': '0.2',
+    'Data consegna': '15/10/2026',
+    'Versione': '0.3',
     'Documento': '[codice documento da assegnare]',
     'Codice Area Applicativa': '06',
     'Codice Asset': '[da assegnare]',
@@ -112,6 +112,16 @@ if len(storia.rows) > 1 and len(storia.rows[0].cells) == 4:
                                '(num-ansc-sipo), introdotto dall’analisi v3.39: stacco dei numeri '
                                'dalla serie per registro e anno, registrazione a posteriori, '
                                'stato dei numeri e lettura delle serie con i loro buchi.']):
+        set_par(c.paragraphs[0], v)
+    nuova3 = copy.deepcopy(nuova)
+    nuova.addnext(nuova3)
+    r3 = _Row(nuova3, storia)
+    for c, v in zip(r3.cells, ['15/10/2026', '0.3', 'Contratto della numerazione comunale',
+                               'Allineato all’analisi v3.41: il numero comunale è di sei cifre e '
+                               'la serie è una per anno, unica per tutti i registri. Il registro '
+                               'esce dai percorsi delle serie e dei numeri, dalla richiesta di '
+                               'numeri e dalle risposte; creaSerie crea la sola serie dell’anno; '
+                               'i limiti del numero passano a 999999.']):
         set_par(c.paragraphs[0], v)
 
 # ----------------------------------------------------------------------- helper

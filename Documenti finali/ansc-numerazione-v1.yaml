@@ -2,8 +2,8 @@ openapi: 3.0.3
 
 info:
   title: Integrazione SIPO - ANSC — servizio della numerazione comunale
-  version: 1.0.0
-  summary: Stacco dei numeri comunali dalla serie per registro e anno e governo della loro sorte.
+  version: 1.1.0
+  summary: Stacco dei numeri comunali dalla serie annuale e governo della loro sorte.
   description: |
     Interfacce esposte dal componente `num-ansc-sipo`, che governa la **serie dei numeri
     comunali** degli atti di stato civile: il progressivo che il Comune assegna a ciascun atto e
@@ -16,7 +16,8 @@ info:
 
     La gestione è ereditata dal sistema Side del Comune di Milano, con le sue tabelle
     (`PRENOTAZIONE_ATTI`, `DATI_ATTO_ESTERNO`) e i suoi quattro stati del numero. La serie è una
-    sequence Oracle **per registro e per anno**, così che la numerazione riparta ogni anno.
+    sequence Oracle **per anno**, unica per tutti i registri, così che la numerazione
+    riparta ogni anno. Il numero è di sei cifre al massimo.
 
     ## Perché è un componente a sé
 
@@ -33,7 +34,7 @@ info:
       sequence. Un numero mancante fra uno e l'ultimo della serie è un buco e la lettura della
       serie lo mostra; un numero staccato e non usato non è un buco, è un numero scartato.
 
-    Documentazione di analisi: `ANALISI_Integrazione-ANSC_v3.39.docx`, paragrafo «La
+    Documentazione di analisi: `ANALISI_Integrazione-ANSC_v3.41.docx`, paragrafo «La
     numerazione comunale».
   contact:
     name: Dipartimento Trasformazione Digitale — Roma Capitale
@@ -53,10 +54,10 @@ tags:
   - name: prenotazioni
     description: |
       Le richieste di numeri. Una richiesta stacca uno o più numeri consecutivi dalla serie di un
-      registro e di un anno e li registra come disponibili.
+      anno e li registra come disponibili.
   - name: serie
     description: |
-      Le serie dei numeri, una per registro e per anno, con i loro conteggi e i loro buchi, e i
+      Le serie dei numeri, una per anno, con i loro conteggi e i loro buchi, e i
       singoli numeri con la loro sorte.
 
 security:
@@ -69,7 +70,7 @@ paths:
       operationId: creaPrenotazione
       summary: Crea una richiesta di numeri e li stacca dalla serie
       description: |
-        Stacca uno o più numeri consecutivi dalla serie del registro e dell'anno indicati e li
+        Stacca uno o più numeri consecutivi dalla serie dell'anno indicato e li
         registra nello stato **Disponibile**, insieme alla richiesta che li ha prodotti.
 
         Si usa in tre percorsi:
@@ -101,14 +102,12 @@ paths:
               esempioAttoSipo:
                 summary: Un numero per un atto di morte formato in SIPO
                 value:
-                  codRegistro: '2'
                   numAnno: 2027
                   numNumeri: 1
                   idAttoSipo: 4581273
               esempioGemelli:
                 summary: Tre numeri consecutivi per un parto trigemino
                 value:
-                  codRegistro: '1'
                   numAnno: 2027
                   numNumeri: 3
       responses:
@@ -130,7 +129,6 @@ paths:
                     messaggi: []
                     dati:
                       idPrenotazione: 90211
-                      codRegistro: '1'
                       numAnno: 2027
                       numNumeri: 3
                       operatore: RSSMRA70A01H501U
@@ -153,7 +151,7 @@ paths:
                     properties:
                       dati: { $ref: '#/components/schemas/Prenotazione' }
         '400':
-          description: Registro, anno o quantità non ammessi.
+          description: Anno o quantità non ammessi.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Busta' }
@@ -181,7 +179,7 @@ paths:
                     messaggi:
                       - tipo: ERROR
                         codice: SERIE_NON_DISPONIBILE
-                        descrizione: La serie del registro 2 per l'anno 2027 non è stata creata
+                        descrizione: La serie dell'anno 2027 non è stata creata
                     dati: null
         '500': { $ref: '#/components/responses/ErroreInterno' }
       x-ruoli: [USC]
@@ -193,16 +191,14 @@ paths:
         Gli stacchi sono serializzati. Il chiamante non deve tenere aperte transazioni proprie
         attorno alla chiamata: il blocco si rilascia solo alla conferma.
       x-codici-errore:
-        - codice: REGISTRO_NON_VALIDO
-          condizione: Il registro non appartiene alla decodifica ANSC_01.
         - codice: ANNO_NON_AMMESSO
           condizione: L'anno non è né il corrente né il precedente.
         - codice: QUANTITA_NON_AMMESSA
           condizione: Il numero di valori richiesti è fuori dall'intervallo ammesso, o è maggiore di uno insieme a un atto di SIPO.
         - codice: SERIE_NON_DISPONIBILE
-          condizione: La sequence del registro e dell'anno non esiste.
+          condizione: La sequence dell'anno non esiste.
         - codice: SERIE_ESAURITA
-          condizione: La sequence ha raggiunto il valore massimo di cinque cifre.
+          condizione: La sequence ha raggiunto il valore massimo di sei cifre.
         - codice: NUMERAZIONE_INCOERENTE
           condizione: Il valore preso dalla sequence è già registrato nella serie; lo stacco è annullato e va esaminata la serie.
 
@@ -211,7 +207,7 @@ paths:
       summary: Elenca le richieste di numeri
       description: |
         Restituisce le richieste di numeri con i filtri della pagina di ricerca del back-office:
-        registro, anno, operatore, intervallo di date e stato dei numeri.
+        anno, operatore, intervallo di date e stato dei numeri.
 
         Si usa per la ricerca e la consultazione delle richieste, come nella pagina omonima di
         Side.
@@ -219,7 +215,6 @@ paths:
         **Effetti**: nessuno.
       tags: [prenotazioni]
       parameters:
-        - $ref: '#/components/parameters/CodRegistroFiltro'
         - $ref: '#/components/parameters/NumAnnoFiltro'
         - name: operatore
           in: query
@@ -298,11 +293,11 @@ paths:
       operationId: elencaSerie
       summary: Elenca le serie dei numeri con i loro conteggi
       description: |
-        Restituisce le serie, una per registro e per anno, con il prossimo numero, i conteggi per
-        stato e il numero dei buchi.
+        Restituisce le serie, una per anno, con il prossimo numero, i conteggi per stato e il
+        numero dei buchi.
 
         Si usa nella pagina della numerazione per vedere a colpo d'occhio lo stato delle serie, e
-        a dicembre per controllare che quelle dell'anno successivo siano state create.
+        a dicembre per controllare che quella dell'anno successivo sia stata creata.
 
         **Effetti**: nessuno.
       tags: [serie]
@@ -323,7 +318,7 @@ paths:
                         properties:
                           serie:
                             type: array
-                            description: Le serie, per anno e registro.
+                            description: Le serie, per anno.
                             items: { $ref: '#/components/schemas/Serie' }
         '401': { $ref: '#/components/responses/NonAutenticato' }
         '403': { $ref: '#/components/responses/NonAutorizzato' }
@@ -333,16 +328,16 @@ paths:
 
     post:
       operationId: creaSerie
-      summary: Crea le serie dei cinque registri per un anno
+      summary: Crea la serie di un anno
       description: |
-        Crea, per l'anno indicato, le sequence dei cinque registri che ancora mancano, eseguendo
+        Crea, per l'anno indicato, la sequence della serie se ancora manca, eseguendo
         la stessa procedura che il job pianificato esegue ogni 1° dicembre per l'anno successivo.
 
-        Si usa all'installazione, per l'anno in corso, e quando il job non ha creato le serie
+        Si usa all'installazione, per l'anno in corso, e quando il job non ha creato la serie
         dell'anno successivo.
 
-        **Effetti**: crea le sequence mancanti. **Ripetibile senza effetti ulteriori**: le serie
-        già esistenti non sono toccate.
+        **Effetti**: crea la sequence, se manca. **Ripetibile senza effetti ulteriori**: una
+        serie già esistente non è toccata.
       tags: [serie]
       requestBody:
         required: true
@@ -351,12 +346,12 @@ paths:
             schema: { $ref: '#/components/schemas/SerieRichiesta' }
             examples:
               esempioAnnoSuccessivo:
-                summary: Le serie del 2028
+                summary: La serie del 2028
                 value:
                   numAnno: 2028
       responses:
         '200':
-          description: Le cinque serie dell'anno, dopo l'esecuzione.
+          description: La serie dell'anno, dopo l'esecuzione.
           content:
             application/json:
               schema:
@@ -369,11 +364,8 @@ paths:
                         properties:
                           numCreate:
                             type: integer
-                            description: Quante serie sono state create da questa esecuzione.
-                          serie:
-                            type: array
-                            description: Le cinque serie dell'anno.
-                            items: { $ref: '#/components/schemas/Serie' }
+                            description: 1 se la serie è stata creata da questa esecuzione, 0 se esisteva già.
+                          serie: { $ref: '#/components/schemas/Serie' }
         '400':
           description: Anno non ammesso.
           content:
@@ -384,16 +376,15 @@ paths:
         '500': { $ref: '#/components/responses/ErroreInterno' }
       x-ruoli: [AMMINISTRATORE]
       x-effetti: |
-        Crea le sequence mancanti dell'anno. Ripetibile senza effetti ulteriori.
+        Crea la sequence dell'anno, se manca. Ripetibile senza effetti ulteriori.
       x-codici-errore:
         - codice: ANNO_NON_AMMESSO
           condizione: L'anno non è il corrente né il successivo.
         - codice: SERIE_CREAZIONE_FALLITA
           condizione: La procedura di creazione non è riuscita, tipicamente per un privilegio mancante sullo schema.
 
-  /ansc/v1/numerazione/serie/{codRegistro}/{numAnno}:
+  /ansc/v1/numerazione/serie/{numAnno}:
     parameters:
-      - $ref: '#/components/parameters/CodRegistro'
       - $ref: '#/components/parameters/NumAnno'
     get:
       operationId: leggiSerie
@@ -426,9 +417,8 @@ paths:
       x-ruoli: [USC, SUPPORTO, AMMINISTRATORE, AUDITOR]
       x-effetti: Sola lettura, sicura e ripetibile.
 
-  /ansc/v1/numerazione/serie/{codRegistro}/{numAnno}/numeri:
+  /ansc/v1/numerazione/serie/{numAnno}/numeri:
     parameters:
-      - $ref: '#/components/parameters/CodRegistro'
       - $ref: '#/components/parameters/NumAnno'
     get:
       operationId: elencaNumeri
@@ -453,12 +443,12 @@ paths:
           in: query
           required: false
           description: Primo numero dell'intervallo.
-          schema: { type: integer, minimum: 1, maximum: 99999 }
+          schema: { type: integer, minimum: 1, maximum: 999999 }
         - name: numA
           in: query
           required: false
           description: Ultimo numero dell'intervallo.
-          schema: { type: integer, minimum: 1, maximum: 99999 }
+          schema: { type: integer, minimum: 1, maximum: 999999 }
         - $ref: '#/components/parameters/NumPagina'
         - $ref: '#/components/parameters/NumElementi'
         - $ref: '#/components/parameters/Ordinamento'
@@ -553,7 +543,7 @@ paths:
                       - tipo: ERROR
                         campo: numAtto
                         codice: NUMERO_GIA_REGISTRATO
-                        descrizione: Il numero 1532 della serie 2/2027 è già legato all'atto 4581273
+                        descrizione: Il numero 1532 della serie 2027 è già legato all'atto 4581273
                     dati: null
         '500': { $ref: '#/components/responses/ErroreInterno' }
       x-ruoli: [USC]
@@ -568,13 +558,12 @@ paths:
         - codice: NUMERO_GIA_REGISTRATO
           condizione: Il numero compare già nella serie.
         - codice: NUMERO_NON_VALIDO
-          condizione: Il numero è fuori dall'intervallo da 1 a 99999.
+          condizione: Il numero è fuori dall'intervallo da 1 a 999999.
         - codice: ID_ANSC_NON_VALIDO
           condizione: L'identificativo nazionale non ha la forma anno, numero nazionale, numero comunale, codice ISTAT, o il suo numero comunale differisce da quello indicato.
 
-  /ansc/v1/numerazione/serie/{codRegistro}/{numAnno}/numeri/{numAtto}:
+  /ansc/v1/numerazione/serie/{numAnno}/numeri/{numAtto}:
     parameters:
-      - $ref: '#/components/parameters/CodRegistro'
       - $ref: '#/components/parameters/NumAnno'
       - $ref: '#/components/parameters/NumAtto'
     get:
@@ -709,13 +698,6 @@ components:
       description: Identificativo della richiesta di numeri.
       schema: { type: integer, format: int64 }
       example: 90211
-    CodRegistro:
-      name: codRegistro
-      in: path
-      required: true
-      description: Registro secondo la decodifica ANSC_01 — 1 nascita, 2 morte, 3 matrimonio, 4 unione civile, 5 cittadinanza.
-      schema: { type: string, enum: ['1', '2', '3', '4', '5'] }
-      example: '2'
     NumAnno:
       name: numAnno
       in: path
@@ -727,15 +709,9 @@ components:
       name: numAtto
       in: path
       required: true
-      description: Il numero comunale, da 1 a 99999.
-      schema: { type: integer, minimum: 1, maximum: 99999 }
+      description: Il numero comunale, da 1 a 999999.
+      schema: { type: integer, minimum: 1, maximum: 999999 }
       example: 140
-    CodRegistroFiltro:
-      name: codRegistro
-      in: query
-      required: false
-      description: Limita a un registro della decodifica ANSC_01.
-      schema: { type: string, enum: ['1', '2', '3', '4', '5'] }
     NumAnnoFiltro:
       name: numAnno
       in: query
@@ -840,12 +816,8 @@ components:
     PrenotazioneRichiesta:
       type: object
       description: La richiesta di numeri.
-      required: [codRegistro, numAnno, numNumeri]
+      required: [numAnno, numNumeri]
       properties:
-        codRegistro:
-          type: string
-          enum: ['1', '2', '3', '4', '5']
-          description: Registro secondo la decodifica ANSC_01. Corrisponde a ty_evento.
         numAnno:
           type: integer
           description: Anno della serie. Il corrente, o il precedente a cavallo d'anno. Corrisponde a nr_anno_atto.
@@ -865,7 +837,6 @@ components:
       description: Una richiesta di numeri e i numeri che ha prodotto.
       properties:
         idPrenotazione: { type: integer, format: int64, description: 'Identificativo della richiesta. Corrisponde a id_prenotazione_atti.' }
-        codRegistro: { type: string, description: 'Registro secondo la decodifica ANSC_01.' }
         numAnno: { type: integer, description: 'Anno della serie.' }
         numNumeri: { type: integer, description: 'Quanti numeri sono stati staccati.' }
         operatore: { type: string, description: 'Codice fiscale di chi ha fatto la richiesta. Corrisponde a cd_operatore_prenotazione.' }
@@ -877,18 +848,17 @@ components:
 
     SerieRichiesta:
       type: object
-      description: La richiesta di creazione delle serie di un anno.
+      description: La richiesta di creazione della serie di un anno.
       required: [numAnno]
       properties:
         numAnno:
           type: integer
-          description: Anno di cui creare le serie dei cinque registri. Il corrente o il successivo.
+          description: Anno di cui creare la serie. Il corrente o il successivo.
 
     Serie:
       type: object
-      description: Una serie di numeri, per registro e anno.
+      description: La serie dei numeri di un anno, unica per tutti i registri.
       properties:
-        codRegistro: { type: string, description: 'Registro secondo la decodifica ANSC_01.' }
         numAnno: { type: integer, description: 'Anno della serie.' }
         flgDisponibile: { type: boolean, description: 'Vero se la sequence della serie esiste.' }
         numProssimo: { type: integer, nullable: true, description: 'Il prossimo valore che la sequence restituirà.' }
@@ -910,7 +880,7 @@ components:
         numAtto:
           type: integer
           minimum: 1
-          maximum: 99999
+          maximum: 999999
           description: Il numero comunale usato. Corrisponde a nr_atto_comunale.
         idAnsc:
           type: string
@@ -944,7 +914,6 @@ components:
       description: Un numero della serie e la sua sorte.
       properties:
         numAtto: { type: integer, description: 'Il numero comunale. Corrisponde a nr_atto_comunale.' }
-        codRegistro: { type: string, description: 'Registro della serie. Corrisponde a ty_evento.' }
         numAnno: { type: integer, description: 'Anno della serie. Corrisponde a nr_anno_atto.' }
         codStato:
           type: string

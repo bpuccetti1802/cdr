@@ -159,7 +159,7 @@ Note pratiche apprese su questo workspace:
 ## Stato attuale del lavoro
 
 **FOCUS CORRENTE — riparti da qui**: analisi/progettazione della nuova componente **SIPO → ANSC**
-(scrittura degli atti su ANSC). Documento di lavoro: **`Documenti finali/ANALISI_Integrazione-ANSC_v3.40.docx`**
+(scrittura degli atti su ANSC). Documento di lavoro: **`Documenti finali/ANALISI_Integrazione-ANSC_v3.42.docx`**
 — **base corrente, si modifica IL FILE REALE via python-docx** (NON rigenerare da script: contiene edit
 manuali e **17 commenti** di Word da preservare — erano 22 fino alla v3.33, 6 tolti dall'utente in Word il 07/10, 1 aggiunto nella v3.38). Dalla v3.22: catalogo delle logiche (`TIPO_DOMINIO` +
 `VALORI_DOMINIO`, da NON confondere con i dizionari), `ANSC_CFG_SEZIONE`, `ANSC_XREF` eliminata (OP-25
@@ -183,6 +183,7 @@ di un atto formato sulla web app (R005 all'avvio della stesura) e **stacco del n
 (OP-66). Script `strumenti/v3_2*_*.py`. Dalla v3.32: `ALLEGATO` passa da `ANSC_USR` a **`MATR_USR`**, nomi di vincolo entro i 30 byte di Oracle. Dalla v3.33: nuova **`ANSC_CFG_DOMINIO_SIPO`** (dove vive in SIPO un dominio di decodifica ANSC, popolata a mano, senza pagina di back-office). Dalla v3.34: `RICONCILIAZ_DIZIONARI` **senza `CONDIZIONE`** (traduzione dipendente dal contesto = una riga per contesto). Dalla v3.35 (`strumenti/v3_35_soggetti.py`): **`SOGGETTI_USECASE`** da Side (soggetti per UC con `fg_dichiarante`/`fg_comparente`/`fg_firmatario` — ⚠️ i ruoli **non sono nel mapping ANSC**: 374 file, 7 colonne, 226 nomi di sezione, nessun ruolo → si compilano), stesse scelte di ALLEGATI_USECASE ma **senza** richiamo alle logiche (la presenza sta già in `ANSC_CFG_SEZIONE` → sovrapposizione dichiarata); ⚠️ **le API di Milano per gestirla NON sono fra le sorgenti** (la tabella non è citata in nessun documento CdMI SIDe) e non se ne propongono → **OP-69**; nuovo **[R12]** = strutture e documenti di processo di Side. Tolti dal DDL di ALLEGATI_USECASE un indice duplicato e due COMMENT orfani. ⚠️ **Prossimo passo già individuato**: il documento Side sugli allegati v1.5 dichiara i valori di `ty_presenza` (O/F/C001…C004) e `ty_configurazione` (BASE / D.LIB.M.01) → chiude in buona parte **OP-61**. Dalla v3.36 (`strumenti/v3_36_allegati.py` + `strumenti/immagini_side.py`): ⚠️ **INDIRIZZO DEL COMMITTENTE (10/10/2026): per i documenti si ADOTTA il processo di Side — logica, filosofia, tabelle, maschere — con i soli aggiustamenti adattivi, dichiarati in una tabella con la ragione.** La sezione «Punto di attenzione: i documenti e la loro firma» è diventata **«La gestione dei documenti: il processo di Side adottato in SIPO»** (presenza O/F/C001…C004 e forme BASE/D.LIB.M.01; sei stati = 0 locale + ANSC_08; R001 upload/verifica/dettaglio, **nessuna cancellazione in R001** → OP-70; attestazione di conformità con R010/R007; riuso delle interfacce sui componenti della libreria [R13]; 3 schermate Side con il **nome dell'operatore coperto**). Verificati sul corpus: ANSC_08 stato 5 = «In elaborazione» (Side 2023 diceva «Altro»); ANSC_09 998 «Allegato generico», 999 «Processo verbale»; ANSC_10 = PDF/JPG/TIF/P7M; ⚠️ **ANSC_78 ha 3 valori, il 4 «presenza figlio» su cui Side costruisce C004 non è più pubblicato**; `flagAttConformita` boolean in R007/R010 vs `flagInclusoAttConformita` string nel modello evento. **Tolta `ALLEGATI_USECASE.fg_incluso_att_conformita`** (era nostra: in Side la scelta è dell'ufficiale atto per atto, su ALLEGATO) → OP-50 ridotto, **OP-61 chiuso**, nuovi OP-70 (cancellazione dopo l'invio), OP-71 (`fg_testo_libero` vs tipo 998), OP-72 (codice delle maschere di Side). ⚠️ **Da riallineare nel DISEGNO_Back-Office v0.7**: la pagina allegati legge ancora il contrassegno dalla configurazione. OP fino a **OP-72**. Dalla v3.37 (`strumenti/v3_37_soggetti_csv.py`): riportato **`Sorgenti Documentali/Tabella SOGGETTI_USECASE.csv`** = l'esportazione della tabella COMPILATA da Milano (⚠️ è dei SOGGETTI, non degli allegati): **1.167 righe, 278 UC** (nascita 174/206 · morte 13/26 · matrimonio 27/45 · unione civile 17/31 · cittadinanza 47/65 in vigore), 0 chiavi duplicate, **11413030 assente dal catalogo**; ⚠️ **il nome del blocco del modello evento sta in `ty_soggetto` (941/1.167 righe), NON in `cd_soggetto`** (codici di Side: PADRE, INT_NAS…) → raccordo con `ANSC_CFG_SEZIONE.OGGETTO_ANSC`; `ty_presenza` = O 687 · C 399 (senza numero) · F 52 + **CSTCIV 24 · FO 4 · C02 1 non documentati**; **60 codici `ty_configurazione`** = maschere di Side senza definizione; note con i riallineamenti alle versioni ANSC 1.27…1.48. OP-69 ridotto; [R14] = disegno back-office v0.8. ⚠️ `verifica-conteggi`: la frase «una proprietà di primo livello» fa scattare la regola delle 111 proprietà (legge «una»=1) — scrivere «la radice di un blocco».
 Dalla v3.38 (`strumenti/v3_38_numerazione.py`): ⚠️ **NUMERAZIONE COMUNALE EREDITATA DA SIDE** (tabelle `PRENOTAZIONE_ATTI` + `DATI_ATTO_ESTERNO`, stati 1 Disponibile · 2 Utilizzato · 3 Scartato · 4 Evento acquisito) con l'aggiustamento del committente: **una SEQUENCE per anno** → `SEQ_NUM_COMUNALE_<registro>_<anno>` (START 1, MAXVALUE 99999, NOCACHE ORDER NOCYCLE), create il 1° dicembre per l'anno dopo da `JOB_CREA_SEQ_NUM_COMUNALE` → `PRC_CREA_SEQ_NUM_COMUNALE`. ⚠️ **Per REGISTRO e anno, non solo per anno**: `numeroatto` è maxLength 5 (model_evento, R005, nota ANSC) e Roma forma 144.285 atti/anno > 99.999; è anche la chiave di Side. ⚠️ **Una sequence non garantisce né contiguità dei blocchi (gemelli) né assenza di buchi** → stacchi serializzati con `LOCK TABLE DATI_ATTO_ESTERNO IN EXCLUSIVE MODE`, registrazione nella stessa transazione, buchi mostrati dal back-office. Adattamenti: TUTTI i numeri (anche percorso ordinario) passano da DATI_ATTO_ESTERNO; `ty_evento`+`nr_anno_atto` ripetuti su DATI_ATTO_ESTERNO per l'UK della serie; `id_evento`→`id_atto_sipo`. SIPO numera la vecchia serie con `PKG_PRATICA.get_temp_numatto(area, anno, parte, serie, esponente)` (corpo non fra le sorgenti; esiste anche `getNextATTONascitaGemello`). OP-44 e OP-47 **chiusi**, OP-60 ridotto, **OP-73** (registro confermato da Sogei? anno a cavallo d'anno? privilegio CREATE SEQUENCE). ⚠️ **Il back-office (pagina «Numerazione comunale», BO-3/BO-4) va ancora riallineato** alle due pagine di Side (Richiesta + Ricerca).
 Dalla v3.39 (`strumenti/v3_39_servizio_numerazione.py`): ⚠️ **MICROSERVIZIO DEDICATO `num-ansc-sipo`** (deciso con l'utente 11/10) = **4ª unità di deployment nuova** (non è un concentratore: non parla con ANSC, nessuna credenziale); **lo stacco sta nel microservizio, non in PL/SQL** (descritto passo per passo con l'SQL). Contratto **`ansc-numerazione-v1.yaml`** (10 op.: creaPrenotazione · elenca/leggiPrenotazione · elenca/crea/leggiSerie · elenca/crea/leggi/aggiornaNumero) → **SPEC_API v0.2** (57 operazioni: i dizionari erano già a 8, la v0.1 ne contava 6); `genera-spec-api.py` ora scrive la v0.2. ⚠️ **Corretto il percorso «SIPO non disponibile»**: registrare a posteriori un numero senza far avanzare la sequence faceva fallire lo stacco successivo sull'UK della serie → `creaNumero` fa avanzare la sequence fino al numero (NOCACHE ⇒ `ALL_SEQUENCES.LAST_NUMBER` = prossimo valore) o colma un buco. DDL completata (CHECK registro/anno, COMMENT, indice, grant a `<UTENZA_NUM>` segnaposto → OP-73 d). ⚠️ La tabella d'inventario dell'App. B ha ora **4 colonne** (+ Ruoli). Dalla v3.40 (`strumenti/v3_40_identificativi_soggetto.py`): nuova **`ANSC_SOGGETTO_IDENTIFICATIVI`** (una riga per `MATR_USR.SOGGETTO.ID_SOGGETTO`, per valore; `ID_ANSC_SOGGETTO`, esiti di ricerca e di scrittura ANPR, `ID_AUDIT` per valore). ⚠️ **ATOMICITÀ DEL DATO (decisione utente)**: i due codici ANPR NON si duplicano — stanno già su **`ANAG_USR.SOGGETTO.ID_SCHEDA_ANPR`** (NUMBER(15)) e **`.ID_UNICO_NAZIONALE`**, scritti dai canali ANPR → R005 scrive su due tabelle e su ANAG_USR **solo se vuoto** (diverso = DISCORDANTE, segnalato, non sovrascritto). ⚠️ Nomi ANSC: **`idANPR` = identificativo UNICO nazionale**, `idsoggettoanpr`/`idAnpr` = scheda, `id`/`idAnscSoggetto` = soggetto ANSC. Legame stato civile→anagrafe = `CODICE_INDIVIDUALE` (`SoggettoMatrRepository.java:78`). Prima scrittura del componente su ANAG_USR (grant UPDATE di colonna a `<UTENZA_CONCENTRATORE>`). **OP-74** (riga di MATR_USR.SOGGETTO per persona o per atto? non residenti senza riga anagrafica? permessi). ⚠️ Il back-office (riepilogo soggetti, discordanze) NON è ancora riallineato.
+Dalla v3.41 (`strumenti/v3_41_numerazione.py` + `v3_41_contratto_numerazione.py`): ⚠️ **ASSUNTO DELL'UTENTE (15/10/2026): numero comunale di SEI cifre e NESSUN registro** → una sola `SEQ_NUM_COMUNALE_<anno>` (MAXVALUE 999999), `ty_evento` tolto da PRENOTAZIONE_ATTI (adattamento dichiarato) e da DATI_ATTO_ESTERNO, UK `(nr_anno_atto, nr_atto_comunale)`, `NUMBER(6)`; contratto `ansc-numerazione-v1.yaml` 1.1.0 senza `{codRegistro}` → **SPEC_API v0.3** (40 codici di errore). ⚠️ **Le fonti ANSC dicono 5 caratteri** (`model_evento.yaml:149`, `R005:543` maxLength 5; Changelog «ammessi massimo 5 caratteri»): dichiarato [DA VERIFICARE] + OP-73 (a). Corretto il refuso nella DECODIFICA virtuale di `ANSC_CFG_DOMINIO_SIPO` (l'utente ha tolto `CAMPO_SIPO`; `DECODIFICA` resta chiave di RICONCILIAZ_DIZIONARI, verifica **solo applicativa**, nessuna FK). ⚠️ Da riallineare: back-office v0.10 (pagine della numerazione con registro) e il racconto della riconciliazione («terna dominio, tabella e campo»). Dalla v3.42 (`strumenti/v3_42_workflow.py`): nel cap. «Il processo di gestione dei dati ANSC in SIPO», dopo la tabella del workflow, il **diagramma funzionale con i cambi di stato** (pagine SIPO · servizio · stato ANSC_11 · stato SIPO). ⚠️ **È in POWERPOINT, modificabile dall'utente**: `strumenti/img/workflow_ansc_sipo.pptx` generato da `strumenti/diagramma_workflow_pptx.py` (forme e connettori nativi, python-pptx 1.0.2 installato il 15/10). Il PNG nel .docx è l'**esportazione di PowerPoint** (AppleScript `save … as save as PDF`, poi `qlmanage -t -s 2400`; pdftoppm NON c'è) → se l'utente modifica il .pptx il PNG va riesportato e sostituito con `sostituisci_immagine`. Nuova sorgente `Sorgenti Documentali/Mappatura_Tipologiche_SIPO_ANSC_v2.xlsx` = abbinamenti `TABELLA_SIPO.ANSC_nn` (228) + ~3.366 valori: è il popolamento di DOMINIO_SIPO/RICONCILIAZ_DIZIONARI.
 **DISEGNO_Back-Office_ANSC_v0.10** (`strumenti/bo_v0_10.py`, figure `strumenti/pagine_bo_v5.py`, **corrente**): riallineato alla v3.40 — nuova pagina **«Identificativi dei soggetti»** (area operativa, dopo «Allegati dell'atto», Figura 12): in testa i conteggi Discordante/Non numerico/Assente in anagrafe, elenco su `ANSC_SOGGETTO_IDENTIFICATIVI`, confronto ANAG_USR.SOGGETTO ↔ risposta R005 letta dall'audit; ⚠️ **in sola lettura, non scrive sull'anagrafe** (regola «solo se vuoto»); ⚠️ **la consultazione R005 con la scelta fra più risultati sta nel riepilogo dei soggetti di SIPO, NON nel back-office**. Dettaglio dell'atto con scheda **«Soggetti»** (`bo_atto.png` rigenerato da `pagine_bo_v5.atto`, che aggiunge la linguetta). **20 pagine** + postazioni, copertura a **21 tabelle** + ANAG_USR.SOGGETTO in lettura; figure 1…29; **BO-31** (il contratto `ansc-v1.yaml` non ha operazioni per la consultazione dei soggetti né per la pagina → da aggiungere e rigenerare la SPEC), **BO-32** (manca uno stato di «discordanza esaminata»). 2 commenti preservati.
 **DISEGNO_Back-Office_ANSC_v0.9** (`strumenti/bo_v0_9.py`, figure `strumenti/pagine_bo_v4.py`): numerazione riallineata a Side e a `num-ansc-sipo` — **due pagine** «Numerazione comunale — richiesta» (stacco + **registrazione a posteriori** = `creaNumero`) e «— ricerca e consultazione» (in testa le **serie dell'anno con i buchi**, CREA SERIE solo amministratore); adattamenti a Side dichiarati (stati finali, idAnsc per «Utilizzato»; registrazione del numero effettivamente usato invece della richiesta che «coinciderà»); copertura a **20 tabelle**; **19 pagine** + postazioni; figure 1…28; BO-3/BO-4 chiusi, **BO-30**; [R11] = documento Side sulla numerazione. Verificata SOGGETTI_USECASE: c'era tutto tranne la riga di `mfe-configurazione` nella tabella delle unità di rilascio (corretta, e `bo_mfe.png` rigenerato con il servizio num-ansc-sipo). ⚠️ `pagine_bo.py` non rigenera più `bo_numerazione.png`. ⚠️ L'analisi del front-end v0.6 conta ancora diciassette pagine del back-office.
 **DISEGNO_Back-Office_ANSC_v0.8** (`strumenti/bo_v0_8.py`, figure `strumenti/pagine_bo_v3.py`): «Allegati dell'atto» rifatta sul processo di Side (6 stati, INVIA/VERIFICA esclusivi, descrizione libera 998, attestazione in sola lettura); **nuove pagine «Allegati per caso d'uso», «Soggetti per caso d'uso», «Caricamento da file»** (formato = esportazione di Side ricavato dal CSV: intestazione coi nomi della DDL, virgola, doppi apici, vuoto=null; modalità «sostituisci per UC» predefinita o «aggiungi e aggiorna»; solo simulazione predefinita; i campi tecnici del file NON si riportano, si registra chi carica; il verbale in figura è calcolato dal CSV vero da `verbale_soggetti()`); scheda «Soggetti» nel dettaglio UC; 18 pagine + postazioni; 18 tabelle del modello coperte (ANSC_CFG_DOMINIO_SIPO «nessuna pagina, per decisione»); figure 1…27; BO-27 (valori soggetti non documentati), BO-28 (chi carica da file), BO-29 (formato/contenuto di ALLEGATI_USECASE da chiedere a Milano). ⚠️ I commenti di Word del back-office sono **2** (non 6). ⚠️ `pagine_bo.py` non rigenera più `bo_allegati.png`. Metodo: dopo ogni modifica il TOC
@@ -1249,7 +1250,104 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   rimaste al piè di pagina a tre colonne dopo che la primitiva era stata riscritta — rigenerare i PNG non
   aggiorna il `.docx`, serve riscriverne il blob. ⚠️ Si legge insieme all'analisi del front-end: qui le
   pagine, lì i componenti ([R2] ↔ [F8]).
-- **`ANALISI_Identita-Profilazione-IAM_v0.6.docx`** (13/10/2026, **corrente**) — il documento unico su
+- **`ANALISI_Identita-Profilazione-IAM_v0.12.docx`** (20/10/2026, **corrente**,
+  `strumenti/v0_12_iam_sequenza.py`, dalla v0.11 salvata dall'utente alle 09:14): diagramma di
+  sequenza del login nelle applicazioni nuove (`diagrammi_iam.sequenza_login()` →
+  `img/iam_sequenza_login.png`, Figura 7, frammento «alt» per l'utente non censito); figure
+  seguenti rinumerate (modello dati = 8, dominio dei profili = 9).
+- **`ANALISI_Identita-Profilazione-IAM_v0.11.docx`** (20/10/2026,
+  `strumenti/v0_11_iam_vecchio_tobe.py`, dalla v0.10 **rivista a mano** dall'utente, che ha
+  spostato «Punti aperti» in coda): ⚠️ **il cap. «Scelte effettuate per il TO BE» vale per il
+  SOLO mondo nuovo** (Angular, back-office ANSC). Al posto di «Un solo impianto…» e «Perché non
+  si comincia dalla libreria» (bocciati dall'utente: confliggevano col «lasciare com'è»): «Portare
+  il nuovo login sui front-end Thymeleaf: che cosa significherebbe» (perimetro misurato: 35 FE
+  tutti su CommonWeb, 1.680 template, 614 controller, 628 classi/4.781 getRuoloBe, 4.829
+  getRuoli().get(0), 50 BE avviabili di cui 45 con RestSecurity, 3.360 @PreAuthorize in 42
+  moduli; interventi per strato; prove) e «Perché conviene lasciare il vecchio ambiente com'è».
+  ⚠️ **NIENTE stime in giorni/uomo** (decisione utente: dipendono dalle risorse) — tolte anche
+  quelle di [F10]. ⚠️ **IL BFF È FUORI DAL TO BE** («non digerito»): la piattaforma consegna il
+  token in cookie HttpOnly `Bearer` e il service mesh lo inoltra come `Authorization: Bearer`
+  (`AuthenticationFilter.java:125` del mesh) → sottocapitolo «Il token nel browser: tre
+  requisiti» (niente token nel corpo, niente localStorage, anti-CSRF); il BFF resta in Parte II
+  come variante non adottata; PI-19/20/21 chiusi, PI-29 riformulato. Tolte le sequenze A/B e
+  «Che cosa cambia rispetto a oggi»; Figura 6 = `diagrammi_iam.mse_nuovo()` →
+  `img/iam_mse_nuovo.png`. Il cap. integrazione «Il vecchio ambiente» è ridotto a rimando.
+  ⚠️ Resta da valutare con l'utente il cap. dei ruoli, che propone modifiche ad ANAG_USR.
+- **`ANALISI_Identita-Profilazione-IAM_v0.10.docx`** (20/10/2026,
+  `strumenti/v0_10_iam_strutture.py`; figura `diagrammi_iam.dominio()` → `img/iam_dominio.png`):
+  nuovo cap. 12 «Le strutture dati del servizio di profilazione». ⚠️ **NON C'È DDL di
+  management** (nessuno script SQL, nessuna migrazione, schema non generato dal codice): le
+  strutture sono **estratte dalla mappatura JPA** (17 classi = 16 tabelle + la vista
+  `v_str_organizzativa`), e il documento lo dichiara → **PI-39** (chiedere `pg_dump --schema-only`).
+  auth e service mesh **non hanno tabelle**: leggono management dalle API interne. Una sola
+  specifica `TABELLE` nello script genera sia le tabelle del documento sia la **DDL per ORACLE**
+  (anche come file a parte `Documenti finali/DDL_Profili-Oracle_v0.1.sql`, rigenerato dallo
+  script): nomi di tabelle/colonne **as is** (il servizio li usa così), vincoli con prefissi
+  PK_/UK_/FK_/CK_/IX_ entro 30 byte, **21 FK** (15 dai join, 4 proposte, 2 dedotte dal nome),
+  3 UK proposte (username, CF, terna dell'abilitazione), CHECK solo dove il codice confronta
+  valori (S/N, G/P, 0/1); proprietario `PROFILI_OWN` NO AUTHENTICATION, utenza `PROFILI_APP`
+  con ruolo e sinonimi privati (codice invariato), tablespace cifrato, Unified Auditing — nomi
+  proposti → **PI-40**; chi decide Oracle per una piattaforma condivisa → **PI-41**. ⚠️ Con le FK
+  le cancellazioni «a riga singola» di abilitazione/applicazione/menu/ambito/struttura/
+  visibilità (`*Domain.java`) verranno **rifiutate** se l'oggetto è usato: cambio di
+  comportamento dichiarato. Raccomandazioni **DS-01…DS-13** per il «dominio dei profili» a
+  parte (PDB dedicato raccomandato, schema dedicato minimo; nessun collegamento con
+  MATR_USR/ANAG_USR/ANSC_USR). 12 capitoli, 66 tabelle, 9 immagini.
+- **`ANALISI_Identita-Profilazione-IAM_v0.9.docx`** (15/10/2026,
+  `strumenti/v0_9_iam_vecchio.py`): ⚠️ **INDIRIZZO DELL'UTENTE: per il vecchio ambiente (35 FE
+  Thymeleaf, 44 BE, ANAG_USR, AnagrafeWeb, header di portale) si lascia TUTTO COM'È**; la
+  piattaforma MSE si adotta solo per il mondo nuovo (Angular, back-office ANSC). Sottocapitolo «Il
+  vecchio ambiente: lasciarlo com’è» dopo i rischi del cap. integrazione; riallineate la risposta
+  (c) dell'Executive summary e la proposta A/B; tolti tutti i «⚠️» anche dalle tabelle (zero nel
+  documento). ⚠️ Il cap. «Scelte effettuate per il TO BE» descrive ancora il passaggio dei 35 FE
+  alla piattaforma (sequenze A/B, token in sessione): da riallineare se l'utente lo chiede.
+- **`ANALISI_Identita-Profilazione-IAM_v0.8.docx`** (15/10/2026,
+  `strumenti/v0_8_iam_interfaccia.py`): parte dalla **v0.7 rivista a mano dall'utente** (tolti «⚠️»
+  e formule «dalla versione 0.7», cap. 6 → «Scelte effettuate per il TO BE»: vedi la memoria sullo
+  stile) e aggiunge nel cap. dell'integrazione «L’interfaccia di amministrazione» (dichiarata da
+  [F12] §6.2, codice assente → PI-36 riformulato; serve; per SIPO sola lettura in A, unico punto di
+  gestione da estendere in B) e «Le credenziali: che cosa si aggiunge» (persone: no, restano in
+  IAM; registro utenti: sì, terzo con ruolo distinto; segreti tecnici: tre famiglie in transizione)
+  + un rischio + PI-38. ⚠️ `D.h()` confronta per INIZIO del titolo: «I rischi» trovava prima «I
+  rischi dell’intervento» → usare `esatto=True` quando un titolo è prefisso di un altro.
+  ⚠️ `v0_7_iam_mse.py` NON va più rieseguito: genererebbe la v0.7 senza
+  le modifiche dell'utente.
+- **`ANALISI_Identita-Profilazione-IAM_v0.7.docx`** (15/10/2026,
+  `strumenti/v0_7_iam_mse.py`; figure `diagrammi_iam.mse()` → `img/iam_mse.png` e
+  `diagrammi_iam.management()` → `img/iam_management.png`). **LA STRADA È CAMBIATA: sipo-auth e
+  sipo-profili NON si costruiscono, si ADOTTA la piattaforma MSE** dell'area Entrate e Sportelli
+  Unici ([F12] = `Sorgenti Documentali/Interventi_Innovazione_Progettazione_Architettura_v1.1.docx`):
+  **roma-capitale-auth (L2)**, IAM (L3), **roma-capitale-management (L4)**, service mesh. Codice
+  letto ([F13]) nelle cartelle `serv_roma-capitale-{auth,management,service-mesh}-main/` in radice.
+  La libreria Angular `fsha_mf-shared-library-main` È il modulo comune MSE: `/msAuth/.../loginIAM`
+  = l'operazione di accesso di auth (vuole `cd_ambito`+`cd_applicazione`) → PI-17 e PI-22 chiusi.
+  Il committente ha chiesto di **valutare L4** con tre domande → quattro capitoli nuovi in coda
+  (8 «Il servizio di profilazione della piattaforma» · 9 manutenzione = **MA-01…MA-18, 6 alte** ·
+  10 miglioramenti = **MI-01…MI-12** + sicurezza in 5 misure, **sicurezza con rilievo ma NON
+  centrale** (indicazione dell'utente) · 11 integrazione con la gestione AS-IS: modalità A (SIPO
+  fonte, piattaforma legge) come transizione, B (piattaforma fonte, R_UTENTI_RUOLI proiezione) come
+  approdo, C (doppia gestione) esclusa; 10 rischi). Cap. 6 riscritto nella sezione della soluzione;
+  «token SIPO» resta il NOME del token che la piattaforma emette per SIPO. PI-31…PI-37.
+  **11 capitoli, 51 tabelle, 8 immagini, 0 commenti.**
+  ⚠️ **Fatti di codice che reggono la valutazione** (non ricercarli di nuovo): modello reale di
+  management = 17 entità, più ricco dell'ERD di [F12] (profilo per applicazione con
+  `cd_ruolo_profilo`; `ty_auth` G/P con applicazione padre; `utente_per_profilo.id_nodo` →
+  `nodo_struttura` → `visibilita` tabella/colonna/valore — **ma nessuna operazione scrive
+  `id_nodo`** e la visibilità restituita all'operatore è sempre vuota); gestione = CRUD a
+  **sostituzione integrale** delle assegnazioni, cancellazioni fisiche, **zero @Secured/@PreAuthorize**;
+  ricerca utente per CF dal 04/03/2026; token 480 min in cookie HttpOnly, ridotto in Redis oltre
+  soglia; **il refresh rimette le abilitazioni del token vecchio** (`LoginDomain.java:759`) e il
+  mesh riemette il token a 100 s dalla scadenza → **la revoca non ha effetto**; `/api/internal/**`
+  pubblici in auth e management. ⚠️ **`management/.../application.properties` contiene credenziali
+  in chiaro (DB, Redis, chiave privata JWT, righe 11/33/74)**: non riportarle MAI; le cartelle non
+  sono in `.gitignore` e l'utente ha detto di lasciarle così — non committarle senza chiedere.
+  ⚠️ **Vedere le pagine di un .docx**: Word via AppleScript — `open` NON restituisce il documento e
+  `active document` è quello dell'utente: cercare `document i` per nome, poi `save as … file format
+  format PDF` e `close … saving no`; per rasterizzare pagine qualsiasi (qlmanage fa solo la prima,
+  swift non parte per la licenza Xcode) **JXA**: `osascript -l JavaScript` con `ObjC.import('PDFKit')`,
+  `page.thumbnailOfSizeForBox(...)` → TIFF → `sips -s format png`. Nelle tabelle con nomi di classe
+  lunghi Word allarga la colonna: spazio di larghezza nulla dopo i punti + `w:tblLayout fixed`.
+- **`ANALISI_Identita-Profilazione-IAM_v0.6.docx`** (13/10/2026) — il documento unico su
   identità, profilazione e IAM, che accorpa l'AS-IS e le due analisi del committente. Il TO-BE è una
   **scala di soluzioni S0…S4** dalla più conservativa alla più coerente, con dentro S3 la variante del
   **BFF**. ⚠️ **S0 non è un'alternativa: è il pavimento** — nessuna delle altre chiude i servizi che oggi
