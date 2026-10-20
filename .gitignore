@@ -39,3 +39,12 @@ Richiesta utenza Pitech.pdf
 # 7. Le impostazioni personali di Claude Code in questo repository: sono di chi
 #    lavora, non del progetto.
 /.claude/settings.local.json
+
+# Sorgenti della piattaforma MSE: si versiona il codice, NON i file con credenziali o chiavi
+# (password di database e Redis, chiave privata JWT, credenziali Maven, chiave NVD, truststore)
+serv_roma-capitale-*.zip
+serv_roma-capitale-*/src/main/resources/application.properties
+serv_roma-capitale-service-mesh-main/src/main/resources/truststore.jks
+serv_roma-capitale-management-main/settings.xml
+serv_roma-capitale-auth-main/pom.xml
+serv_roma-capitale-management-main/pom.xml
