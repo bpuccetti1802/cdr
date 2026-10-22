@@ -1285,6 +1285,22 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   nuova **«Esito della chiusura»** dopo CHIUDI. Figure: `schermate_sipo_wf.disegna_v3()` (prefisso
   `wf3_`; `disegna_tutte()` rigenera ancora quelle a linguette della v0.2). 18 capitoli, 65 tabelle,
   38 immagini.
+- **`PROCESSO_Numerazione-Comunale_SIPO-ANSC_v0.1.docx`** e
+  **`PROCESSO_Attestato-Conformita_SIPO-ANSC_v0.1.docx`** (22/10/2026,
+  `strumenti/genera_processi_side.py`, figure `strumenti/schermate_processi_side.py`): i due
+  documenti di processo di Side (numerazione comunale v1.0, attestato di conformità v1.1)
+  **adattati a Roma**, con la STRUTTURA del documento di Milano (attori, servizi/processo e scenari,
+  pagine, sviluppo propedeutico o casi di prova) + un capitolo «Che cosa cambia rispetto a Side»
+  + punti aperti NC-1…NC-8 / AC-1…AC-6. Dal template DAD. ⚠️ **Due stili di schermata**: la
+  numerazione sta nel **back-office** → cornice Roma Capitale (`wireframe_bo`), una mattonella
+  «Numerazione comunale» con due voci, **senza registro** (serie unica per anno, sei cifre, v3.41),
+  finestra «Segna come utilizzato» che chiede l'idAnsc; la conformità sta nel **percorso SIPO** →
+  stile SIPO (`schermate_sipo_wf`), schermata separata con banner di arrivo, tre stati (iniziale /
+  anteprima / nessuno). ⚠️ Conformità: preselezione = **tutti** (analisi; flag NULL = selezionato),
+  l'esclusione dei P7M resta solo come AC-3; le operazioni del concentratore per R010/R007
+  **mancano in `ansc-v1.yaml`** (AC-1). Le tabelle di R007/R010/ModelAllegatoRif si leggono dai
+  contratti ANSC, quella del servizio da `ansc-numerazione-v1.yaml`. Il disegno del back-office v0.10
+  va ancora riallineato (NC-7).
 - **`ANALISI_Identita-Profilazione-IAM_v0.13.docx`** (20/10/2026, **corrente**,
   `strumenti/v0_13_iam_schema.py`): ⚠️ **ARRIVATE LE DDL VERE di management**
   (`Sorgenti Documentali/management-schema.sql` = [F14], solo struttura, nessun dato), lette da

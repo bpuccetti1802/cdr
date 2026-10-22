@@ -470,7 +470,7 @@ def riapertura(dest):
     return dest
 
 
-def _pagina_pdf(dr, x, y, w):
+def _pagina_pdf(dr, x, y, w, allegati=None):
     """Il PDF dell'attestazione così come lo genera ANSC (guida operativa, Figura 29)."""
     h = 300
     dr.rectangle([x, y, x + w, y + h], fill='#525659')
@@ -501,8 +501,9 @@ def _pagina_pdf(dr, x, y, w):
     yy += 6
     dr.text((px + 30, yy), "Allegati", font=f(N_BLD, 13), fill=INK)
     yy += 18
-    dr.text((px + 30, yy), "Attestazione di nascita – Codice hash: c5znaSOl16V2si…",
-            font=fr, fill=INK)
+    for i, riga in enumerate(allegati or ["Attestazione di nascita – Codice hash: "
+                                          "c5znaSOl16V2si…"]):
+        dr.text((px + 30, yy + i * 17), riga, font=fr, fill=INK)
     return y + h
 
 
