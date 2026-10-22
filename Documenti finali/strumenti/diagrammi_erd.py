@@ -23,12 +23,12 @@ import diagrammi_comune as G   # noqa: E402
 BASE = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'img')
 
-W, H = 1700, 1640
+W, H = 1700, 1720
 LARG = 350                                  # larghezza di ogni scheda
 COL = {1: 60, 2: 470, 3: 880, 4: 1290}      # ascisse delle quattro colonne
 RIGA = {1: 176, 2: 392, 3: 592, 4: 796}     # ordinate delle quattro righe della configurazione
 OPER = 1046                                 # ordinata della fascia operativa
-OPER2 = 1290                                # v3.38: seconda riga operativa (numerazione)
+OPER2 = 1386                                # v3.38: seconda riga operativa (numerazione)
 CORR_V = {'1-2': 440, '2-3': 850, '3-4': 1260}   # corridoi verticali fra le colonne
 CORR_H = {'1-2': 366, '2-3': 576, '2-3b': 586, 'sotto': 984}  # corridoi orizzontali fra le righe
 
@@ -120,7 +120,12 @@ TABELLE = [
         ('', 'COD_ORIGINE_UC, COD_FASE'),
         ('', 'STATO (replica ANSC), TIPO_ESITO'),
         ('', 'ID_ANSC, NUM_COMUNALE'),
-        ('', 'TXT_PAYLOAD, FLG_EMERGENZA'), ('', 'ID_VERSIONE (per valore)')],
+        ('', 'FLG_EMERGENZA, ID_ATTO_EMERGENZA'), ('', 'ID_VERSIONE (per valore)'),
+        # v3.44: la testata del modello evento, il modello intero e la ripresa stanno qui
+        ('', 'testata del modello evento'),
+        ('', 'TXT_EVENTO (il modello evento)'),
+        ('', 'TXT_HASH_VALIDATO'),
+        ('', 'COD_PAGINA_RIPRESA, FLG_SOSPESO'), ('', 'NUM_REVISIONE')],
      'l’atto: che cosa è stato deciso, inviato e ottenuto'),
     (2, 'op', 'blu', 'ANSC_LOG_AUDIT', [
         ('PK', 'ID_AUDIT'), ('FK', 'ID_STATO_ATTO'),
@@ -207,12 +212,12 @@ def disegna(percorso=None):
                     'MATR_USR, e le sequence della numerazione')
     G.banda(dr, 40, 140, W - 40, 980, '#3f8f5f',
             'CONFIGURAZIONE — la decide il Comune · REPLICHE — le pubblica ANSC', '#a8801a')
-    G.banda(dr, 40, 1016, W - 40, 1468, '#2f6bb0',
+    G.banda(dr, 40, 1016, W - 40, 1574, '#2f6bb0',
             'OPERATIVE — ciò che accade agli atti', '#25548a')
 
     riq = {}
     for colonna, riga, colore, titolo, righe, nota in TABELLE:
-        y = OPER if riga == 'op' else OPER2 if riga == 'op2' else RIGA[riga]
+        y = {'op': OPER, 'op2': OPER2}.get(riga) or RIGA[riga]
         riq[titolo] = G.scheda(dr, COL[colonna], y, LARG, colore, titolo, righe, nota)
 
     def bordo(nome, lato):
@@ -242,9 +247,9 @@ def disegna(percorso=None):
     dr.text((876, 994), 'la configurazione guida ciò che accade agli atti',
             font=G.fnt(G.F_ITA, 17), fill='#25548a')
 
-    G.legenda(dr, 60, 1496, [('verde', 'decise dal Comune'), ('giallo', 'replicate da ANSC'),
+    G.legenda(dr, 60, 1604, [('verde', 'decise dal Comune'), ('giallo', 'replicate da ANSC'),
                              ('viola', 'dizionari'), ('blu', 'operative')])
-    y = 1540
+    y = 1648
     G.linea(dr, [(62, y + 8), (122, y + 8)], G.ARROW, False, 3)
     dr.text((132, y), 'chiave esterna dichiarata nel DDL', font=G.fnt(G.F_REG, 16),
             fill=G.MUTED)

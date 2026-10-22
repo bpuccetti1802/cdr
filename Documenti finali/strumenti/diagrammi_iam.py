@@ -713,7 +713,8 @@ def dominio(dest):
     Raccomandazione della v0.10 (20/10/2026): chi scrive queste tabelle decide chi entra in
     tutte le applicazioni della piattaforma, quindi vivono in un dominio proprio (PDB dedicato,
     o almeno schema dedicato), raggiunto da una sola utenza applicativa, con il proprietario
-    senza accesso e nessun collegamento diretto con gli schemi di SIPO.
+    senza accesso e nessun collegamento diretto con gli schemi di SIPO. Dalla v0.13 le tabelle
+    sono quelle dello schema in esercizio (management-schema.sql): 19, più le 5 di copia escluse.
     """
     im, dr = G.tela(1900, 1130, "Il dominio dei profili: chi vi accede e come",
                     "Le tabelle di roma-capitale-management in un dominio a parte, raggiunto "
@@ -725,11 +726,13 @@ def dominio(dest):
     dr.text((540, 132), "tablespace cifrato  ·  vincoli di integrità nel database  ·  "
             "tracciamento delle modifiche", font=fnt(F_ITA, 15), fill=MUTED)
     S(dr, 545, 170, 260, 'viola', "Utenti", [("", "utente"), ("", "ente"),
-                                             ("", "utente_per_profilo")])
+                                             ("", "utente_per_profilo"),
+                                             ("", "utente_profilo_per_applicazione")])
     S(dr, 830, 170, 260, 'verde', "Profili", [("", "profilo"),
                                               ("", "profilo_per_abilitazione")])
     S(dr, 1110, 170, 250, 'blu', "Catalogo", [("", "ambito"), ("", "applicazione"),
-                                              ("", "abilitazione"), ("", "menu")])
+                                              ("", "abilitazione"), ("", "menu"),
+                                              ("", "applicazione_padre")])
     S(dr, 545, 330, 260, 'giallo', "Organizzazione", [("", "struttura"), ("", "nodo_struttura"),
                                                       ("", "visibilita"),
                                                       ("", "nodo_per_visibilita")])
@@ -748,6 +751,8 @@ def dominio(dest):
             "privati, così il codice del servizio non cambia.", font=fnt(F_REG, 15), fill=INK)
     dr.text((545, 690), "Credenziali di connessione fuori dalla configurazione versionata; "
             "connessione cifrata.", font=fnt(F_REG, 15), fill=INK)
+    dr.text((545, 720), "Le cinque tabelle di copia dello schema in esercizio non entrano nel "
+            "dominio.", font=fnt(F_REG, 15), fill=INK)
 
     # --- a sinistra: i servizi
     G.box(dr, 40, 150, 380, 120, 'blu', "roma-capitale-management",
