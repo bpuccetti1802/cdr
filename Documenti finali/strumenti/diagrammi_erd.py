@@ -143,9 +143,9 @@ TABELLE = [
         ('', 'TABELLA_SIPO (tabella di decodifica)'),
         ('UK', 'DECODIFICA — colonna virtuale')],
      'dove vive in SIPO un dominio ANSC'),
-    # ─────────── v3.38: la numerazione comunale, ereditata da Side, più la sequence decisa dal
-    # committente. v3.41: una sola serie per anno, senza registro, numero a sei cifre. Le sequence non sono tabelle: si disegnano in
-    # grigio, come ALLEGATO, per dire che non sono dello stesso genere.
+    # ─────────── v3.38: la numerazione comunale, ereditata da Side. v3.41: una sola serie per
+    # anno, senza registro, numero a sei cifre. v3.45: la serie è la tabella NUMERATORE_COMUNALE
+    # (una riga per anno, struttura di Milano), al posto delle sequence.
     (1, 'op2', 'blu', 'PRENOTAZIONE_ATTI', [
         ('PK', 'id_prenotazione_atti'), ('', 'nr_anno_atto (la serie)'),
         ('', 'nr_id_ansc_da_prenotare'),
@@ -157,11 +157,11 @@ TABELLE = [
         ('', 'cd_stato_numero_prenotato (1-4)'),
         ('', 'id_ansc_collegato, id_atto_sipo')],
      'ogni numero staccato e la sua sorte'),
-    (3, 'op2', 'grigio', 'SEQ_NUM_COMUNALE_aaaa', [
-        ('', 'una per anno, tutti i registri'),
-        ('', 'START 1 · MAXVALUE 999999'),
-        ('', 'NOCACHE · ORDER · NOCYCLE'),
-        ('', 'creata in anticipo da un job')],
+    (3, 'op2', 'blu', 'NUMERATORE_COMUNALE', [
+        ('PK', 'id_anno_documento (l’anno)'),
+        ('', 'pg_atto NUMBER(6): ultimo numero'),
+        ('', 'dt_inserimento, dt_aggiornamento'),
+        ('', 'una riga per anno, alla prima richiesta')],
      'la serie: riparte ogni anno'),
     # v3.40: idSoggettoAnsc del soggetto, ottenuto da R005. I due codici ANPR NON stanno qui:
     # si scrivono su ANAG_USR.SOGGETTO (ID_SCHEDA_ANPR, ID_UNICO_NAZIONALE), dove esistono già.
@@ -192,7 +192,7 @@ LEGAMI = [
     ('ANSC_CFG_CAMPO', 'b', ['h:2-3b'], 'LOGICHE_DI_SCELTA', 'b', False),
     ('ANSC_LOG_AUDIT', 's', [], 'ANSC_STATO_ATTO', 'd', False),
     ('DATI_ATTO_ESTERNO', 's', [], 'PRENOTAZIONE_ATTI', 'd', False),
-    ('SEQ_NUM_COMUNALE_aaaa', 's', [], 'DATI_ATTO_ESTERNO', 'd', True),
+    ('NUMERATORE_COMUNALE', 's', [], 'DATI_ATTO_ESTERNO', 'd', True),
     # riferimenti per valore, senza vincolo di integrità
     ('ANSC_CFG_UC', 'd', [], 'ANSC_ANA_UC', 's', True),
     ('ALLEGATI_USECASE', 'g', ['v:2-3'], 'ANSC_ANA_UC', 'd', True),
@@ -209,7 +209,7 @@ def disegna(percorso=None):
     im, dr = G.tela(W, H, 'Schema ANSC_USR',
                     'le tabelle operative sono la base: configurazione e dizionari esistono '
                     'per metterle in grado di lavorare. In grigio ALLEGATO, che sta in '
-                    'MATR_USR, e le sequence della numerazione')
+                    'MATR_USR')
     G.banda(dr, 40, 140, W - 40, 980, '#3f8f5f',
             'CONFIGURAZIONE — la decide il Comune · REPLICHE — le pubblica ANSC', '#a8801a')
     G.banda(dr, 40, 1016, W - 40, 1574, '#2f6bb0',
