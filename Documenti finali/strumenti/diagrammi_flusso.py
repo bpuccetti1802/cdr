@@ -16,62 +16,66 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import diagrammi_comune as G   # noqa: E402
 
 # (fase, condizione di uscita della fase, COD_FASE raggiunto)
-# v3.43: allineato al processo del capitolo «Il processo di gestione dei dati ANSC in SIPO»
-# (pagine di SIPO): la ricerca dei soggetti sta nella pagina di dettaglio, prima della
-# determinazione dell'UC; il numero comunale si stacca prima del deposito; fra le firme del
-# dichiarante e quella dell'USC c'è l'attestazione di conformità; il modello evento in
-# redazione sta in ANSC_STATO_ATTO (v3.44: tabella unica), con la pagina da cui riprendere.
+# v3.43: allineato al processo del capitolo «Il processo di gestione dei dati ANSC in SIPO».
+# v3.48: le quattro fasi raggruppano le PAGINE di quel capitolo — A dati anagrafici e
+# dettaglio, B riepilogo (UC, firmatari, documenti, verifica locale), C anteprima e VALIDA,
+# D firme, «Definisci» e «Chiudi» — e il flusso dichiara il ritorno ai dati (stato 0).
 FASI = {
-    'A': ('FASE A — LAVORAZIONE IN SIPO', 'al termine l’UC deve essere identificato',
-          '#2f6bb0'),
-    'B': ('FASE B — I DOCUMENTI', 'i file previsti dall’UC, più gli eventuali atti a testo libero',
+    'A': ('FASE A — DATI ANAGRAFICI E DETTAGLIO', 'soggetti cercati in ANSC, intestatario '
+          'obbligatorio; nessun dato richiesto mancante', '#2f6bb0'),
+    'B': ('FASE B — RIEPILOGO', 'UC determinato, documenti accettati, verifica locale superata',
           '#7b5aa6'),
-    'C': ('FASE C — VALIDAZIONE', 'prima quella locale, poi quella di ANSC', '#a8801a'),
-    'D': ('FASE D — FIRME', 'dalla firma del dichiarante i dati sono vincolati; con quella '
-          'dell’USC l’atto è formato', '#b03a48'),
+    'C': ('FASE C — ANTEPRIMA E VALIDA', 'numero comunale staccato, atto validato da ANSC',
+          '#a8801a'),
+    'D': ('FASE D — FIRME E DEFINIZIONE', 'con la firma dell’USC l’atto è formato e non torna '
+          'più ai dati', '#b03a48'),
 }
 
 # (fase, numero, titolo, sottotitolo, legge, scrive, fase di audit, colore)
 PASSI = [
-    ('A', '1', 'Salvataggio dell’atto', 'l’operatore compila le maschere di SIPO',
-     'tabelle di SIPO', 'l’atto in SIPO: ID_ATTO_SIPO', '', 'grigio'),
-    ('A', '2', 'Dettaglio: ricerca dei soggetti', 'R005 per ciascun soggetto; serve l’OTP '
-     'di sessione', 'ANSC (consultazione)',
+    ('A', '1', 'Tipo atto e dati anagrafici', 'le maschere di SIPO; l’intestatario dai '
+     'soggetti dell’UC', 'tabelle di SIPO\nSOGGETTI_USECASE (l’intestatario)',
+     'l’atto in SIPO: ID_ATTO_SIPO\nstato SIPO 1 In lavorazione', '', 'grigio'),
+    ('A', '2', 'Dettaglio: ricerca dei soggetti', 'R005 con l’OTP di sessione; per '
+     'l’intestatario la ricerca è obbligatoria, il risultato no', 'ANSC (consultazione)',
      'ANSC_SOGGETTO_IDENTIFICATIVI · ANAG_USR.SOGGETTO\nANSC_STATO_ATTO (IN_LAVORAZIONE)\n'
      'e pagina di ripresa', 'SOGGETTO', 'rosso'),
-    ('A', '3', 'Riepilogo: determinazione dell’UC', 'automatica; l’operatore sceglie solo se '
+    ('B', '3', 'Riepilogo: determinazione dell’UC', 'automatica; l’operatore sceglie solo se '
      'ambigua', 'ANSC_CFG_UC (baseline ATTIVA)\nLOGICHE_DI_SCELTA (dominio 1)',
      'ANSC_STATO_ATTO\nID_UC_ANSC · COD_LOGICA · COD_ORIGINE_UC\nID_VERSIONE · COD_FASE = '
      'UC_DETERMINATO', 'DETERMINAZIONE', 'blu'),
-    ('B', '4', 'Documenti e atti a testo libero', 'caricamento in SIPO e invio ad ANSC — R001',
-     'ALLEGATI_USECASE (che cosa serve)',
+    ('B', '4', 'Riepilogo: firmatari', 'chi firma, con il contrassegno modificabile',
+     'SOGGETTI_USECASE (fg_firmatario)', 'firmatari: chi firma e in quale modo', '', 'blu'),
+    ('B', '5', 'Riepilogo: documenti e atti a testo libero', 'caricamento in SIPO e invio ad '
+     'ANSC — R001', 'ALLEGATI_USECASE (che cosa serve)',
      'ALLEGATO\nid_ansc_allegato · cd_stato · fg_testo_libero\nCOD_FASE = DOCUMENTI_ACQUISITI',
      'ALLEGATI', 'viola'),
-    ('C', '5', 'Prevalidazione locale', 'pre-filtro RF-9: nessuna chiamata ad ANSC',
+    ('B', '6', 'Riepilogo: verifica locale', 'pre-filtro RF-9: nessuna chiamata ad ANSC',
      'ANSC_CFG_SEZIONE · ANSC_CFG_CAMPO\nALLEGATI_USECASE · V_ANSC_DIZ_VALIDO',
      'esito a video; COD_FASE = PREVALIDATO', 'PREVERIFICA', 'giallo'),
-    ('C', '6', 'Anteprima: numero comunale', 'stacco dalla serie dell’anno; il modello evento '
+    ('C', '7', 'Anteprima: numero comunale', 'stacco dalla serie dell’anno; il modello evento '
      'lo porta', 'num-ansc-sipo',
      'DATI_ATTO_ESTERNO (il numero e la sua sorte)\nANSC_STATO_ATTO.NUM_COMUNALE', '', 'blu'),
-    ('C', '7', 'Costruzione del payload', 'un solo adattatore, guidato dalla configurazione',
-     'ANSC_CFG_SEZIONE · ANSC_CFG_CAMPO\nANSC_CFG_FORMULA · dizionari',
+    ('C', '8', 'Anteprima: il modello evento', 'un solo adattatore, guidato dalla '
+     'configurazione', 'ANSC_CFG_SEZIONE · ANSC_CFG_CAMPO\nANSC_CFG_FORMULA · dizionari',
      'ANSC_STATO_ATTO.TXT_EVENTO\n(il modello evento in redazione,\naggiornato a ogni salvataggio)',
      'PAYLOAD', 'blu'),
-    ('C', '8', 'Anteprima del testo', 'R010 — facoltativa, prima del deposito',
+    ('C', '9', 'Anteprima del testo', 'R010 — facoltativa, prima della validazione',
      'il modello evento', 'nulla: è una lettura', 'ANTEPRIMA', 'giallo'),
-    ('C', '9', 'Validazione ANSC e deposito',
-     'R009 — da qui l’identificativo nazionale è consumato', 'il modello evento',
+    ('C', '10', '«VALIDA»: la validazione ANSC', 'R009 — da qui l’identificativo nazionale è '
+     'consumato', 'il modello evento',
      'ANSC_STATO_ATTO: ID_ANSC · STATO = CONFERMATO\nCOD_FASE = VALIDATO\n'
      'TXT_HASH_VALIDATO: impronta del modello validato', 'DEPOSITO', 'rosso'),
-    ('D', '10', 'Firme dei dichiaranti', 'R006 cartacea · R012 elettronica; senza firmatari '
+    ('D', '11', 'Firme dei dichiaranti', 'R006 cartacea · R012 elettronica; senza firmatari '
      'si salta', 'firmatari (chi firma e come)',
      'firmatari: stato della firma\nANSC_STATO_ATTO: STATO = FIRMATO_DICHIARANTE',
      'FIRMA_DICH', 'rosso'),
-    ('D', '11', 'Attestazione di conformità', 'R007 — firmata dall’USC',
+    ('D', '12', 'Attestazione di conformità', 'R007 — firmata dall’USC',
      'ALLEGATO (documenti inclusi)', 'ANSC_STATO_ATTO: STATO = FIRMATO_CONFORMITA',
      'FIRMA_CONFORMITA', 'rosso'),
-    ('D', '12', 'Firma dell’USC e «Definisci»', 'R007 con le credenziali di firma remota; '
-     'poi il salvataggio in SIPO', 'lo stato reale dell’atto',
+    ('D', '13', 'Firma dell’USC, «Definisci» e «Chiudi»', 'R007 con le credenziali di firma '
+     'remota; la comunicazione anagrafica con R014 se l’UC la prevede',
+     'lo stato reale dell’atto\ncomunicaz_anagrafica_usecase',
      'ANSC_STATO_ATTO: STATO = FIRMATO_USC\nCOD_FASE = FIRMATO · in SIPO 2 DEFINITO\n'
      'l’atto si blocca in SIPO', 'FIRMA_USC', 'rosso'),
 ]
@@ -79,7 +83,7 @@ ULTIMO = PASSI[-1][1]
 
 
 def flusso(dest):
-    im, dr = G.tela(1600, 2100, 'Il flusso operativo: dall’atto di SIPO all’atto formato',
+    im, dr = G.tela(1600, 2600, 'Il flusso operativo: dall’atto di SIPO all’atto formato',
                     'quattro fasi; per ogni passo la configurazione che lo guida, ciò che '
                     'resta scritto e la fase con cui l’audit lo registra')
 
@@ -128,7 +132,7 @@ def flusso(dest):
         y += alt + 12
 
     y += 16
-    dr.text((x0, y), 'Cinque regole che il flusso impone', font=G.fnt(G.F_BLD, 19),
+    dr.text((x0, y), 'Sei regole che il flusso impone', font=G.fnt(G.F_BLD, 19),
             fill='#25548a')
     for i, t in enumerate([
         'Ogni fase aggiorna lo stato dell’atto: COD_FASE dice a che punto è la lavorazione '
@@ -136,10 +140,14 @@ def flusso(dest):
         'confondono.',
         'Ogni passo lascia una riga in ANSC_LOG_AUDIT: anche quelli che non chiamano ANSC, '
         'perché sono le decisioni che spiegano il payload.',
-        'Dal passo 9 in avanti l’identificativo nazionale è consumato: un esito indeterminato '
+        'Dal passo 10 in avanti l’identificativo nazionale è consumato: un esito indeterminato '
         'non si ritenta, si accerta con R005 e semmai si annulla con R011.',
-        'Dopo la firma dell’USC l’atto non è più modificabile in SIPO: la correzione passa per '
-        'gli istituti di ANSC (annotazione, rettifica, annullamento), non per la maschera.',
+        'Fino alla firma dell’USC si torna ai dati: se cambiano, l’atto va nello stato 0 e le '
+        'firme si chiudono finché una nuova validazione dello stesso atto non lo riporta a '
+        'CONFERMATO; dopo le firme dei dichiaranti, solo se tutti possono firmare di nuovo.',
+        'Dopo la firma dell’USC l’atto non è più modificabile in SIPO, nemmeno nello stesso '
+        'giorno: la correzione passa per gli istituti di ANSC (annotazione, rettifica, '
+        'annullamento), non per la maschera.',
         'Dal passo 2 ogni salvataggio aggiorna ANSC_STATO_ATTO con il modello evento e la pagina '
         'raggiunta: la redazione si sospende e si riprende dal punto in cui era.',
     ]):
@@ -147,10 +155,10 @@ def flusso(dest):
             dr.text((x0 + 20, y + 34 + i * 60 + j * 22), ('· ' if j == 0 else '   ') + rg,
                     font=G.fnt(G.F_REG, 16), fill=G.MUTED)
 
-    G.legenda(dr, x0, y + 340, [('grigio', 'SIPO'), ('blu', 'concentratore, in locale'),
+    G.legenda(dr, x0, y + 400, [('grigio', 'SIPO'), ('blu', 'concentratore, in locale'),
                                 ('viola', 'documenti'), ('giallo', 'verifica locale'),
                                 ('rosso', 'chiamata ad ANSC')])
-    im = im.crop((0, 0, 1600, y + 390))
+    im = im.crop((0, 0, 1600, y + 450))
     im.save(dest)
     return dest
 

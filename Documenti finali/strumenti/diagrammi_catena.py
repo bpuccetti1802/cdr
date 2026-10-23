@@ -50,9 +50,10 @@ CANALE_Y = 290
 
 # ───────────────────────────────────────────── fascia 2: la configurazione
 CONF = [
-    ('ANSC_CFG_UC', 'scritta dal Comune',
-     'l’UC adottato, il Modello,\nla priorità, il codice della logica', 'verde'),
-    ('TIPO_LOGICHE_DI_SCELTA e\nLOGICHE_DI_SCELTA', 'scritte dal Comune',
+    # v3.46: il catalogo degli UC (ex ANSC_ANA_UC) è confluito in ANSC_CFG_UC
+    ('ANSC_CFG_UC', 'dai fogli e dal Comune',
+     'gli UC con codice motore e\ntipo evento; Modello, logica', 'verde'),
+    ('TIPO_LOGICHE_DI_SCELTA\ne LOGICHE_DI_SCELTA', 'scritte dal Comune',
      'le logiche: scelta dell’UC,\nsezioni e campi', 'verde'),
     ('ANSC_CFG_SEZIONE', 'dai fogli', 'i blocchi richiesti\ne quando si popolano', 'verde'),
     ('ANSC_CFG_CAMPO', 'dai fogli',
@@ -63,13 +64,11 @@ CONF = [
      'valori ammessi; si leggono\nper chiave: dominio + valore', 'giallo'),
     ('RICONCILIAZ_DIZIONARI', 'scritta dal Comune',
      'come un valore di SIPO\ndiventa un valore di ANSC', 'verde'),
-    ('ANSC_ANA_UC', 'da R901, più il codice motore',
-     'catalogo degli UC,\ncon il tipo evento', 'giallo'),
 ]
-C_LARG, C_GAP, C_Y = 198, 10, 408
+C_LARG, C_GAP, C_Y = 228, 10, 408
 
 # quali riquadri della configurazione alimenta ciascun canale
-ALIMENTA = [(0, [2, 3, 4]), (1, [5, 6])]   # il canale 2 non alimenta la riconciliazione
+ALIMENTA = [(0, [2, 3, 4]), (1, [5])]   # il canale 2 non alimenta la riconciliazione
 
 # ───────────────────────────────────────────────── fascia 3: l'esecuzione
 PASSI = [
@@ -179,9 +178,8 @@ def figura(dest):
     ]):
         dr.text((60, y + 26 + i * 24), t, font=fnt(F_ITA, 16), fill=MUTED)
     dr.text((60, y + 76), 'ATTENZIONE: i file del repository non sono un canale, sono il '
-                          'riscontro; in esercizio si legge e si scrive solo sul database. Il '
-                          'catalogo degli UC e i dizionari non stanno nella baseline: sono '
-                          'repliche, con validità temporale.', font=fnt(F_ITA, 16), fill=ROSSO)
+                          'riscontro; in esercizio si legge solo il database. I dizionari restano '
+                          'fuori dalla baseline; il catalogo degli UC vi entra con ANSC_CFG_UC.', font=fnt(F_ITA, 16), fill=ROSSO)
 
     # ---------------- 3 · l'esecuzione
     banda(dr, 40, 724, W - 40, 1074, '#2f6bb0',

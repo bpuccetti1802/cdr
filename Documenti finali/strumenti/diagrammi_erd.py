@@ -30,24 +30,25 @@ RIGA = {1: 176, 2: 392, 3: 592, 4: 796}     # ordinate delle quattro righe della
 OPER = 1046                                 # ordinata della fascia operativa
 OPER2 = 1386                                # v3.38: seconda riga operativa (numerazione)
 CORR_V = {'1-2': 440, '2-3': 850, '3-4': 1260}   # corridoi verticali fra le colonne
-CORR_H = {'1-2': 366, '2-3': 576, '2-3b': 586, 'sotto': 984}  # corridoi orizzontali fra le righe
+CORR_H = {'1-2': 366, '1-2b': 376, '2-3': 576, '2-3b': 586, 'sotto': 984}  # corridoi orizzontali fra le righe
 
 # (colonna, riga, colore, titolo, righe, nota)
 TABELLE = [
     # ─────────── riga 1: i cataloghi e ciò che si replica da ANSC
-    (1, 1, 'verde', 'ANSC_CFG_UC', [
-        ('PK', 'ID_UC_CFG'), ('UK', 'COD_UC_ANSC + ID_VERSIONE'),
-        ('', 'ID_MODELLO_ATTO, ID_CONF_TIPO_ATTO'),
-        ('', 'MASCHERA_UI, SERIE, NUM_PRIORITA'),
-        ('FK', 'ID_DOMINIO=1 + COD_LOGICA'), ('FK', 'ID_VERSIONE')],
-     'quale UC, e quando si applica'),
-    (2, 1, 'giallo', 'ANSC_ANA_UC', [
-        ('PK', 'ID_UC'), ('', 'COD_UC_ANSC, COD_MOTORE'),
-        ('', 'COD_FAMIGLIA, COD_VERSIONE'),
-        ('', 'ID_TIPO_EVENTO (ANSC_01)'),
-        ('', 'ID_TIPO_DOCUMENTO, validità')], 'il catalogo degli UC'),
+    # v3.46: ANSC_ANA_UC è confluita in ANSC_CFG_UC, che porta anche le colonne del catalogo.
+    # La riga è per UC e per Modello: sezioni e formule la richiamano per valore.
+    (1, 1, 'verde', 'ANSC_CFG_FORMULA', [
+        ('PK', 'ID_FORMULA'), ('', 'COD_UC_ANSC (per valore)'), ('FK', 'ID_VERSIONE')],
+     'le diciture dell’atto'),
+    (2, 1, 'verde', 'ANSC_CFG_UC', [
+        ('PK', 'ID_UC_CFG'), ('UK', 'versione + UC + tipo atto + Modello'),
+        ('', 'COD_UC_ANSC, COD_MOTORE'),
+        ('', 'DESC_UC_ANSC, COD_FAMIGLIA'),
+        ('', 'ID_MODELLO_ATTO, NUM_PRIORITA, …'),
+        ('FK', 'LOGICA (dominio 1) · ID_VERSIONE')],
+     'il catalogo degli UC e la loro scelta'),
     (3, 1, 'verde', 'ANSC_CFG_SEZIONE', [
-        ('PK', 'ID_SEZIONE'), ('FK', 'ID_UC → ANA_UC'),
+        ('PK', 'ID_SEZIONE'), ('', 'COD_UC_ANSC (per valore)'),
         ('', 'SEZIONE_FE_ANSC, OGGETTO_ANSC'),
         ('FK', 'ID_DOMINIO=2 + COD_LOGICA'), ('FK', 'ID_VERSIONE')],
      'quando una sezione si popola'),
@@ -61,11 +62,8 @@ TABELLE = [
         ('PK', 'ID_DOMINIO + COD_LOGICA_DI_SCELTA'),
         ('', 'DESC_LOGICA_DI_SCELTA'),
         ('', 'TXT_LOGICA (espressione)')], 'le logiche, scritte una volta sola'),
-    (2, 2, 'verde', 'ANSC_CFG_FORMULA', [
-        ('PK', 'ID_FORMULA'), ('FK', 'ID_UC → ANA_UC'), ('FK', 'ID_VERSIONE')],
-     'le diciture dell’atto'),
     (3, 2, 'verde', 'ANSC_CFG_CAMPO', [
-        ('PK', 'ID_CAMPO'), ('FK', 'ID_SEZIONE'),
+        ('PK', 'ID_CAMPO'), ('FK', 'ID_SEZIONE + ID_VERSIONE + UC'),
         ('', 'OGGETTO_ANSC + CAMPO_ANSC'), ('', 'SCHEMA_/TABELLA_/CAMPO_SIPO'),
         ('', 'ID_ / NM_DECODIFICA_ANSC'),
         ('FK', 'ID_DOMINIO=3 + ID_BUSINESS_LOGIC'),
@@ -181,12 +179,10 @@ TABELLE = [
 #   orizzontale. Il percorso si costruisce a gomiti, mai in diagonale.
 LEGAMI = [
     # chiavi esterne dichiarate nel DDL
-    ('ANSC_CFG_SEZIONE', 's', [], 'ANSC_ANA_UC', 'd', False),
     ('ANSC_CFG_CAMPO', 'g', [], 'ANSC_CFG_SEZIONE', 'b', False),
-    ('ANSC_CFG_FORMULA', 'g', [], 'ANSC_ANA_UC', 'b', False),
     ('VALORE_DOMINIO', 'g', [], 'DOMINIO_DECODIFICA', 'b', False),
     ('LOGICHE_DI_SCELTA', 'b', [], 'TIPO_LOGICHE_DI_SCELTA', 'g', False),
-    ('ANSC_CFG_UC', 'b', [], 'LOGICHE_DI_SCELTA', 'g', False),
+    ('ANSC_CFG_UC', 'b', ['h:1-2b'], 'LOGICHE_DI_SCELTA', 'g', False),
     ('ANSC_CFG_SEZIONE', 'b', ['h:1-2'], 'LOGICHE_DI_SCELTA', 'd', False),
     ('ALLEGATI_USECASE', 's', ['h:2-3'], 'LOGICHE_DI_SCELTA', 'b', False),
     ('ANSC_CFG_CAMPO', 'b', ['h:2-3b'], 'LOGICHE_DI_SCELTA', 'b', False),
@@ -194,9 +190,10 @@ LEGAMI = [
     ('DATI_ATTO_ESTERNO', 's', [], 'PRENOTAZIONE_ATTI', 'd', False),
     ('NUMERATORE_COMUNALE', 's', [], 'DATI_ATTO_ESTERNO', 'd', True),
     # riferimenti per valore, senza vincolo di integrità
-    ('ANSC_CFG_UC', 'd', [], 'ANSC_ANA_UC', 's', True),
-    ('ALLEGATI_USECASE', 'g', ['v:2-3'], 'ANSC_ANA_UC', 'd', True),
-    ('SOGGETTI_USECASE', 's', ['v:2-3'], 'ANSC_ANA_UC', 'd', True),
+    ('ANSC_CFG_FORMULA', 'd', [], 'ANSC_CFG_UC', 's', True),
+    ('ANSC_CFG_SEZIONE', 's', [], 'ANSC_CFG_UC', 'd', True),
+    ('ALLEGATI_USECASE', 'g', ['v:2-3'], 'ANSC_CFG_UC', 'd', True),
+    ('SOGGETTI_USECASE', 's', ['v:2-3'], 'ANSC_CFG_UC', 'd', True),
     ('ANSC_CFG_CAMPO', 'd', [], 'VALORE_DOMINIO', 's', True),
     ('RICONCILIAZ_DIZIONARI', 'g', [], 'VALORE_DOMINIO', 'b', True),
     ('ANSC_CFG_DOMINIO_SIPO', 'g', [], 'RICONCILIAZ_DIZIONARI', 'b', False),
