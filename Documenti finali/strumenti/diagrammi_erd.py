@@ -45,13 +45,16 @@ TABELLE = [
         ('', 'COD_UC_ANSC, COD_MOTORE'),
         ('', 'DESC_UC_ANSC, COD_FAMIGLIA'),
         ('', 'ID_MODELLO_ATTO, NUM_PRIORITA, …'),
-        ('FK', 'LOGICA (dominio 1) · ID_VERSIONE')],
+        ('FK', 'LOGICA · COD_QUERY_UC · VERSIONE')],
      'il catalogo degli UC e la loro scelta'),
-    (3, 1, 'verde', 'ANSC_CFG_SEZIONE', [
-        ('PK', 'ID_SEZIONE'), ('', 'COD_UC_ANSC (per valore)'),
-        ('', 'SEZIONE_FE_ANSC, OGGETTO_ANSC'),
-        ('FK', 'ID_DOMINIO=2 + COD_LOGICA'), ('FK', 'ID_VERSIONE')],
-     'quando una sezione si popola'),
+    # v3.51: ANSC_CFG_SEZIONE è stata tolta (troppo onerosa da gestire): la sezione resta come
+    # dato descrittivo su ANSC_CFG_CAMPO. Al suo posto ANSC_TEMPLATE, le interrogazioni per UC,
+    # richiamate da ANSC_CFG_UC.COD_QUERY_UC nella stessa baseline.
+    (3, 1, 'verde', 'ANSC_TEMPLATE', [
+        ('PK', 'ID_COD_QUERY'), ('UK', 'ID_VERSIONE + COD_QUERY_UC'),
+        ('', 'QUERY (CLOB)'), ('', 'COD_UC_ANSC (per valore)'),
+        ('FK', 'ID_VERSIONE')],
+     'le interrogazioni degli UC'),
     (4, 1, 'viola', 'DOMINIO_DECODIFICA', [
         ('PK', 'id_dominio + nm_dominio'), ('', 'il nome è IN CHIAVE: 134 e 135'),
         ('', 'cd_versione (da R901)')],
@@ -63,11 +66,11 @@ TABELLE = [
         ('', 'DESC_LOGICA_DI_SCELTA'),
         ('', 'TXT_LOGICA (espressione)')], 'le logiche, scritte una volta sola'),
     (3, 2, 'verde', 'ANSC_CFG_CAMPO', [
-        ('PK', 'ID_CAMPO'), ('FK', 'ID_SEZIONE + ID_VERSIONE + UC'),
+        ('PK', 'ID_CAMPO'), ('FK', 'ID_VERSIONE · UC per valore'),
+        ('', 'SEZIONE_FE_ANSC (descrittiva)'),
         ('', 'OGGETTO_ANSC + CAMPO_ANSC'), ('', 'SCHEMA_/TABELLA_/CAMPO_SIPO'),
-        ('', 'ID_ / NM_DECODIFICA_ANSC'),
         ('FK', 'ID_DOMINIO=3 + ID_BUSINESS_LOGIC'),
-        ('', 'FLG_OBBLIGATORIO, VALORE_DEFAULT')],
+        ('', 'ID_DECODIFICA_ANSC, FLG_OBBLIGATORIO')],
      'da dove viene ogni dato'),
     (4, 2, 'viola', 'VALORE_DOMINIO', [
         ('PK', 'id_dominio + nm_dominio'), ('', '+ id_valore'),
@@ -78,18 +81,18 @@ TABELLE = [
     # ─────────── riga 3: le due radici che tutti richiamano
     (1, 3, 'verde', 'TIPO_LOGICHE_DI_SCELTA', [
         ('PK', 'ID_DOMINIO'), ('', '1 scelta dell’UC'),
-        ('', '2 attivazione di sezione'),
+        ('', '2 presenza di un documento'),
         ('', '3 logica dei campi')], 'i domini di logica'),
     (2, 3, 'giallo', 'ANSC_CFG_VERSIONE', [
         ('PK', 'ID_VERSIONE'), ('', 'COD_STATO: bozza/attiva/storica'),
         # ⚠️ v3.35: l'elenco nominava CFG_CAMPO, che dalla v3.2x pende dalla sezione e non
         # porta ID_VERSIONE, e taceva RICONCILIAZ_DIZIONARI, che invece la referenzia.
         # Le chiavi esterne sono quelle del DDL; STATO_ATTO la richiama per valore.
-        ('FK', '← CFG_UC, CFG_SEZIONE, CFG_FORMULA'),
-        ('', '   ALLEGATI_ e SOGGETTI_USECASE'),
+        ('FK', '← CFG_UC, CFG_CAMPO, CFG_FORMULA'),
+        ('', '   TEMPLATE, ALLEGATI_, SOGGETTI_USECASE'),
         ('', '   RICONCILIAZ_DIZIONARI'),
         ('', 'per valore: STATO_ATTO (timbro storico)')],
-     'la baseline: sei chiavi esterne, frecce omesse'),
+     'la baseline: sette chiavi esterne, frecce omesse'),
     (3, 3, 'verde', 'ALLEGATI_USECASE', [
         ('PK', 'cd_usecase + ty_allegato'), ('', '+ id_versione'),
         ('', 'ty_presenza, cd_logica'), ('', 'fg_operante, nr_ordinamento')],
@@ -179,11 +182,10 @@ TABELLE = [
 #   orizzontale. Il percorso si costruisce a gomiti, mai in diagonale.
 LEGAMI = [
     # chiavi esterne dichiarate nel DDL
-    ('ANSC_CFG_CAMPO', 'g', [], 'ANSC_CFG_SEZIONE', 'b', False),
     ('VALORE_DOMINIO', 'g', [], 'DOMINIO_DECODIFICA', 'b', False),
     ('LOGICHE_DI_SCELTA', 'b', [], 'TIPO_LOGICHE_DI_SCELTA', 'g', False),
     ('ANSC_CFG_UC', 'b', ['h:1-2b'], 'LOGICHE_DI_SCELTA', 'g', False),
-    ('ANSC_CFG_SEZIONE', 'b', ['h:1-2'], 'LOGICHE_DI_SCELTA', 'd', False),
+    ('ANSC_CFG_UC', 'd', [], 'ANSC_TEMPLATE', 's', False),
     ('ALLEGATI_USECASE', 's', ['h:2-3'], 'LOGICHE_DI_SCELTA', 'b', False),
     ('ANSC_CFG_CAMPO', 'b', ['h:2-3b'], 'LOGICHE_DI_SCELTA', 'b', False),
     ('ANSC_LOG_AUDIT', 's', [], 'ANSC_STATO_ATTO', 'd', False),
@@ -191,7 +193,6 @@ LEGAMI = [
     ('NUMERATORE_COMUNALE', 's', [], 'DATI_ATTO_ESTERNO', 'd', True),
     # riferimenti per valore, senza vincolo di integrità
     ('ANSC_CFG_FORMULA', 'd', [], 'ANSC_CFG_UC', 's', True),
-    ('ANSC_CFG_SEZIONE', 's', [], 'ANSC_CFG_UC', 'd', True),
     ('ALLEGATI_USECASE', 'g', ['v:2-3'], 'ANSC_CFG_UC', 'd', True),
     ('SOGGETTI_USECASE', 's', ['v:2-3'], 'ANSC_CFG_UC', 'd', True),
     ('ANSC_CFG_CAMPO', 'd', [], 'VALORE_DOMINIO', 's', True),

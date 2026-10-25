@@ -54,8 +54,9 @@ CONF = [
     ('ANSC_CFG_UC', 'dai fogli e dal Comune',
      'gli UC con codice motore e\ntipo evento; Modello, logica', 'verde'),
     ('TIPO_LOGICHE_DI_SCELTA\ne LOGICHE_DI_SCELTA', 'scritte dal Comune',
-     'le logiche: scelta dell’UC,\nsezioni e campi', 'verde'),
-    ('ANSC_CFG_SEZIONE', 'dai fogli', 'i blocchi richiesti\ne quando si popolano', 'verde'),
+     'le logiche: scelta dell’UC,\ndocumenti e campi', 'verde'),
+    # v3.51: ANSC_CFG_SEZIONE tolta; al suo posto le interrogazioni degli UC
+    ('ANSC_TEMPLATE', 'scritta dal Comune', 'le interrogazioni\nassociate agli UC', 'verde'),
     ('ANSC_CFG_CAMPO', 'dai fogli',
      'campo ANSC ↔ colonna SIPO,\ndecodifica, obbligatorietà', 'verde'),
     ('ALLEGATI_USECASE\ne ANSC_CFG_FORMULA', 'dai fogli',
@@ -68,16 +69,16 @@ CONF = [
 C_LARG, C_GAP, C_Y = 228, 10, 408
 
 # quali riquadri della configurazione alimenta ciascun canale
-ALIMENTA = [(0, [2, 3, 4]), (1, [5])]   # il canale 2 non alimenta la riconciliazione
+ALIMENTA = [(0, [3, 4]), (1, [5])]   # il canale 2 non alimenta la riconciliazione
 
 # ───────────────────────────────────────────────── fascia 3: l'esecuzione
 PASSI = [
     ('L’atto in SIPO', 'già salvato sulle tabelle:\nè lì che si va a leggere',
      'CONF_TIPO_ATTI\ndà Modello e maschera', 'blu'),
     ('Determinazione\ndell’UC', 'la logica di ciascun UC,\nin ordine di priorità',
-     'ANSC_CFG_UC\n+ VALORI_DOMINIO', 'blu'),
-    ('Requisiti dell’UC', 'sezioni, campi, allegati\ne formule che servono',
-     'ANSC_CFG_SEZIONE · _CAMPO\nALLEGATI_USECASE · _FORMULA', 'blu'),
+     'ANSC_CFG_UC\n+ LOGICHE_DI_SCELTA', 'blu'),
+    ('Requisiti dell’UC', 'campi, allegati\ne formule che servono',
+     'ANSC_CFG_CAMPO\nALLEGATI_USECASE · _FORMULA', 'blu'),
     ('Prevalidazione\nlocale', 'mancanze segnalate prima\ndi consumare un idAnsc',
      'RF-9 · nessuna chiamata\nad ANSC', 'blu'),
     ('Costruzione\ndel payload', 'ogni CAMPO_SIPO nel suo percorso,\ncon la transcodifica '

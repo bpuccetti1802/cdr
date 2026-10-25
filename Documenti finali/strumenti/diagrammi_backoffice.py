@@ -211,12 +211,13 @@ def config_campi(dest):
     im, dr = finestra(1180, 580,
                       'SIPO · Integrazione ANSC — Configurazione · UC 11111000',
                       'Ruolo: Amministratore')
-    y = testata(dr, 26, 62, 'Sezioni, campi, allegati e formule dell’UC',
-                'quattro schede per un solo UC: le sezioni dicono quali blocchi si popolano, i '
-                'campi da dove viene ogni dato, gli allegati quali documenti servono, le formule '
-                'quali diciture sono previste.')
-    for i, (testo, attiva) in enumerate([('Sezioni (11)', False), ('Campi (199)', True),
-                                         ('Allegati (5)', False), ('Formule (8)', False)]):
+    # v3.51: ANSC_CFG_SEZIONE tolta; la sezione resta un dato descrittivo del campo (filtro)
+    y = testata(dr, 26, 62, 'Campi, allegati e formule dell’UC',
+                'tre schede per un solo UC: i campi dicono da dove viene ogni dato e a quale '
+                'sezione del mapping appartengono, gli allegati quali documenti servono, le '
+                'formule quali diciture sono previste.')
+    for i, (testo, attiva) in enumerate([('Campi (199)', True), ('Allegati (5)', False),
+                                         ('Formule (8)', False)]):
         x = 26 + i * 150
         colore = BLU if attiva else BORDO
         dr.rounded_rectangle([x, y, x + 140, y + 32], radius=6, outline=colore,
