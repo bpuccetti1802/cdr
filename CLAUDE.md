@@ -1565,6 +1565,40 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   Copre le schede di operazione complete, i modelli di dati per pod, l'elenco unico dei codici di errore, la
   lista di controllo di conformità, gli interventi di allineamento rispetto alla v2.6 e i punti aperti
   PS-1…PS-7. Cfr. il blocco «SPECIFICA DELLE API DI TUTTI I POD» in «Stato attuale del lavoro».
+- **`STUDIO_Identificativi-ANSC-verso-ANPR_v0.1.docx`** (27/10/2026, `strumenti/genera_idansc_anpr.py`,
+  generato dal template DAD) — se e dove si possa passare ad ANPR un identificativo di ANSC, partendo
+  dai processi che aggiornano ANPR. 9 capitoli, 7 tabelle, 6 punti aperti AN-01…AN-06.
+  ⚠️ **LA RISPOSTA È DOPPIA, e le due metà non vanno confuse. Per il SOGGETTO NON si può**:
+  `TipoIdentificativi` dello schema ANPR ha **un solo campo, `idANPR`**, e nessun tipo porta un
+  identificativo di soggetto di provenienza esterna — giusto così, perché è ANSC a consumare l'id di
+  ANPR, non il contrario. La corrispondenza resta da noi, in `ANSC_SOGGETTO_IDENTIFICATIVI`.
+  **Per l'ATTO si può**: lo schema ha **`TipoAttoANSC`** (`idANSC`, `comuneRegistrazione`, `anno`
+  obbligatori · `numeroComunale` **obbligatorio**, quindi la forma ANSC non sostituisce il numero
+  comunale · `ufficioMunicipio`, `dataFormazioneAtto`, `trascritto` facoltativi), e `TipoAttoANPR` è
+  il contenitore che ammette `atto` **oppure** `attoANSC`.
+  ⚠️ **IL CLIENT LO FA GIÀ E COMMUTA DA SÉ**, su `atto.getIdAttoAnsc() != null`, in due punti:
+  `Richiesta5008XmlGenerator.java:343-358` e `AnprUtilities.generateTipoAttoANPR` (`:427-449`, usata
+  da `Richiesta2001XmlGenerator:172`, `5008:705` e `:1036`). ⚠️ **Letto per REFLECTION**
+  (`getMethod("getIdAttoAnsc")`): invisibile a una ricerca per nome di campo — è per questo che
+  sembra non esistere — e un oggetto senza quel getter dà **errore**, non valore nullo (l'`AttoVO`
+  del concentratore non lo ha).
+  ⚠️ **SOLO 2 GENERATORI DI SCRITTURA SU 15 lo trattano**: 5008 e 2001. **Tutte le iscrizioni**
+  (1001, 1002, 1013, 1014), le altre cancellazioni (2003, 2011), le altre mutazioni (5001, 5010,
+  5012, 5013) e l'AIRE (A001, A002, A006) accettano **solo la forma classica**.
+  **Dove si interrompe la catena**: non nello schema e non nel client, ma in
+  **`all-anpr-sipo/.../common/Convert.java:1033`** (`generateAtto`, e `attoConverter` a `:177`), che
+  ricostruisce l'`Atto` dai dati del legacy e **non tocca le colonne ANSC** — il concentratore ha
+  **zero** occorrenze di ANSC. ⚠️ Il valore **non può venire dal legacy**:
+  `EstremiAttodiStatoCivile` non ha il campo; va letto da `ANAG_USR.ATTO` (`ID_ATTO_ANSC`,
+  `ANNO_ANSC`, `NUMERO_COMUNALE`, `DATA_ANSC` — `Atto.java:161,164,175,180`), che però oggi
+  **l'operatore scrive a mano** dalle maschere: `AttoAnscBL.creaAttoAnsc` è chiamata solo da
+  `varana-be/SoggettoController:1827,2864` e `MatrimonioController:342,695,750,1080,2272` → **AN-01**
+  (se per gli atti dei batch quelle colonne siano popolate) e **AN-02** (con quale chiave ritrovare
+  l'atto dal codice individuale).
+  **Esito per processo**: decessi = **caso più favorevole** (2001 e 5008 lo trattano già: basta la
+  conversione, nessun tocco al client condiviso — ed è la famiglia del pilota) · nascite = a metà
+  (la mutazione sì, l'**iscrizione no**: 1001/1002 da estendere) · matrimoni = in parte (5012/5013 da
+  estendere) · elettorale e CRI online = **non pertinenti**, non portano atti di stato civile.
 - **`verifica-conteggi.py`** — controllo di coerenza da eseguire **prima di consegnare** ogni nuova
   versione di un `.docx` (vedi il dettaglio in «Come leggere/scrivere i file»). **40 regole**, di cui 31
   verificate direttamente sulle sorgenti ANSC (decodifiche, mapping dei casi d'uso, **changelog dei

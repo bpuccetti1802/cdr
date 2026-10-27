@@ -425,4 +425,10 @@ def frontespizio(doc, versione, nome_documento=None, data=None):
                         if m and not testo.endswith('v' + versione):
                             riscrivi_cella(c, m.group(1) + 'v' + versione)
                             fatti.append('testata: %r -> v%s' % (testo, versione))
+                        # ⚠️ Nel template la cella e' «Codice Documento», senza
+                        # versione: se non si gestisce anche questo caso il primo
+                        # documento generato esce con la testata senza versione.
+                        elif testo.lower() == 'codice documento':
+                            riscrivi_cella(c, '%s v%s' % (testo, versione))
+                            fatti.append('testata: aggiunta v%s' % versione)
     return fatti
