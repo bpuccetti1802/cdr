@@ -1565,8 +1565,8 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   Copre le schede di operazione complete, i modelli di dati per pod, l'elenco unico dei codici di errore, la
   lista di controllo di conformità, gli interventi di allineamento rispetto alla v2.6 e i punti aperti
   PS-1…PS-7. Cfr. il blocco «SPECIFICA DELLE API DI TUTTI I POD» in «Stato attuale del lavoro».
-- **`STUDIO_Identificativi-ANSC-verso-ANPR_v0.2.docx`** (27/10/2026, `strumenti/idansc_v0_2.py`
-  dalla v0.1 di `strumenti/genera_idansc_anpr.py`,
+- **`STUDIO_Identificativi-ANSC-verso-ANPR_v0.3.docx`** (27/10/2026, `strumenti/idansc_v0_3.py`
+  dalla v0.2 di `idansc_v0_2.py`, dalla v0.1 di `genera_idansc_anpr.py`,
   generato dal template DAD) — se e dove si possa passare ad ANPR un identificativo di ANSC, partendo
   dai processi che aggiornano ANPR. 9 capitoli, 7 tabelle, 6 punti aperti AN-01…AN-06.
   ⚠️ **LA RISPOSTA È DOPPIA, e le due metà non vanno confuse. Per il SOGGETTO NON si può**:
@@ -1631,7 +1631,42 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   ⚠️ **`anpr-9.2.9/` NON È SUL DISCO**: è esclusa dal `.gitignore` e la documentazione esiste solo
   nella copia **`anpr-9.2.9 2/`**. È **la ragione per cui questa interfaccia non era stata vista** in
   mesi di analisi — e il rischio si ripresenterà: **la cartella va ripristinata al suo posto**
-  (AN-10). 10 capitoli, 12 tabelle, 10 punti aperti AN-01…AN-10.
+  (AN-10).
+  ⚠️ **v0.3 — L'OBIETTIVO DELL'UTENTE È `idSoggettoAnsc` VERSO ANPR, e la risposta è NO,
+  verificata stavolta sugli SCHEMI 9.2.9 e non sul client**: in tutti gli XSD di
+  `anpr-9.2.9 2/src/wsdl/comuni/` la stringa «ansc» compare **8 volte, tutte riferite all'ATTO**
+  (`tipoAttoANSC` 4 · `tipoNumeroAttoANSC` 2 · `idANSC` 1 · `attoANSC` 1). **Nessun identificativo di
+  soggetto di provenienza esterna**: le operazioni individuano la persona con `idANPR` (9 caratteri)
+  e con le schede. ⚠️ `tipoIdSoggettoNazionale` di `E000Vocabolario.xsd:524` **non è** un'alternativa:
+  è 9 caratteri come `idANPR`, cioè l'identificativo di ANPR con altro nome, e sta nei servizi Enti.
+  **Quindi l'unica strada per il soggetto resta la Predisposizione Anagrafica** (AN-07/AN-08) e
+  ⚠️ **RIGENERARE IL CLIENT NON SERVE A QUELL'OBIETTIVO**: serve all'atto.
+  ⚠️ **GLI XSD IMBARCATI NEL CLIENT SONO ANTERIORI AD ANSC** (`AnprClient/src/main/resources/`, [S9]):
+  `tipoDato.xsd` del modulo ha **0** occorrenze di `tipoAttoANSC`, la 9.2.9 ne ha **11**; e tutti gli
+  schemi sono più corti (tipoDato 3.632 vs **4.405** · vocabolario5000mutazione 550 vs **788** ·
+  2000cancellazione 214 vs **247**). ⚠️ Conseguenze: (a) la **9.2.9 prevede `attoNascitaANPR` anche
+  nell'ISCRIZIONE (2 elementi) e nell'AIRE (2)**, non solo nella mutazione (1) — quindi le iscrizioni
+  **non** sono impossibili, il client è indietro; (b) **gli XSD del modulo non descrivono più il Java
+  dello stesso modulo** (il Java ha `TipoAttoANSC`, i suoi XSD no) → **non usarli come sorgente di
+  rigenerazione** (AN-11 da quale versione rigenerare, AN-12 quale sia la sorgente di verità).
+  **AN-04 RIFORMULATO**: non è «estendere i generatori», è **rigenerare** e poi estendere.
+  **ARCHITETTURA DEL CLIENT** (cap. nuovo): **685 classi, 80.233 righe**, di cui **~64.700 generate**
+  (`tipoDato` 105 · `vocabolario*` · involucri · port) e **~15.500 scritte a mano**
+  (`xmlRequestGenerator` 32/8.402 · `sicurezza` 50/4.154 · `common` 3/1.427 · il resto 14/~1.500).
+  Percorso: `AnprClient.callAnprClient` → `generateXmlRequest` (switch su **36 casi**) →
+  `Richiesta<N>XmlGenerator` che produce **XML come STRINGA** → `DispatchHandler` (switch su **11
+  famiglie**) → `Op<N>Handler` (uno per operazione, ~90 righe) che firma e **ri-deserializza** la
+  stringa nella classe generata. ⚠️ I **nomi ufficiali delle 36 operazioni** stanno nei commenti del
+  primo switch (1001 iscrizione per nascita · 2001 cancellazione per morte · 5008 mutazioni dati
+  generali stato civile · 5010 mutazioni liste elettorali · A001 iscrizione AIRE per nascita ·
+  P001/P002/P003 elenco/dettaglio/aggiorna…): **non sono negli schemi**.
+  **Costo di un'operazione nuova**: 1 `Op<N>Handler` + 1 case in `DispatchHandler` + 1 case in
+  `generateXmlRequest` + 1 generatore + le classi rigenerate. Nessun registro: **tutto per switch**.
+  ⚠️ **TRE DIFETTI, e il primo va sciolto PRIMA di qualunque prova**: `EnvironmentHandler.TEST`
+  **cablato** in `callAnprClient:78`, da cui dipende il portachiavi di firma
+  (`RequestHandler:44`, `/config/<ENV>_Keystore.properties`) → **non si può collaudare fuori da TEST**
+  (= DV-33) · XML come stringa poi ri-deserializzato · tutto per reflection.
+  11 capitoli, 20 tabelle, **12 punti aperti AN-01…AN-12**.
 - **`verifica-conteggi.py`** — controllo di coerenza da eseguire **prima di consegnare** ogni nuova
   versione di un `.docx` (vedi il dettaglio in «Come leggere/scrivere i file»). **40 regole**, di cui 31
   verificate direttamente sulle sorgenti ANSC (decodifiche, mapping dei casi d'uso, **changelog dei
