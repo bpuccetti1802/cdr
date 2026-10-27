@@ -1565,7 +1565,8 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   Copre le schede di operazione complete, i modelli di dati per pod, l'elenco unico dei codici di errore, la
   lista di controllo di conformità, gli interventi di allineamento rispetto alla v2.6 e i punti aperti
   PS-1…PS-7. Cfr. il blocco «SPECIFICA DELLE API DI TUTTI I POD» in «Stato attuale del lavoro».
-- **`STUDIO_Identificativi-ANSC-verso-ANPR_v0.1.docx`** (27/10/2026, `strumenti/genera_idansc_anpr.py`,
+- **`STUDIO_Identificativi-ANSC-verso-ANPR_v0.2.docx`** (27/10/2026, `strumenti/idansc_v0_2.py`
+  dalla v0.1 di `strumenti/genera_idansc_anpr.py`,
   generato dal template DAD) — se e dove si possa passare ad ANPR un identificativo di ANSC, partendo
   dai processi che aggiornano ANPR. 9 capitoli, 7 tabelle, 6 punti aperti AN-01…AN-06.
   ⚠️ **LA RISPOSTA È DOPPIA, e le due metà non vanno confuse. Per il SOGGETTO NON si può**:
@@ -1599,6 +1600,38 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   conversione, nessun tocco al client condiviso — ed è la famiglia del pilota) · nascite = a metà
   (la mutazione sì, l'**iscrizione no**: 1001/1002 da estendere) · matrimoni = in parte (5012/5013 da
   estendere) · elettorale e CRI online = **non pertinenti**, non portano atti di stato civile.
+  ⚠️ **IL CLIENT NON È IL CONTRATTO DI ANPR — ERRORE DI METODO CORRETTO NELLA v0.2 su rilievo
+  dell'utente.** La v0.1 concludeva che `idSoggettoAnsc` non si può passare ad ANPR deducendolo **dai
+  soli tipi generati nel client**: quelli sono la **fotografia della versione di schema con cui SIPO
+  è stato compilato**, non il contratto. Che cosa ANPR preveda si verifica sulla **sua**
+  documentazione. ⚠️ **Da non ripetere su nessun altro tema.**
+  **La risposta vera**: in `anpr-9.2.9/src/wsdl/ansc/xsd/` c'è l'interfaccia **«Predisposizione
+  Anagrafica»** (3 XSD, ~2.000 righe, 245 tipi, 9 esempi), e il tipo **`tipoGeneralita`** porta
+  **QUATTRO identificativi affiancati, tutti facoltativi**: `idSchedaSoggettoComune` ·
+  `idSchedaSoggettoANPR` (num. max 16) · **`idSoggettoANSC`** (num. max 16) · **`idANPR`**
+  (alfanumerico di **9**) — cioè **entrambi** i codici chiesti dall'utente. Compaiono su
+  intestatario, padre e madre negli esempi. Quindi **il limite è del CLIENT, non di ANPR**, e ha la
+  forma di **un'interfaccia intera che SIPO non implementa** (zero occorrenze del namespace in tutto
+  il codice).
+  **Testata**: `codMittente` = «codice ISTAT **del comune che effettua la richiesta**» ·
+  `idTipoNotifica` = **SC01, SC02…** (sono le notifiche anagrafiche di **ANSC_93**: questa interfaccia
+  **è** il canale del cancello anagrafico, visto dal lato di chi emette) · `idTipoContenuto`
+  (1 ATTO/2 ANNOTAZIONE/3 TRASCRIZIONE/4 ANNOT. AUTOMATICA) · `idTipoEvento` (1–5) · `idUsecase`.
+  **Corpo**: `intestatario` 1..N **obbligatorio** (da qui il parto plurimo), `atto` **obbligatorio**,
+  più i blocchi per famiglia.
+  ⚠️ **DUE `tipoAttoANSC` OMONIMI IN NAMESPACE DIVERSI, da non confondere**: quello di **ANPR**
+  (`sogei.it/ANPR/tipoDato`, usato da 5008 e 2001, `idANSC`, anno e numero comunale **obbligatori**,
+  ha `ufficioMunicipio` e `trascritto`) e quello di **ANSC**
+  (`sogei.it/ansc/predisposizioneAnagrafica`, `idAnsc`, **tutti facoltativi**, ha
+  **`composizioneCompleta`** = il testo dell'atto).
+  ⚠️ **TRE CAUTELE**: **non c'è WSDL** (solo xsd + esempi → il trasporto non è dichiarato, AN-07) ·
+  il namespace è **di ANSC** pur stando nel repository ANPR · **chi emette il messaggio non è deciso
+  da quei file** (AN-08: gestionale comunale o ANSC per conto del comune?). Nuovo **AN-09** (se la
+  Predisposizione sia alternativa o complementare alle mutazioni dei batch) e **AN-10**.
+  ⚠️ **`anpr-9.2.9/` NON È SUL DISCO**: è esclusa dal `.gitignore` e la documentazione esiste solo
+  nella copia **`anpr-9.2.9 2/`**. È **la ragione per cui questa interfaccia non era stata vista** in
+  mesi di analisi — e il rischio si ripresenterà: **la cartella va ripristinata al suo posto**
+  (AN-10). 10 capitoli, 12 tabelle, 10 punti aperti AN-01…AN-10.
 - **`verifica-conteggi.py`** — controllo di coerenza da eseguire **prima di consegnare** ogni nuova
   versione di un `.docx` (vedi il dettaglio in «Come leggere/scrivere i file»). **40 regole**, di cui 31
   verificate direttamente sulle sorgenti ANSC (decodifiche, mapping dei casi d'uso, **changelog dei
