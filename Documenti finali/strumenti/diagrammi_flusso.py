@@ -41,8 +41,8 @@ PASSI = [
      'ANSC_SOGGETTO_IDENTIFICATIVI · ANAG_USR.SOGGETTO\nANSC_STATO_ATTO (IN_LAVORAZIONE)\n'
      'e pagina di ripresa', 'SOGGETTO', 'rosso'),
     ('B', '3', 'Riepilogo: determinazione dell’UC', 'automatica; l’operatore sceglie solo se '
-     'ambigua', 'ANSC_CFG_UC (baseline ATTIVA)\nLOGICHE_DI_SCELTA (dominio 1)',
-     'ANSC_STATO_ATTO\nID_UC_ANSC · COD_LOGICA · COD_ORIGINE_UC\nID_VERSIONE · COD_FASE = '
+     'ambigua', 'ANSC_CFG_UC (baseline ATTIVA)\nper tipo atto, LOGICA_DI_SCELTA',
+     'ANSC_STATO_ATTO\nID_UC_ANSC · COD_LOGICA · COD_ORIGINE_UC\nCOD_FASE = '
      'UC_DETERMINATO', 'DETERMINAZIONE', 'blu'),
     ('B', '4', 'Riepilogo: firmatari', 'chi firma, con il contrassegno modificabile',
      'SOGGETTI_USECASE (fg_firmatario)', 'firmatari: chi firma e in quale modo', '', 'blu'),
@@ -51,13 +51,13 @@ PASSI = [
      'ALLEGATO\nid_ansc_allegato · cd_stato · fg_testo_libero\nCOD_FASE = DOCUMENTI_ACQUISITI',
      'ALLEGATI', 'viola'),
     ('B', '6', 'Riepilogo: verifica locale', 'pre-filtro RF-9: nessuna chiamata ad ANSC',
-     'ANSC_CFG_SEZIONE · ANSC_CFG_CAMPO\nALLEGATI_USECASE · V_ANSC_DIZ_VALIDO',
+     'ANSC_CFG_CAMPO\nALLEGATI_USECASE · V_ANSC_DIZ_VALIDO',
      'esito a video; COD_FASE = PREVALIDATO', 'PREVERIFICA', 'giallo'),
     ('C', '7', 'Anteprima: numero comunale', 'stacco dalla serie dell’anno; il modello evento '
-     'lo porta', 'num-ansc-sipo',
-     'DATI_ATTO_ESTERNO (il numero e la sua sorte)\nANSC_STATO_ATTO.NUM_COMUNALE', '', 'blu'),
+     'lo porta', 'be-numeratore-comunale\nPOST /richiesta',
+     'DATI_ATTO_ESTERNO (il numero e la sua sorte)\nANSC_STATO_ATTO.NUMERO_ATTO', '', 'blu'),
     ('C', '8', 'Anteprima: il modello evento', 'un solo adattatore, guidato dalla '
-     'configurazione', 'ANSC_CFG_SEZIONE · ANSC_CFG_CAMPO\nANSC_CFG_FORMULA · dizionari',
+     'configurazione', 'ANSC_CFG_CAMPO\nANSC_CFG_FORMULA · dizionari',
      'ANSC_STATO_ATTO.TXT_EVENTO\n(il modello evento in redazione,\naggiornato a ogni salvataggio)',
      'PAYLOAD', 'blu'),
     ('C', '9', 'Anteprima del testo', 'R010 — facoltativa, prima della validazione',
@@ -65,7 +65,7 @@ PASSI = [
     ('C', '10', '«VALIDA»: la validazione ANSC', 'R009 — da qui l’identificativo nazionale è '
      'consumato', 'il modello evento',
      'ANSC_STATO_ATTO: ID_ANSC · STATO = CONFERMATO\nCOD_FASE = VALIDATO\n'
-     'TXT_HASH_VALIDATO: impronta del modello validato', 'DEPOSITO', 'rosso'),
+     'TS_VALIDAZIONE: quando è stato validato', 'DEPOSITO', 'rosso'),
     ('D', '11', 'Firme dei dichiaranti', 'R006 cartacea · R012 elettronica; senza firmatari '
      'si salta', 'firmatari (chi firma e come)',
      'firmatari: stato della firma\nANSC_STATO_ATTO: STATO = FIRMATO_DICHIARANTE',

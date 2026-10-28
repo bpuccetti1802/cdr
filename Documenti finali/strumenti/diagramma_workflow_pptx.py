@@ -50,7 +50,7 @@ PASSI = [
      'R005 · per ciascun soggetto'),
     ('Riepilogo', 'UC (ANSC_03), allegati, firmatari, dati mancanti', 'preverifica'),
     ('Anteprima · numero comunale', 'il numero definitivo sostituisce il provvisorio ed è mostrato',
-     'num-ansc-sipo · creaPrenotazione'),
+     'be-numeratore-comunale · POST /richiesta'),
     ('Anteprima · Valida', 'validazione di metadati e allegati; si salvano gli idAnsc',
      'R009 /validazione/evento'),
     ('Anteprima · firme dei dichiaranti', 'firma digitale o scansione del cartaceo firmato',

@@ -2,7 +2,7 @@
 """I diagrammi a stati delle pagine nuove del workflow SIPO-ANSC.
 
 Documento: WORKFLOW_Interfacce-SIPO-ANSC (dalla v0.2, 21/10/2026). Cinque figure: il
-comportamento comune alle quattro pagine nuove (sessione, esiti da accertare, sospensione e
+comportamento comune alle quattro pagine nuove (sessione, esiti da accertare, interruzione e
 ripresa, eliminazione dell'evento) e un diagramma per ciascuna pagina — Validazione, Firme
 dei dichiaranti, Conformità, Firma dell'USC.
 
@@ -107,8 +107,8 @@ def comune():
     d.stato('E', 1240, 560, 400, 120, 'rosso', "Esito da accertare",
             "nessuna risposta o errore 5xx su R009, R006, R012, R007, R014")
     d.uscita('N', 1270, 800, 340, "Stato successivo della pagina")
-    d.stato('Sp', 60, 150, 400, 110, 'viola', "Sospesa",
-            "FLG_SOSPESO = S; la riga resta all’ultimo salvataggio")
+    d.stato('Sp', 60, 150, 400, 110, 'viola', "Interrotta",
+            "nessun contrassegno: la riga resta all’ultimo salvataggio")
     d.stato('R', 60, 560, 400, 120, 'viola', "Ripresa",
             "dalla ricerca degli atti; OTP e credenziali di firma si chiedono di nuovo")
     d.uscita('A', 670, 820, 360, "Annullato: ANSC 3 (R011)")
@@ -129,7 +129,7 @@ def comune():
     d.etichetta("R005: avvenuta", 1450, 730, VERDE)
 
     d.passo([('P', 'o', 0.3), (560, 436), (560, 205), ('Sp', 'e')], VIOLA)
-    d.etichetta("SOSPENDI, fine della sessione\nSIPO, OTP non rinnovato", 480, 280, VIOLA)
+    d.etichetta("INTERROMPI, fine della sessione\nSIPO, OTP non rinnovato", 480, 280, VIOLA)
     d.passo([('Sp', 's'), ('R', 'n')], VIOLA)
     d.etichetta("riapertura", 270, 400, VIOLA)
     d.passo([('R', 'e', 0.4), ('P', 'o', 0.75)], VERDE)

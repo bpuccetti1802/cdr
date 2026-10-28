@@ -40,12 +40,16 @@ TABELLE = [
     (1, 1, 'verde', 'ANSC_CFG_FORMULA', [
         ('PK', 'ID_FORMULA'), ('', 'COD_UC_ANSC (per valore)'), ('FK', 'ID_VERSIONE')],
      'le diciture dell’atto'),
+    # v3.54: niente vincolo di unicità (decisione utente).
+    # v3.53: la riga è per UC e per tipo atto (ID_TIPO_ATTO); la logica di scelta è un codice
+    # libero, senza catalogo: TIPO_LOGICHE_DI_SCELTA e LOGICHE_DI_SCELTA sono deprecate.
     (2, 1, 'verde', 'ANSC_CFG_UC', [
-        ('PK', 'ID_UC_CFG'), ('UK', 'versione + UC + tipo atto + Modello'),
+        ('PK', 'ID_UC_CFG'), ('', 'nessun vincolo di unicità'),
         ('', 'COD_UC_ANSC, COD_MOTORE'),
         ('', 'DESC_UC_ANSC, COD_FAMIGLIA'),
-        ('', 'ID_MODELLO_ATTO, NUM_PRIORITA, …'),
-        ('FK', 'LOGICA · COD_QUERY_UC · VERSIONE')],
+        ('', 'ID_TIPO_ATTO, NUM_PRIORITA, STATO'),
+        ('', 'LOGICA_DI_SCELTA (codice libero)'),
+        ('FK', 'COD_QUERY_UC · VERSIONE')],
      'il catalogo degli UC e la loro scelta'),
     # v3.51: ANSC_CFG_SEZIONE è stata tolta (troppo onerosa da gestire): la sezione resta come
     # dato descrittivo su ANSC_CFG_CAMPO. Al suo posto ANSC_TEMPLATE, le interrogazioni per UC,
@@ -61,16 +65,12 @@ TABELLE = [
      'le decodifiche pubblicate da ANSC'),
 
     # ─────────── riga 2: ciò che pende dai cataloghi
-    (1, 2, 'verde', 'LOGICHE_DI_SCELTA', [
-        ('PK', 'ID_DOMINIO + COD_LOGICA_DI_SCELTA'),
-        ('', 'DESC_LOGICA_DI_SCELTA'),
-        ('', 'TXT_LOGICA (espressione)')], 'le logiche, scritte una volta sola'),
     (3, 2, 'verde', 'ANSC_CFG_CAMPO', [
-        ('PK', 'ID_CAMPO'), ('FK', 'ID_VERSIONE · UC per valore'),
-        ('', 'SEZIONE_FE_ANSC (descrittiva)'),
-        ('', 'OGGETTO_ANSC + CAMPO_ANSC'), ('', 'SCHEMA_/TABELLA_/CAMPO_SIPO'),
-        ('FK', 'ID_DOMINIO=3 + ID_BUSINESS_LOGIC'),
-        ('', 'ID_DECODIFICA_ANSC, FLG_OBBLIGATORIO')],
+        # v3.53: nessun vincolo (né FK né UK), per scelta; il lato SIPO è ALIAS_CAMPO_SIPO
+        ('PK', 'ID_CAMPO'), ('', 'ID_VERSIONE · UC per valore'),
+        ('', 'OGGETTO_ANSC + CAMPO_ANSC'), ('', 'ALIAS_CAMPO_SIPO (a mano)'),
+        ('', 'ID_DECODIFICA_ANSC, FLG_OBBLIGATORIO'),
+        ('', 'OBBLIGATORIETA_EVENTO, OPERATIVO')],
      'da dove viene ogni dato'),
     (4, 2, 'viola', 'VALORE_DOMINIO', [
         ('PK', 'id_dominio + nm_dominio'), ('', '+ id_valore'),
@@ -79,20 +79,16 @@ TABELLE = [
      'si legge per chiave: dominio + valore'),
 
     # ─────────── riga 3: le due radici che tutti richiamano
-    (1, 3, 'verde', 'TIPO_LOGICHE_DI_SCELTA', [
-        ('PK', 'ID_DOMINIO'), ('', '1 scelta dell’UC'),
-        ('', '2 presenza di un documento'),
-        ('', '3 logica dei campi')], 'i domini di logica'),
     (2, 3, 'giallo', 'ANSC_CFG_VERSIONE', [
         ('PK', 'ID_VERSIONE'), ('', 'COD_STATO: bozza/attiva/storica'),
         # ⚠️ v3.35: l'elenco nominava CFG_CAMPO, che dalla v3.2x pende dalla sezione e non
         # porta ID_VERSIONE, e taceva RICONCILIAZ_DIZIONARI, che invece la referenzia.
         # Le chiavi esterne sono quelle del DDL; STATO_ATTO la richiama per valore.
-        ('FK', '← CFG_UC, CFG_CAMPO, CFG_FORMULA'),
-        ('', '   TEMPLATE, ALLEGATI_, SOGGETTI_USECASE'),
+        ('FK', '← CFG_UC, CFG_FORMULA, TEMPLATE'),
+        ('', '   ALLEGATI_, SOGGETTI_USECASE'),
         ('', '   RICONCILIAZ_DIZIONARI'),
-        ('', 'per valore: STATO_ATTO (timbro storico)')],
-     'la baseline: sette chiavi esterne, frecce omesse'),
+        ('', 'per valore: CFG_CAMPO')],
+     'la baseline: sei chiavi esterne, frecce omesse'),
     (3, 3, 'verde', 'ALLEGATI_USECASE', [
         ('PK', 'cd_usecase + ty_allegato'), ('', '+ id_versione'),
         ('', 'ty_presenza, cd_logica'), ('', 'fg_operante, nr_ordinamento')],
@@ -115,18 +111,20 @@ TABELLE = [
 
     # ─────────── alla base: ciò che accade agli atti
     (1, 'op', 'blu', 'ANSC_STATO_ATTO', [
+        # v3.53: colonne riviste con gli sviluppatori (niente impronta, sospensione,
+        # esito qualificato, baseline e ufficiale sull'atto)
         ('PK', 'ID_STATO_ATTO'), ('', 'ID_ATTO_SIPO, ID_MODELLO_ATTO'),
         ('', 'ID_TIPO_EVENTO, ID_TIPO_CONTENUTO'),
         ('', 'ID_UC_ANSC, COD_LOGICA'),
         ('', 'COD_ORIGINE_UC, COD_FASE'),
-        ('', 'STATO (replica ANSC), TIPO_ESITO'),
-        ('', 'ID_ANSC, NUM_COMUNALE'),
-        ('', 'FLG_EMERGENZA, ID_ATTO_EMERGENZA'), ('', 'ID_VERSIONE (per valore)'),
+        ('', 'ID_STATO, STATO (replica ANSC)'),
+        ('', 'ID_ANSC, NUMERO_ATTO'),
+        ('', 'FLG_EMERGENZA, ID_ATTO_CARTACEO'),
+        ('', 'ID_MOTIVO_RECUPERO'),
         # v3.44: la testata del modello evento, il modello intero e la ripresa stanno qui
         ('', 'testata del modello evento'),
         ('', 'TXT_EVENTO (il modello evento)'),
-        ('', 'TXT_HASH_VALIDATO'),
-        ('', 'COD_PAGINA_RIPRESA, FLG_SOSPESO'), ('', 'NUM_REVISIONE')],
+        ('', 'COD_PAGINA_RIPRESA, NUM_REVISIONE')],
      'l’atto: che cosa è stato deciso, inviato e ottenuto'),
     (2, 'op', 'blu', 'ANSC_LOG_AUDIT', [
         ('PK', 'ID_AUDIT'), ('FK', 'ID_STATO_ATTO'),
@@ -160,8 +158,8 @@ TABELLE = [
      'ogni numero staccato e la sua sorte'),
     (3, 'op2', 'blu', 'NUMERATORE_COMUNALE', [
         ('PK', 'id_anno_documento (l’anno)'),
-        ('', 'pg_atto NUMBER(6): ultimo numero'),
-        ('', 'dt_inserimento, dt_aggiornamento'),
+        ('', 'num_atto NUMBER(6): ultimo numero'),
+        ('', 'ts_inserimento, ts_aggiornamento'),
         ('', 'una riga per anno, alla prima richiesta')],
      'la serie: riparte ogni anno'),
     # v3.40: idSoggettoAnsc del soggetto, ottenuto da R005. I due codici ANPR NON stanno qui:
@@ -183,16 +181,13 @@ TABELLE = [
 LEGAMI = [
     # chiavi esterne dichiarate nel DDL
     ('VALORE_DOMINIO', 'g', [], 'DOMINIO_DECODIFICA', 'b', False),
-    ('LOGICHE_DI_SCELTA', 'b', [], 'TIPO_LOGICHE_DI_SCELTA', 'g', False),
-    ('ANSC_CFG_UC', 'b', ['h:1-2b'], 'LOGICHE_DI_SCELTA', 'g', False),
     ('ANSC_CFG_UC', 'd', [], 'ANSC_TEMPLATE', 's', False),
-    ('ALLEGATI_USECASE', 's', ['h:2-3'], 'LOGICHE_DI_SCELTA', 'b', False),
-    ('ANSC_CFG_CAMPO', 'b', ['h:2-3b'], 'LOGICHE_DI_SCELTA', 'b', False),
     ('ANSC_LOG_AUDIT', 's', [], 'ANSC_STATO_ATTO', 'd', False),
     ('DATI_ATTO_ESTERNO', 's', [], 'PRENOTAZIONE_ATTI', 'd', False),
     ('NUMERATORE_COMUNALE', 's', [], 'DATI_ATTO_ESTERNO', 'd', True),
     # riferimenti per valore, senza vincolo di integrità
     ('ANSC_CFG_FORMULA', 'd', [], 'ANSC_CFG_UC', 's', True),
+    ('ANSC_CFG_CAMPO', 's', ['v:2-3'], 'ANSC_CFG_UC', 'd', True),
     ('ALLEGATI_USECASE', 'g', ['v:2-3'], 'ANSC_CFG_UC', 'd', True),
     ('SOGGETTI_USECASE', 's', ['v:2-3'], 'ANSC_CFG_UC', 'd', True),
     ('ANSC_CFG_CAMPO', 'd', [], 'VALORE_DOMINIO', 's', True),

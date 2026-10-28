@@ -63,10 +63,10 @@ def disegna(dest=None):
                     'ogni stato è la coppia stato SIPO · stato ANSC; sulle frecce la pagina o il '
                     'servizio che provoca il passaggio')
 
-    # la redazione sospendibile: dagli stati di lavorazione fino alla firma dell'USC
+    # la redazione interrompibile: dagli stati di lavorazione fino alla firma dell'USC
     dr.rounded_rectangle([X - 30, 262, X + LW + 30, 1030], radius=16, outline='#7b5aa6',
                          width=2)
-    etichetta(dr, 'riquadro viola: la redazione\nsi sospende e si riprende\n(COD_PAGINA_RIPRESA,\nFLG_SOSPESO)',
+    etichetta(dr, 'riquadro viola: la redazione\nsi interrompe e si riprende\n(COD_PAGINA_RIPRESA)',
               60, 280, '#7b5aa6')
 
     for n, (x, y, w, h, col, tit, sot) in STATI.items():

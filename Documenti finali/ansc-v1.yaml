@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: Integrazione SIPO - ANSC — concentratore operativo
-  version: 1.0.0
+  version: 1.1.0
   summary: Formazione presidiata degli atti di stato civile su ANSC e supervisione del back-office.
   description: |
     Interfacce esposte dal concentratore `all-ansc-sipo`, il componente che media il dialogo fra i
@@ -23,7 +23,7 @@ info:
     La replica locale delle decodifiche ANSC è servita da un componente distinto, con contratto
     proprio (`ansc-dizionari-v1.yaml`); i percorsi restano nello stesso contesto di dominio.
 
-    Documentazione di analisi: `ANALISI_Integrazione-ANSC_v2.6.docx`. Il rimando è in aggiunta e mai
+    Documentazione di analisi: `ANALISI_Integrazione-ANSC_v3.54.docx`. Il rimando è in aggiunta e mai
     in sostituzione: quanto serve a integrare le interfacce è scritto qui.
   contact:
     name: Dipartimento Trasformazione Digitale — Roma Capitale
@@ -50,16 +50,16 @@ tags:
       sessione valida le operazioni sugli atti che contattano ANSC rispondono `409`.
   - name: eccezioni
     description: Gli atti che non si sono conclusi nel percorso ordinario e richiedono un intervento.
-  - name: operazioni
-    description: La configurazione per evento, operazione e casistica che guida mappatura e verifica.
+  - name: casi-uso
+    description: La configurazione degli UC per tipo atto e dei loro campi, che guida mappatura e verifica.
   - name: versioni
-    description: Le versioni della configurazione e la loro attivazione.
+    description: Le baseline della configurazione e la loro attivazione.
   - name: registrazioni-audit
     description: Le registrazioni delle chiamate verso ANSC, con richiesta e risposta integrali.
   - name: postazioni
     description: Il registro delle postazioni autorizzate, obbligo dell'Allegato 4 del D.M. 18/10/2022.
   - name: sistema
-    description: Stato del componente, connettività verso ANSC, versione di configurazione attiva.
+    description: Stato del componente, connettività verso ANSC, baseline della configurazione attiva.
 
 security:
   - bearerJwt: []
@@ -245,7 +245,7 @@ paths:
         alcun identificativo nazionale. È per costruzione ripetibile.
 
         **Prerequisiti**: l'atto deve essere salvato in SIPO; deve esistere una configurazione attiva
-        per la terna evento-operazione-casistica.
+        per il tipo atto, e la logica di scelta deve determinare un UC.
 
         **Che cosa non intercetta**: le regole che dipendono dallo stato centrale — esistenza e stato
         di un atto collegato formato altrove, adesione ad ANSC del comune destinatario,
@@ -265,10 +265,7 @@ paths:
                 summary: Atto di morte, dichiarazione in abitazione
                 value:
                   idAttoSipo: 88012
-                  codTipoEvento: MORTE
-                  codTipoOperazione: CREAZIONE
-                  codCasistica: DICH_ABITAZIONE
-                  codVersioneConfig: v.12
+                  idTipoAtto: 301
       responses:
         '200':
           description: |
@@ -294,9 +291,9 @@ paths:
                         descrizione: Preverifica superata
                     dati:
                       flagFinalizzabile: true
-                      codEventoAnsc: Morte_001
+                      codUcAnsc: '2101'
                       numCampiVerificati: 34
-                      codVersioneConfig: v.12
+                      idVersione: 12
                 esempioPreverificaRespinta:
                   summary: Campi obbligatori mancanti
                   value:
@@ -331,7 +328,7 @@ paths:
         - codice: DECODIFICA_NON_AMMESSA
           condizione: 'Codice non presente fra i valori validi del dizionario ANSC associato al campo.'
         - codice: CONFIG_ASSENTE
-          condizione: 'Nessuna configurazione attiva per la terna evento-operazione-casistica.'
+          condizione: 'Nessun UC della configurazione attiva si applica al tipo atto e ai dati dell''atto.'
 
   # -------------------------------------------------------------------- allegati
   /ansc/v1/atti/{idAtto}/allegati:
@@ -572,10 +569,7 @@ paths:
               esempioDepositoMorte:
                 value:
                   idAttoSipo: 88012
-                  codTipoEvento: MORTE
-                  codTipoOperazione: CREAZIONE
-                  codCasistica: DICH_ABITAZIONE
-                  codVersioneConfig: v.12
+                  idTipoAtto: 301
                   idOperazioneComune: MORTE-88012-CREAZIONE
                   operatore: VRDGPP75B02H501Z
                   idPostazione: PDL-SC-014
@@ -602,7 +596,7 @@ paths:
                       idStatoAtto: 550123
                       stato: CONFERMATO
                       idAnsc: '2026-058091-000123'
-                      codEventoAnsc: Morte_001
+                      codUcAnsc: '2101'
                       dataDeposito: '2026-07-23T10:03:00+02:00'
                 esempioDepositoRifiutato:
                   summary: Validazione respinta, nessun deposito
@@ -952,7 +946,6 @@ paths:
       parameters:
         - { name: codCategoria, in: query, required: false, description: 'Categoria di eccezione: DA_RIPRENDERE, INDETERMINATI, SCARTATI, BLOCCATI_ALLEGATO, FIRMA_NON_RIUSCITA.', schema: { type: string } }
         - { name: idMunicipio, in: query, required: false, description: 'Municipio di competenza.', schema: { type: string } }
-        - { name: operatore, in: query, required: false, description: 'Ufficiale cui l''atto è instradato.', schema: { type: string } }
         - { name: stato, in: query, required: false, description: 'Stato reale dell''atto in ANSC.', schema: { $ref: '#/components/schemas/StatoAnsc' } }
         - $ref: '#/components/parameters/NumPagina'
         - $ref: '#/components/parameters/NumElementi'
@@ -995,7 +988,6 @@ paths:
                           stato: CONFERMATO
                           codCategoria: DA_RIPRENDERE
                           descProblema: Sessione OTP scaduta durante la firma
-                          operatore: VRDGPP75B02H501Z
                           idMunicipio: '01'
                           ultimoErrore: '406002 — token scaduto'
                           dataUltimoTentativo: '2026-07-23T09:41:00+02:00'
@@ -1014,7 +1006,7 @@ paths:
       operationId: elencaAtti
       summary: Elenca gli atti in lavorazione con i filtri di ricerca
       description: |
-        Restituisce gli atti con stato ANSC registrato, filtrabili per stato reale, ufficiale,
+        Restituisce gli atti con stato ANSC registrato, filtrabili per stato reale,
         municipio, identificativo nazionale o codice fiscale del soggetto.
 
         Assorbe la funzione di ricerca e tracciabilità: non esiste una collezione separata per la
@@ -1026,7 +1018,6 @@ paths:
         - { name: stato, in: query, required: false, description: 'Stato reale dell''atto in ANSC.', schema: { $ref: '#/components/schemas/StatoAnsc' } }
         - { name: idAnsc, in: query, required: false, description: 'Identificativo nazionale dell''atto.', schema: { type: string } }
         - { name: codiceFiscale, in: query, required: false, description: 'Codice fiscale del soggetto intestatario.', schema: { type: string } }
-        - { name: operatore, in: query, required: false, description: 'Ufficiale competente.', schema: { type: string } }
         - { name: idMunicipio, in: query, required: false, description: 'Municipio di competenza.', schema: { type: string } }
         - { name: dataDepositoDa, in: query, required: false, description: 'Limite inferiore della data di deposito.', schema: { type: string, format: date } }
         - { name: dataDepositoA, in: query, required: false, description: 'Limite superiore della data di deposito.', schema: { type: string, format: date } }
@@ -1091,7 +1082,7 @@ paths:
                     dati:
                       idAttoSipo: 88012
                       codTipoEvento: MORTE
-                      codTipoOperazione: CREAZIONE
+                      codUcAnsc: '2101'
                       soggetto: Rossi Mario (RSSMRA80A01H501U)
                       idAnsc: '2026-058091-000123'
                       statoAnsc: FIRMATO_USC
@@ -1117,7 +1108,7 @@ paths:
       summary: Registra un'azione di back-office sull'atto
       description: |
         Registra sull'atto un'azione non dispositiva del back-office: instradarlo a un altro
-        ufficiale, annotarlo, marcarlo come preso in carico.
+        municipio, annotarlo, marcarlo come preso in carico.
 
         Si usa dalla vista di supervisione, sul dettaglio dell'atto.
 
@@ -1137,10 +1128,10 @@ paths:
             schema: { $ref: '#/components/schemas/AzioneRichiesta' }
             examples:
               esempioInstradamento:
-                summary: Instradamento a un altro ufficiale
+                summary: Instradamento a un altro municipio
                 value:
                   codTipoAzione: INSTRADA
-                  operatoreDestinatario: BNCLRA82C41H501K
+                  idMunicipioDestinatario: '01'
                   note: Competenza del Municipio I
       responses:
         '201':
@@ -1271,26 +1262,29 @@ paths:
       x-effetti: Sola lettura, sicura e ripetibile.
 
   # ------------------------------------------------------------- configurazione
-  /ansc/v1/back-office/configurazione/operazioni:
+  /ansc/v1/back-office/configurazione/casi-uso:
     get:
-      operationId: elencaOperazioni
-      summary: Elenca le operazioni configurate
+      operationId: elencaCasiUso
+      summary: Elenca gli UC configurati
       description: |
-        Restituisce le operazioni configurate — la terna evento, operazione e casistica con l'evento
-        ANSC corrispondente — filtrabili per versione di configurazione.
+        Restituisce le righe della configurazione degli UC: una per UC e per tipo atto di SIPO che lo
+        raggiunge, dentro una baseline, con la priorità e la logica di scelta. Un UC del catalogo
+        che nessun tipo atto raggiunge ancora compare con una riga senza tipo atto.
 
         Si usa dalla schermata di amministrazione della configurazione.
 
         **Effetti**: nessuno.
-      tags: [operazioni]
+      tags: [casi-uso]
       parameters:
-        - { name: codVersione, in: query, required: false, description: 'Versione di configurazione; se omessa vale quella attiva.', schema: { type: string } }
-        - { name: codTipoEvento, in: query, required: false, description: 'Tipo di evento di stato civile.', schema: { type: string } }
+        - { name: idVersione, in: query, required: false, description: 'Baseline della configurazione; se omessa vale quella attiva.', schema: { type: integer, format: int64 } }
+        - { name: idTipoAtto, in: query, required: false, description: 'Tipo atto di SIPO.', schema: { type: integer, format: int64 } }
+        - { name: codUcAnsc, in: query, required: false, description: 'Codice dell''UC pubblicato da ANSC.', schema: { type: string } }
+        - { name: codFamiglia, in: query, required: false, description: 'Famiglia di evento: nascita, morte, matrimonio…', schema: { type: string } }
         - $ref: '#/components/parameters/NumPagina'
         - $ref: '#/components/parameters/NumElementi'
       responses:
         '200':
-          description: Elenco delle operazioni configurate.
+          description: Elenco delle righe di configurazione degli UC.
           content:
             application/json:
               schema:
@@ -1301,10 +1295,10 @@ paths:
                       dati:
                         type: object
                         properties:
-                          operazioni:
+                          casiUso:
                             type: array
-                            items: { $ref: '#/components/schemas/OperazioneConfigurata' }
-                            description: Le operazioni della pagina richiesta.
+                            items: { $ref: '#/components/schemas/CasoUsoConfigurato' }
+                            description: Le righe della pagina richiesta.
                           navigazione: { $ref: '#/components/schemas/Navigazione' }
         '401': { $ref: '#/components/responses/NonAutenticato' }
         '403': { $ref: '#/components/responses/NonAutorizzato' }
@@ -1312,21 +1306,22 @@ paths:
       x-ruoli: [AMMINISTRATORE]
       x-effetti: Sola lettura, sicura e ripetibile.
 
-  /ansc/v1/back-office/configurazione/operazioni/{idOperazione}:
+  /ansc/v1/back-office/configurazione/casi-uso/{idUcCfg}:
     parameters:
-      - $ref: '#/components/parameters/IdOperazione'
+      - $ref: '#/components/parameters/IdUcCfg'
     get:
-      operationId: leggiOperazione
-      summary: Legge un'operazione configurata
+      operationId: leggiCasoUso
+      summary: Legge una riga della configurazione degli UC
       description: |
-        Restituisce la configurazione di una singola operazione: evento ANSC, mappatore, indicatori di
-        firma e trascrizione, versione e validità.
+        Restituisce una riga della configurazione: l'UC con i dati del catalogo di ANSC, il tipo atto
+        di SIPO che lo raggiunge, la priorità, la logica di scelta, l'interrogazione associata e la
+        baseline.
 
         **Effetti**: nessuno.
-      tags: [operazioni]
+      tags: [casi-uso]
       responses:
         '200':
-          description: L'operazione configurata.
+          description: La riga di configurazione.
           content:
             application/json:
               schema:
@@ -1334,25 +1329,26 @@ paths:
                   - $ref: '#/components/schemas/Busta'
                   - type: object
                     properties:
-                      dati: { $ref: '#/components/schemas/OperazioneConfigurata' }
+                      dati: { $ref: '#/components/schemas/CasoUsoConfigurato' }
               examples:
-                esempioOperazioneMorte:
+                esempioMorteInAbitazione:
                   value:
                     esito: OK
                     messaggi: []
                     dati:
-                      idOperazione: 1
-                      codTipoEvento: MORTE
-                      codTipoOperazione: CREAZIONE
-                      codCasistica: DICH_ABITAZIONE
-                      codEventoAnsc: Morte_001
-                      codServizioAnsc: R009
-                      idMapper: MorteDichiarazione
-                      flagTrascrizione: false
-                      flagFirma: true
-                      codVersione: v.12
-                      dataValiditaDa: '2026-07-20'
-                      dataValiditaA: '9999-12-31'
+                      idUcCfg: 1
+                      codUcAnsc: '2101'
+                      codMotore: Morte_001
+                      descUcAnsc: Dichiarazione di morte avvenuta in abitazione
+                      codFamiglia: morte
+                      idTipoContenuto: '1'
+                      idTipoAtto: 301
+                      numPriorita: 100
+                      codLogicaDiScelta: null
+                      codQueryUc: null
+                      idVersione: 12
+                      dataInizioValidita: '2026-07-20'
+                      dataFineValidita: '9999-12-31'
         '404': { $ref: '#/components/responses/NonTrovato' }
         '401': { $ref: '#/components/responses/NonAutenticato' }
         '403': { $ref: '#/components/responses/NonAutorizzato' }
@@ -1360,25 +1356,27 @@ paths:
       x-ruoli: [AMMINISTRATORE]
       x-effetti: Sola lettura, sicura e ripetibile.
     put:
-      operationId: sostituisciOperazione
-      summary: Sostituisce la configurazione di un'operazione
+      operationId: sostituisciCasoUso
+      summary: Sostituisce una riga della configurazione degli UC
       description: |
-        Sostituisce integralmente la configurazione dell'operazione indicata.
+        Sostituisce integralmente la riga indicata: tipo atto, priorità, logica di scelta e
+        interrogazione. I dati del catalogo (codice, motore, descrizione, famiglia, tipo di
+        contenuto, validità) sono quelli pubblicati da ANSC e non si modificano da qui.
 
-        Si usa in fase di manutenzione della configurazione, su una versione **in stato di bozza**.
+        Si usa in fase di manutenzione della configurazione, su una baseline **in stato di bozza**.
 
-        **Effetti**: modifica la configurazione. **La versione attiva non è modificabile**: per
-        cambiare una configurazione in esercizio si crea una nuova versione con `creaVersione`, la si
-        modifica e la si rende corrente con `attivaVersione`. Ripetibile.
-      tags: [operazioni]
+        **Effetti**: modifica la configurazione. **La baseline attiva non è modificabile**: per
+        cambiare una configurazione in esercizio si crea una nuova baseline con `creaVersione`, la
+        si modifica e la si rende corrente con `attivaVersione`. Ripetibile.
+      tags: [casi-uso]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/OperazioneConfigurata' }
+            schema: { $ref: '#/components/schemas/CasoUsoConfigurato' }
       responses:
         '200':
-          description: Configurazione sostituita.
+          description: Riga sostituita.
           content:
             application/json:
               schema:
@@ -1386,9 +1384,9 @@ paths:
                   - $ref: '#/components/schemas/Busta'
                   - type: object
                     properties:
-                      dati: { $ref: '#/components/schemas/OperazioneConfigurata' }
+                      dati: { $ref: '#/components/schemas/CasoUsoConfigurato' }
         '409':
-          description: La versione di configurazione è attiva e non modificabile.
+          description: La baseline è attiva e non modificabile.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Busta' }
@@ -1399,7 +1397,7 @@ paths:
                     messaggi:
                       - tipo: ERROR
                         codice: CONFIG_VERSIONE_ATTIVA
-                        descrizione: La versione v.12 è attiva. Creare una nuova versione per modificarla.
+                        descrizione: La baseline 12 è attiva. Creare una nuova baseline per modificarla.
                     dati: null
         '404': { $ref: '#/components/responses/NonTrovato' }
         '401': { $ref: '#/components/responses/NonAutenticato' }
@@ -1409,22 +1407,27 @@ paths:
       x-effetti: Modifica la configurazione. Ripetibile.
       x-codici-errore:
         - codice: CONFIG_VERSIONE_ATTIVA
-          condizione: 'Tentativo di modificare la versione di configurazione in esercizio.'
+          condizione: 'Tentativo di modificare la baseline in esercizio.'
 
-  /ansc/v1/back-office/configurazione/operazioni/{idOperazione}/campi:
+  /ansc/v1/back-office/configurazione/casi-uso/{idUcCfg}/campi:
     parameters:
-      - $ref: '#/components/parameters/IdOperazione'
+      - $ref: '#/components/parameters/IdUcCfg'
     get:
       operationId: elencaCampi
-      summary: Elenca i campi configurati per un'operazione
+      summary: Elenca i campi configurati per l'UC
       description: |
-        Restituisce la mappatura campo per campo fra il modello ANSC e le colonne SIPO, con
-        obbligatorietà, condizioni, dizionario di validazione e messaggio da mostrare all'operatore.
+        Restituisce i campi del modello evento configurati per l'UC della riga indicata, nella sua
+        baseline: oggetto e campo ANSC, alias SIPO, obbligatorietà, dizionario di validazione,
+        ordinamento e indicatore di invio ad ANSC.
+
+        I campi appartengono all'UC e non alla riga: righe dello stesso UC per tipi atto diversi
+        restituiscono gli stessi campi, perché la tabella li richiama per valore con il codice
+        dell'UC e la baseline.
 
         È la configurazione che il pre-filtro applica in `verificaAtto`.
 
         **Effetti**: nessuno.
-      tags: [operazioni]
+      tags: [casi-uso]
       responses:
         '200':
           description: I campi configurati.
@@ -1441,7 +1444,7 @@ paths:
                           campi:
                             type: array
                             items: { $ref: '#/components/schemas/CampoConfigurato' }
-                            description: I campi dell'operazione.
+                            description: I campi dell'UC, in ordine.
               examples:
                 esempioCampi:
                   value:
@@ -1449,12 +1452,14 @@ paths:
                     messaggi: []
                     dati:
                       campi:
-                        - campoAnsc: evento.datiDiMorte.idComuneMorte
-                          campoSipo: ATTO_DECESSO.ID_COMUNE_DECESSO
+                        - oggettoAnsc: evento.datiDiMorte
+                          campoAnsc: idComuneMorte
+                          aliasCampoSipo: Comune del decesso
                           flagObbligatorio: false
-                          condizione: se decesso in Italia
-                          codDecodificaAnsc: null
-                          messaggio: Comune del decesso
+                          idDecodificaAnsc: null
+                          obbligatorietaEvento: null
+                          numOrdinamento: 12
+                          flagOperativo: true
         '404': { $ref: '#/components/responses/NonTrovato' }
         '401': { $ref: '#/components/responses/NonAutenticato' }
         '403': { $ref: '#/components/responses/NonAutorizzato' }
@@ -1463,15 +1468,18 @@ paths:
       x-effetti: Sola lettura, sicura e ripetibile.
     put:
       operationId: sostituisciCampi
-      summary: Sostituisce i campi configurati per un'operazione
+      summary: Sostituisce i campi configurati per l'UC
       description: |
-        Sostituisce integralmente l'elenco dei campi configurati per l'operazione.
+        Sostituisce integralmente l'elenco dei campi dell'UC nella baseline della riga indicata.
 
-        Si usa dopo una revisione della mappatura. Vale il medesimo vincolo di
-        `sostituisciOperazione`: la versione attiva non è modificabile.
+        Si usa dopo una revisione della mappatura e per compilare a mano l'alias SIPO. Vale il
+        medesimo vincolo di `sostituisciCasoUso`: la baseline attiva non è modificabile.
+
+        La tabella dei campi non ha vincoli di unicità né chiavi esterne, per scelta: che uno stesso
+        campo non compaia due volte per lo stesso UC e la stessa baseline lo controlla l'operazione.
 
         **Effetti**: modifica la configurazione. Ripetibile.
-      tags: [operazioni]
+      tags: [casi-uso]
       requestBody:
         required: true
         content:
@@ -1490,7 +1498,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Busta' }
         '409':
-          description: La versione di configurazione è attiva e non modificabile.
+          description: La baseline è attiva e non modificabile.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Busta' }
@@ -1501,26 +1509,27 @@ paths:
       x-ruoli: [AMMINISTRATORE]
       x-effetti: Modifica la configurazione. Ripetibile.
 
-  /ansc/v1/back-office/configurazione/operazioni/{idOperazione}/campi/importazioni:
+  /ansc/v1/back-office/configurazione/casi-uso/{idUcCfg}/campi/importazioni:
     parameters:
-      - $ref: '#/components/parameters/IdOperazione'
+      - $ref: '#/components/parameters/IdUcCfg'
     post:
       operationId: importaCampi
       summary: Importa i campi dal mapping ufficiale dei casi d'uso ANSC
       description: |
-        Popola i campi configurati a partire dal mapping ufficiale dei casi d'uso pubblicato da ANSC e
-        dai dizionari replicati in locale, riducendo il lavoro manuale di prima configurazione.
+        Popola i campi dell'UC a partire dal mapping ufficiale pubblicato da ANSC — il file che
+        porta il codice motore dell'UC (per esempio Morte_001) — e dai dizionari replicati in
+        locale, riducendo il lavoro manuale di prima configurazione.
 
-        Si usa quando si abilita un nuovo evento o quando il fornitore pubblica una revisione del
+        Si usa quando si adotta un nuovo UC o quando il fornitore pubblica una revisione del
         mapping.
 
-        **Effetti**: crea o aggiorna i campi dell'operazione. Ripetibile: una seconda importazione
-        dello stesso mapping non produce duplicati.
+        **Effetti**: crea o aggiorna i campi dell'UC nella baseline in bozza. Ripetibile: una
+        seconda importazione dello stesso mapping non produce duplicati.
 
-        **Che cosa non fa**: non decide le corrispondenze con le colonne SIPO, che restano da
-        indicare a mano. L'importazione porta il lato ANSC — percorso del campo, obbligatorietà,
-        condizione, dizionario — e lascia vuoto il lato SIPO.
-      tags: [operazioni]
+        **Che cosa non fa**: non compila l'alias SIPO, che si scrive a mano. L'importazione porta il
+        lato ANSC — oggetto e campo, obbligatorietà, dizionario, ordinamento — e lascia vuoto
+        l'alias.
+      tags: [casi-uso]
       requestBody:
         required: true
         content:
@@ -1529,7 +1538,6 @@ paths:
             examples:
               esempioImportazioneMorte:
                 value:
-                  codEventoAnsc: Morte_001
                   flagSovrascriviEsistenti: false
       responses:
         '200':
@@ -1563,15 +1571,15 @@ paths:
   /ansc/v1/back-office/configurazione/versioni:
     post:
       operationId: creaVersione
-      summary: Crea una nuova versione di configurazione in stato di bozza
+      summary: Crea una nuova baseline della configurazione in stato di bozza
       description: |
-        Crea una nuova versione di configurazione, clonando quella indicata come punto di partenza. La
-        versione nasce **in stato di bozza** ed è l'unica forma in cui la configurazione sia
-        modificabile.
+        Crea una nuova baseline della configurazione, copiando integralmente quella indicata come
+        punto di partenza. La baseline nasce **in stato di bozza** ed è l'unica forma in cui la
+        configurazione sia modificabile. Si nomina con il proprio numero, assegnato alla creazione.
 
         Si usa prima di ogni intervento sulla configurazione in esercizio.
 
-        **Effetti**: crea una versione. Non modifica la configurazione attiva, che resta in vigore
+        **Effetti**: crea una baseline. Non modifica la configurazione attiva, che resta in vigore
         finché non si esegue `attivaVersione`.
       tags: [versioni]
       requestBody:
@@ -1582,12 +1590,12 @@ paths:
             examples:
               esempioNuovaVersione:
                 value:
-                  codVersione: v.13
-                  codVersioneOrigine: v.12
-                  note: Aggiunta casistica trascrizione da estero
+                  idVersioneOrigine: 12
+                  codVersioneAnsc: '1.48'
+                  descrizione: Recepimento della revisione del mapping dei casi d'uso di morte
       responses:
         '201':
-          description: Versione creata in stato di bozza.
+          description: Baseline creata in stato di bozza.
           content:
             application/json:
               schema:
@@ -1596,42 +1604,35 @@ paths:
                   - type: object
                     properties:
                       dati: { $ref: '#/components/schemas/Versione' }
-        '409':
-          description: Esiste già una versione con lo stesso codice.
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/Busta' }
+        '404': { $ref: '#/components/responses/NonTrovato' }
         '401': { $ref: '#/components/responses/NonAutenticato' }
         '403': { $ref: '#/components/responses/NonAutorizzato' }
         '500': { $ref: '#/components/responses/ErroreInterno' }
       x-ruoli: [AMMINISTRATORE]
-      x-effetti: Crea una risorsa. Non ripetibile con lo stesso codice di versione.
-      x-codici-errore:
-        - codice: CONFIG_VERSIONE_DUPLICATA
-          condizione: 'Il codice di versione richiesto esiste già.'
+      x-effetti: Crea una risorsa. Non ripetibile senza effetti.
 
-  /ansc/v1/back-office/configurazione/versioni/{codVersione}/attivazione:
+  /ansc/v1/back-office/configurazione/versioni/{idVersione}/attivazione:
     parameters:
-      - $ref: '#/components/parameters/CodVersione'
+      - $ref: '#/components/parameters/IdVersione'
     post:
       operationId: attivaVersione
-      summary: Rende corrente una versione di configurazione
+      summary: Rende corrente una baseline della configurazione
       description: |
-        Rende corrente la versione indicata: da quel momento il pre-filtro e la mappatura usano la sua
-        configurazione, e la versione diventa immodificabile.
+        Rende corrente la baseline indicata: da quel momento il pre-filtro e la mappatura usano la
+        sua configurazione, e la baseline diventa immodificabile. Quella prima attiva passa allo
+        stato STORICA.
 
         Si usa a valle della revisione di una bozza, tipicamente dopo averne valutato l'effetto in
         ambiente di test.
 
-        **Effetti**: cambia la versione attiva. La versione prima attiva torna modificabile solo
-        creandone una nuova a partire da essa. **L'attivazione non ha effetto sugli atti già
-        depositati**, che conservano la versione con cui sono stati costruiti.
+        **Effetti**: cambia la baseline attiva. **L'attivazione non ha effetto sugli atti già
+        depositati**, che conservano il modello evento con cui sono stati validati.
 
-        Ripetibile: attivare una versione già attiva non produce effetti ulteriori.
+        Ripetibile: attivare una baseline già attiva non produce effetti ulteriori.
       tags: [versioni]
       responses:
         '200':
-          description: Versione resa corrente.
+          description: Baseline resa corrente.
           content:
             application/json:
               schema:
@@ -1646,13 +1647,17 @@ paths:
                     esito: OK
                     messaggi: []
                     dati:
-                      codVersione: v.13
+                      idVersione: 13
                       codStato: ATTIVA
+                      codVersioneAnsc: '1.48'
+                      idVersioneAnsc: '1.53.0'
+                      descrizione: Recepimento della revisione del mapping dei casi d'uso di morte
+                      numUcToccati: 23
                       dataAttivazione: '2026-07-25T09:00:00+02:00'
-                      codVersionePrecedente: v.12
+                      utenteAttivazione: VRDGPP75B02H501Z
         '404': { $ref: '#/components/responses/NonTrovato' }
         '409':
-          description: La versione contiene operazioni incomplete e non può essere attivata.
+          description: La baseline contiene configurazioni incomplete e non può essere attivata.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Busta' }
@@ -1660,10 +1665,10 @@ paths:
         '403': { $ref: '#/components/responses/NonAutorizzato' }
         '500': { $ref: '#/components/responses/ErroreInterno' }
       x-ruoli: [AMMINISTRATORE]
-      x-effetti: Cambia la versione attiva. Ripetibile.
+      x-effetti: Cambia la baseline attiva. Ripetibile.
       x-codici-errore:
         - codice: CONFIG_VERSIONE_INCOMPLETA
-          condizione: 'Una o più operazioni della versione hanno campi senza corrispondenza SIPO.'
+          condizione: 'Uno o più UC adottati hanno campi obbligatori senza alias SIPO.'
 
   # --------------------------------------------------------------------- audit
   /ansc/v1/back-office/registrazioni-audit:
@@ -1779,7 +1784,7 @@ paths:
       summary: Legge lo stato del componente e la connettività verso ANSC
       description: |
         Restituisce l'ambiente in cui il componente è in esecuzione, l'indirizzo ANSC configurato, la
-        versione di configurazione attiva e le metriche di dominio.
+        baseline della configurazione attiva e le metriche di dominio.
 
         Si usa dalla schermata di esercizio e come base per gli indicatori di monitoraggio.
 
@@ -2054,20 +2059,20 @@ components:
       description: Identificativo locale dell'allegato, assegnato alla trasmissione.
       schema: { type: integer, format: int64 }
       example: 771204
-    IdOperazione:
-      name: idOperazione
+    IdUcCfg:
+      name: idUcCfg
       in: path
       required: true
-      description: Identificativo dell'operazione configurata.
+      description: Identificativo della riga di configurazione dell'UC.
       schema: { type: integer, format: int64 }
       example: 1
-    CodVersione:
-      name: codVersione
+    IdVersione:
+      name: idVersione
       in: path
       required: true
-      description: Codice della versione di configurazione.
-      schema: { type: string }
-      example: v.13
+      description: Numero della baseline della configurazione.
+      schema: { type: integer, format: int64 }
+      example: 13
     IdRegistrazione:
       name: idRegistrazione
       in: path
@@ -2148,7 +2153,7 @@ components:
                     descrizione: Sessione OTP assente o scaduta. Generare un nuovo codice e riprovare.
                 dati: null
     VersioneAttiva:
-      description: La versione di configurazione è attiva e non modificabile.
+      description: La baseline della configurazione è attiva e non modificabile.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Busta' }
@@ -2269,24 +2274,23 @@ components:
 
     PreverificaRichiesta:
       type: object
-      required: [idAttoSipo, codTipoEvento, codTipoOperazione, codCasistica]
+      required: [idAttoSipo, idTipoAtto]
       properties:
         idAttoSipo: { type: integer, format: int64, description: 'Identificativo dell''atto in SIPO, da cui si rileggono i dati.' }
-        codTipoEvento: { type: string, description: 'Tipo di evento di stato civile, per esempio MORTE.' }
-        codTipoOperazione: { type: string, description: 'Operazione richiesta, per esempio CREAZIONE.' }
-        codCasistica: { type: string, description: 'Casistica che distingue le varianti dell''evento, per esempio DICH_ABITAZIONE.' }
-        codVersioneConfig:
-          type: string
+        idTipoAtto: { type: integer, format: int64, description: 'Tipo atto di SIPO, da cui la configurazione determina l''UC; per esempio 301, morte in abitazione a Roma.' }
+        idVersione:
+          type: integer
+          format: int64
           nullable: true
-          description: Versione di configurazione da applicare. Se omesso vale quella attiva.
+          description: Baseline della configurazione da applicare. Se omessa vale quella attiva.
 
     EsitoPreverifica:
       type: object
       properties:
         flagFinalizzabile: { type: boolean, description: 'Indica se l''atto possa procedere al deposito.' }
-        codEventoAnsc: { type: string, description: 'Evento ANSC individuato dalla configurazione.' }
+        codUcAnsc: { type: string, description: 'UC determinato dalla configurazione.' }
         numCampiVerificati: { type: integer, description: 'Numero di campi sottoposti a controllo.' }
-        codVersioneConfig: { type: string, description: 'Versione di configurazione effettivamente applicata.' }
+        idVersione: { type: integer, format: int64, description: 'Baseline effettivamente applicata.' }
 
     AllegatoRichiesta:
       type: object
@@ -2312,13 +2316,10 @@ components:
 
     DepositoRichiesta:
       type: object
-      required: [idAttoSipo, codTipoEvento, codTipoOperazione, codCasistica, operatore, idPostazione]
+      required: [idAttoSipo, idTipoAtto, operatore, idPostazione]
       properties:
         idAttoSipo: { type: integer, format: int64, description: 'Atto SIPO da depositare; i dati sono riletti alla chiamata.' }
-        codTipoEvento: { type: string, description: 'Tipo di evento di stato civile.' }
-        codTipoOperazione: { type: string, description: 'Operazione richiesta.' }
-        codCasistica: { type: string, description: 'Casistica dell''evento.' }
-        codVersioneConfig: { type: string, nullable: true, description: 'Versione di configurazione; se omesso vale quella attiva.' }
+        idTipoAtto: { type: integer, format: int64, description: 'Tipo atto di SIPO. Il deposito applica sempre la baseline attiva, che l''atto non registra.' }
         idOperazioneComune:
           type: string
           description: |
@@ -2339,7 +2340,7 @@ components:
           description: |
             Identificativo nazionale assegnato da ANSC. Valorizzato solo a deposito riuscito; nullo
             quando la validazione è respinta, perché in quel caso nessun identificativo è consumato.
-        codEventoAnsc: { type: string, description: 'Evento ANSC con cui l''atto è stato depositato.' }
+        codUcAnsc: { type: string, description: 'UC con cui l''atto è stato depositato.' }
         codTipoEsito:
           type: string
           nullable: true
@@ -2418,10 +2419,10 @@ components:
       properties:
         idAttoSipo: { type: integer, format: int64, description: 'Atto SIPO cui lo stato si riferisce.' }
         codTipoEvento: { type: string, description: 'Tipo di evento di stato civile.' }
-        codTipoOperazione: { type: string, description: 'Operazione.' }
+        codUcAnsc: { type: string, nullable: true, description: 'UC determinato, se già determinato.' }
+        numeroAtto: { type: string, nullable: true, description: 'Numero comunale dell''atto, se già staccato.' }
         stato: { $ref: '#/components/schemas/StatoAnsc' }
         idAnsc: { type: string, nullable: true, description: 'Identificativo nazionale, se assegnato.' }
-        operatore: { type: string, nullable: true, description: 'Ufficiale competente.' }
         idMunicipio: { type: string, nullable: true, description: 'Municipio di competenza.' }
         dataAggiornamento: { type: string, format: date-time, description: 'Ultimo aggiornamento dello stato locale.' }
 
@@ -2439,7 +2440,7 @@ components:
       properties:
         idAttoSipo: { type: integer, format: int64, description: 'Atto SIPO.' }
         codTipoEvento: { type: string, description: 'Tipo di evento.' }
-        codTipoOperazione: { type: string, description: 'Operazione.' }
+        codUcAnsc: { type: string, nullable: true, description: 'UC determinato.' }
         soggetto: { type: string, description: 'Descrizione sintetica del soggetto intestatario.' }
         idAnsc: { type: string, nullable: true, description: 'Identificativo nazionale.' }
         statoAnsc: { $ref: '#/components/schemas/StatoAnsc' }
@@ -2462,7 +2463,6 @@ components:
             Categoria di eccezione, che determina l'azione di recupero proponibile: DA_RIPRENDERE,
             INDETERMINATI, SCARTATI, BLOCCATI_ALLEGATO, FIRMA_NON_RIUSCITA.
         descProblema: { type: string, description: 'Descrizione del problema, mostrabile in lista.' }
-        operatore: { type: string, nullable: true, description: 'Ufficiale competente.' }
         idMunicipio: { type: string, nullable: true, description: 'Municipio di competenza.' }
         ultimoErrore: { type: string, nullable: true, description: 'Codice e testo dell''ultimo errore restituito da ANSC.' }
         dataUltimoTentativo: { type: string, format: date-time, nullable: true, description: 'Istante dell''ultimo tentativo, con fuso esplicito.' }
@@ -2475,7 +2475,7 @@ components:
           type: string
           enum: [INSTRADA, ANNOTA, PRENDI_IN_CARICO]
           description: Tipo di azione locale da registrare.
-        operatoreDestinatario: { type: string, nullable: true, description: 'Ufficiale cui instradare l''atto; obbligatorio per `INSTRADA`.' }
+        idMunicipioDestinatario: { type: string, nullable: true, description: 'Municipio cui instradare l''atto; obbligatorio per `INSTRADA`.' }
         note: { type: string, nullable: true, description: 'Annotazione libera.' }
 
     Azione:
@@ -2496,37 +2496,44 @@ components:
         flagAllineato: { type: boolean, description: 'Indica se lo stato locale sia stato modificato per effetto della riconciliazione.' }
         dataRiconciliazione: { type: string, format: date-time, description: 'Istante della riconciliazione, con fuso esplicito.' }
 
-    OperazioneConfigurata:
+    CasoUsoConfigurato:
       type: object
+      description: |
+        Una riga di ANSC_CFG_UC: un UC del catalogo di ANSC e il tipo atto di SIPO che lo
+        raggiunge, dentro una baseline. I dati del catalogo si ripetono sulle righe dello stesso UC.
       properties:
-        idOperazione: { type: integer, format: int64, description: 'Identificativo dell''operazione configurata.' }
-        codTipoEvento: { type: string, description: 'Tipo di evento di stato civile.' }
-        codTipoOperazione: { type: string, description: 'Operazione.' }
-        codCasistica: { type: string, description: 'Casistica che distingue le varianti dell''evento.' }
-        codEventoAnsc: { type: string, description: 'Evento ANSC corrispondente alla terna.' }
-        codServizioAnsc: { type: string, description: 'Servizio cooperativo con cui l''operazione è eseguita.' }
-        idMapper: { type: string, description: 'Adattatore di mappatura che costruisce il payload.' }
-        flagTrascrizione: { type: boolean, description: 'Indica se si tratti di trascrizione di atto formato altrove.' }
-        flagFirma: { type: boolean, description: 'Indica se l''operazione richieda la firma.' }
-        codVersione: { type: string, description: 'Versione di configurazione cui la riga appartiene.' }
-        dataValiditaDa: { type: string, format: date, description: 'Inizio di validità.' }
-        dataValiditaA: { type: string, format: date, description: 'Fine di validità.' }
+        idUcCfg: { type: integer, format: int64, description: 'Identificativo della riga di configurazione.' }
+        codUcAnsc: { type: string, description: 'Codice dell''UC pubblicato da ANSC; la lunghezza non è fissa (2101, 11111000).' }
+        codMotore: { type: string, description: 'Codice del mapping ufficiale dell''UC, per esempio Morte_001.' }
+        descUcAnsc: { type: string, nullable: true, description: 'Denominazione dell''UC pubblicata da ANSC (decodifica ANSC_03).' }
+        codFamiglia: { type: string, description: 'Famiglia di evento: nascita, morte, matrimonio…' }
+        idTipoContenuto: { type: string, nullable: true, description: 'Tipo di contenuto secondo la decodifica ANSC_02.' }
+        idConfTipoAtto: { type: integer, format: int64, nullable: true, description: 'Configurazione del tipo atto in SIPO (CONF_TIPO_ATTI).' }
+        idTipoAtto: { type: integer, format: int64, nullable: true, description: 'Tipo atto di SIPO che raggiunge l''UC; nullo per un UC del catalogo che nessun tipo atto raggiunge ancora.' }
+        codStato: { type: string, nullable: true, description: 'Stato della riga di configurazione; valori ammessi da definire nell''analisi.' }
+        numPriorita: { type: integer, description: 'Ordine di valutazione fra gli UC dello stesso tipo atto: il primo la cui logica è soddisfatta determina l''UC.' }
+        codLogicaDiScelta: { type: string, nullable: true, description: 'Codice libero della logica che stabilisce se l''UC si applica all''atto, valutato dal codice applicativo; nessun catalogo lo descrive. Nullo: si applica sempre.' }
+        codQueryUc: { type: string, nullable: true, description: 'Interrogazione da utilizzare per l''UC, in ANSC_TEMPLATE della stessa baseline.' }
+        idVersione: { type: integer, format: int64, description: 'Baseline cui la riga appartiene.' }
+        dataInizioValidita: { type: string, format: date, description: 'Inizio di validità dell''UC dichiarato da ANSC.' }
+        dataFineValidita: { type: string, format: date, description: 'Fine di validità dell''UC dichiarata da ANSC.' }
 
     CampoConfigurato:
       type: object
+      description: Una riga di ANSC_CFG_CAMPO, richiamata dall'UC per valore con il codice e la baseline.
       properties:
-        campoAnsc: { type: string, description: 'Percorso del campo nel modello dell''evento ANSC.' }
-        campoSipo: { type: string, nullable: true, description: 'Colonna SIPO che alimenta il campo, nella forma TABELLA.COLONNA. Nulla se ancora da definire.' }
-        flagObbligatorio: { type: boolean, description: 'Indica se il campo sia obbligatorio per il caso d''uso.' }
-        condizione: { type: string, nullable: true, description: 'Condizione alla quale l''obbligatorietà si applica.' }
-        codDecodificaAnsc: { type: string, nullable: true, description: 'Dizionario ANSC con cui validare il valore; nullo se il campo non è codificato.' }
-        messaggio: { type: string, description: 'Testo mostrato all''operatore quando il controllo non è superato.' }
+        oggettoAnsc: { type: string, description: 'Oggetto del modello evento che contiene il campo (Binding Object del mapping), per esempio evento.datiDiMorte.' }
+        campoAnsc: { type: string, description: 'Campo dentro l''oggetto (Binding Field del mapping), per esempio dataMorte.' }
+        aliasCampoSipo: { type: string, nullable: true, description: 'Nome con cui il dato è noto in SIPO, compilato a mano da chi configura. Nullo finché non compilato.' }
+        flagObbligatorio: { type: boolean, description: 'Indica se il campo sia obbligatorio per l''UC, come dichiarato dal mapping.' }
+        idDecodificaAnsc: { type: integer, nullable: true, description: 'Dizionario ANSC con cui validare il valore; nullo se il campo non è codificato.' }
+        obbligatorietaEvento: { type: string, nullable: true, description: 'Obbligatorietà nel modello evento; valori ammessi e rapporto con flagObbligatorio da stabilire nell''analisi.' }
+        numOrdinamento: { type: integer, description: 'Ordine di presentazione e di elaborazione del campo.' }
+        flagOperativo: { type: boolean, description: 'Indica se il campo vada inviato ad ANSC.' }
 
     ImportazioneRichiesta:
       type: object
-      required: [codEventoAnsc]
       properties:
-        codEventoAnsc: { type: string, description: 'Evento ANSC di cui importare il mapping ufficiale.' }
         flagSovrascriviEsistenti: { type: boolean, default: false, description: 'Indica se sovrascrivere i campi già configurati o lasciarli invariati.' }
 
     EsitoImportazione:
@@ -2535,23 +2542,26 @@ components:
         numEsaminati: { type: integer, description: 'Righe esaminate nel mapping di origine.' }
         numImportati: { type: integer, description: 'Campi creati o aggiornati.' }
         numInvariati: { type: integer, description: 'Campi lasciati invariati.' }
-        numDaCompletare: { type: integer, description: 'Campi importati che restano senza corrispondenza SIPO.' }
+        numDaCompletare: { type: integer, description: 'Campi importati che restano senza alias SIPO.' }
 
     VersioneRichiesta:
       type: object
-      required: [codVersione]
       properties:
-        codVersione: { type: string, description: 'Codice della nuova versione.' }
-        codVersioneOrigine: { type: string, nullable: true, description: 'Versione da clonare; se omessa si parte da quella attiva.' }
-        note: { type: string, nullable: true, description: 'Motivo della nuova versione.' }
+        idVersioneOrigine: { type: integer, format: int64, nullable: true, description: 'Baseline da copiare; se omessa si parte da quella attiva.' }
+        codVersioneAnsc: { type: string, nullable: true, description: 'Revisione del mapping di ANSC che la baseline recepisce.' }
+        descrizione: { type: string, nullable: true, description: 'Che cosa la baseline recepisce.' }
 
     Versione:
       type: object
       properties:
-        codVersione: { type: string, description: 'Codice della versione.' }
-        codStato: { type: string, enum: [BOZZA, ATTIVA, SUPERATA], description: 'Stato della versione.' }
+        idVersione: { type: integer, format: int64, description: 'Numero della baseline, con cui la si nomina.' }
+        codStato: { type: string, enum: [BOZZA, ATTIVA, STORICA], description: 'Stato della baseline; una sola è ATTIVA.' }
+        codVersioneAnsc: { type: string, nullable: true, description: 'Revisione del mapping da cui la baseline è derivata.' }
+        idVersioneAnsc: { type: string, nullable: true, description: 'Versione del modello evento da cui la baseline è derivata.' }
+        descrizione: { type: string, nullable: true, description: 'Che cosa la baseline recepisce.' }
+        numUcToccati: { type: integer, description: 'Quanti UC la revisione ha modificato.' }
         dataAttivazione: { type: string, format: date-time, nullable: true, description: 'Istante in cui è diventata corrente.' }
-        codVersionePrecedente: { type: string, nullable: true, description: 'Versione che era attiva prima di questa.' }
+        utenteAttivazione: { type: string, nullable: true, description: 'Chi l''ha resa corrente.' }
 
     RegistrazioneAuditSintesi:
       type: object
@@ -2587,7 +2597,7 @@ components:
       properties:
         codAmbiente: { type: string, enum: [SVILUPPO, TEST, ESERCIZIO], description: 'Ambiente SIPO in cui il componente è in esecuzione.' }
         indirizzoAnsc: { type: string, description: 'Indirizzo ANSC configurato per l''ambiente.' }
-        codVersioneConfigAttiva: { type: string, description: 'Versione di configurazione corrente.' }
+        idVersioneAttiva: { type: integer, format: int64, description: 'Baseline della configurazione corrente.' }
         numAttiNonConclusi: { type: integer, description: 'Atti in stato non chiuso, per il monitoraggio.' }
         numEsitiIndeterminatiAperti: { type: integer, description: 'Esiti indeterminati non ancora riconciliati.' }
         numSessioniAperte: { type: integer, description: 'Sessioni OTP attualmente valide.' }

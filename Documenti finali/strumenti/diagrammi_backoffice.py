@@ -177,28 +177,28 @@ def config_uc(dest):
     im, dr = finestra(1180, 540, 'SIPO · Integrazione ANSC — Configurazione · Casi d’uso',
                       'Ruolo: Amministratore')
     y = testata(dr, 26, 62, 'Configurazione — Casi d’uso',
-                'una riga per UC adottato: a quale Modello si applica, con quale priorità e con '
-                'quale logica di scelta. La logica si prende dal catalogo, non si riscrive qui.')
-    y = filtri(dr, 26, y, ['Baseline: v12 (ATTIVA)', 'Tipo evento', 'Modello', 'Validità'])
+                'una riga per UC adottato: a quale tipo atto si applica, con quale priorità e con '
+                'quale logica di scelta, nominata da un codice.')
+    # v3.53: niente più Modello sulla riga né catalogo delle logiche
+    y = filtri(dr, 26, y, ['Baseline: v12 (ATTIVA)', 'Famiglia', 'Tipo atto', 'Validità'])
     y = tabella(dr, 26, y, 1128,
-                ['UC', 'Descrizione', 'Modello / tipo atto', 'Prior.', 'Logica di scelta',
+                ['UC', 'Descrizione', 'Tipo atto', 'Prior.', 'Logica di scelta',
                  'Stato', 'Validità', ''],
                 [80, 280, 190, 70, 190, 90, 150, 90],
-                [['2101', 'Morte in abitazione a Roma', '01 · 301', '1', '—',
+                [['2101', 'Morte in abitazione a Roma', '301', '1', '—',
                   ('ATTIVO', VERDE), 'dal 01/01/2026', 'apri »'],
-                 ['2102', 'Morte in struttura sanitaria', '03 · 303', '1', '—',
+                 ['2102', 'Morte in struttura sanitaria', '303', '1', '—',
                   ('ATTIVO', VERDE), 'dal 01/01/2026', 'apri »'],
-                 ['11111000', 'Dichiarazione entro 10 gg', '30 · 1515', '1', 'NASC_VIVO',
+                 ['11111000', 'Dichiarazione entro 10 gg', '1515', '1', 'NASC_VIVO',
                   ('ATTIVO', VERDE), 'dal 01/01/2026', 'apri »'],
-                 ['11111100', 'Dichiarazione — nato morto', '30 · 1515', '2', 'NASC_MORTO',
+                 ['11111100', 'Dichiarazione — nato morto', '1515', '2', 'NASC_MORTO',
                   ('ATTIVO', VERDE), 'dal 01/01/2026', 'apri »'],
-                 ['11111200', 'Nato vivo poi deceduto', '30 · 1515', '3', 'NASC_VIMO',
+                 ['11111200', 'Nato vivo poi deceduto', '1515', '3', 'NASC_VIMO',
                   ('ATTIVO', VERDE), 'dal 01/01/2026', 'apri »']])
     y = bottoni(dr, 26, y, [('Nuovo UC', BLU), ('Ordina priorità', '#6b7280'),
-                            ('Simula su un atto reale', VERDE),
-                            ('Apri il catalogo delle logiche', VIOLA)])
+                            ('Simula su un atto reale', VERDE)])
     righe(dr, 26, y + 6,
-          ['ATTENZIONE: Due righe con lo stesso Modello e la stessa priorità sono una configurazione '
+          ['ATTENZIONE: Due righe con lo stesso tipo atto e la stessa priorità sono una configurazione '
            'ambigua: la simulazione la mostra prima che un atto la incontri allo sportello.',
            'Una riga non si cancella: si chiude la validità. Gli atti già formati devono restare '
            'leggibili con la configurazione in vigore allora.'],
@@ -213,8 +213,8 @@ def config_campi(dest):
                       'Ruolo: Amministratore')
     # v3.51: ANSC_CFG_SEZIONE tolta; la sezione resta un dato descrittivo del campo (filtro)
     y = testata(dr, 26, 62, 'Campi, allegati e formule dell’UC',
-                'tre schede per un solo UC: i campi dicono da dove viene ogni dato e a quale '
-                'sezione del mapping appartengono, gli allegati quali documenti servono, le '
+                'tre schede per un solo UC: i campi dicono come ogni dato è noto in SIPO e '
+                'se va inviato, gli allegati quali documenti servono, le '
                 'formule quali diciture sono previste.')
     for i, (testo, attiva) in enumerate([('Campi (199)', True), ('Allegati (5)', False),
                                          ('Formule (8)', False)]):
@@ -225,27 +225,28 @@ def config_campi(dest):
         centra(dr, testo, fnt(F_BLD if attiva else F_REG, 13), x + 70, y + 9,
                BLU if attiva else MUTED)
     y += 46
-    y = filtri(dr, 26, y, ['Sezione: Madre', 'Solo obbligatori', 'Senza corrispondenza SIPO'])
+    # v3.53: il lato SIPO è ALIAS_CAMPO_SIPO, compilato a mano; niente logica del campo
+    y = filtri(dr, 26, y, ['Oggetto: evento.madre', 'Solo obbligatori', 'Senza alias SIPO'])
     y = tabella(dr, 26, y, 1128,
-                ['Oggetto · campo ANSC', 'Obbl.', 'Schema · tabella · colonna SIPO',
-                 'Decodifica', 'Logica del campo', 'Operativo', 'Ord.'],
-                [290, 70, 320, 120, 180, 100, 60],
-                [['evento.madre.cognome', 'NO', 'MATR_USR · SOGGETTO · COGNOME', '—', '—',
+                ['Oggetto · campo ANSC', 'Obbl.', 'Alias SIPO', 'Decodifica',
+                 'Obblig. evento', 'Operativo', 'Ord.'],
+                [290, 70, 300, 120, 200, 90, 58],
+                [['evento.madre.cognome', 'NO', 'COGNOME_MADRE', '—', '—',
                   ('SÌ', VERDE), '12'],
-                 ['evento.madre.nome', 'SI', 'MATR_USR · SOGGETTO · NOME', '—', '—',
+                 ['evento.madre.nome', 'SI', 'NOME_MADRE', '—', '—',
                   ('SÌ', VERDE), '13'],
-                 ['evento.madre.dataNascita', 'SI', 'MATR_USR · SOGGETTO · DATA_NASCITA', '—',
-                  'DATA_COMPLETA', ('SÌ', VERDE), '14'],
-                 ['evento.madre.idstatocivile', 'SI', 'MATR_USR · SOGGETTO · DETTAGLIO_SC',
-                  'ANSC_61', 'riconciliazione »', ('SÌ', VERDE), '15'],
+                 ['evento.madre.dataNascita', 'SI', 'DATA_NASCITA_MADRE', '—', '—',
+                  ('SÌ', VERDE), '14'],
+                 ['evento.madre.idstatocivile', 'SI', 'STATO_CIVILE_MADRE', 'ANSC_61',
+                  '—', ('SÌ', VERDE), '15'],
                  ['evento.madre.idANPR', 'NO', '— (assente in SIPO)', '—', '—',
                   ('NO', '#9aa3af'), '16']])
     y = bottoni(dr, 26, y, [('Precompila dal foglio', BLU),
                             ('Apri la riconciliazione dei valori', VIOLA),
                             ('Simula la costruzione del payload', VERDE)])
     righe(dr, 26, y + 6,
-          ['La colonna «Logica del campo» richiama il catalogo (dominio 3): la trasformazione si '
-           'scrive una volta e vale per tutti i campi che la citano.',
+          ['L’alias SIPO si compila a mano; i valori di «Obblig. evento» si stabiliranno in '
+           'analisi.',
            'ATTENZIONE: Un campo con decodifica ANSC e senza riconciliazione dei valori supera la '
            'configurazione ma non la costruzione del payload: il pre-filtro lo segnala.'],
           font=fnt(F_ITA, 13))

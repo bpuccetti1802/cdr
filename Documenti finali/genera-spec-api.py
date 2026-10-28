@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Genera SPEC_API_Integrazione-ANSC_v0.3.docx dai contratti OpenAPI dei pod.
+"""Genera SPEC_API_Integrazione-ANSC_v0.4.docx dai contratti OpenAPI dei pod.
 
 Il documento è un artefatto DERIVATO: la fonte autoritativa sono i file .yaml.
 Per aggiornarlo si modificano i contratti e si riesegue questo script.
@@ -13,7 +13,7 @@ from docx.oxml.ns import qn
 
 BASE = '/Users/minimac/Desktop/Comune di Roma'
 TEMPLATE = os.path.join(BASE, 'Template documentale/template_DAD_roma-capitale.docx')
-OUT = os.path.join(BASE, 'Documenti finali/SPEC_API_Integrazione-ANSC_v0.3.docx')
+OUT = os.path.join(BASE, 'Documenti finali/SPEC_API_Integrazione-ANSC_v0.4.docx')
 DATA = os.path.join(BASE, 'Documenti finali')
 
 POD = [
@@ -29,10 +29,11 @@ POD = [
      'Deployment con una o due repliche. Esegue le sole attività non presidiate ammesse: letture '
      'e code. Non forma e non firma atti. La sua realizzabilità è subordinata alla chiusura di '
      'un open point.'),
-    ('num-ansc-sipo', 'Servizio della numerazione comunale', 'ansc-numerazione-v1.yaml',
-     'Deployment stateless, due repliche: la serializzazione degli stacchi sta nella base dati, '
-     'non nel processo. Governa la serie annuale dei numeri comunali, unica per tutti i registri. Non parla con '
-     'ANSC e non detiene credenziali verso la piattaforma.'),
+    ('be-numeratore-comunale', 'Servizio della numerazione comunale', 'ansc-numerazione-v1.yaml',
+     'Stacca i numeri comunali consecutivi dalla serie annuale, unica per tutti i registri, li '
+     'cerca e ne cambia lo stato. Non parla con ANSC e non detiene credenziali verso la '
+     'piattaforma. Espone un proprio percorso di base, /api/v1/numerazione-comunale, con le '
+     'quattro operazioni descritte dal servizio.'),
 ]
 
 METODI = ('get', 'post', 'put', 'delete', 'patch')
@@ -79,8 +80,8 @@ SCHEDA = {
           'servizi di demand e PMO per le pubbliche amministrazioni locali - terza edizione - '
           'ID 2610 - Lotti 1',
     'Progetto': 'Integrazione SIPO – ANSC',
-    'Data consegna': '15/10/2026',
-    'Versione': '0.3',
+    'Data consegna': '28/10/2026',
+    'Versione': '0.4',
     'Documento': '[codice documento da assegnare]',
     'Codice Area Applicativa': '06',
     'Codice Asset': '[da assegnare]',
@@ -122,6 +123,21 @@ if len(storia.rows) > 1 and len(storia.rows[0].cells) == 4:
                                'esce dai percorsi delle serie e dei numeri, dalla richiesta di '
                                'numeri e dalle risposte; creaSerie crea la sola serie dell’anno; '
                                'i limiti del numero passano a 999999.']):
+        set_par(c.paragraphs[0], v)
+    nuova4 = copy.deepcopy(nuova3)
+    nuova3.addnext(nuova4)
+    r4 = _Row(nuova4, storia)
+    for c, v in zip(r4.cells, ['28/10/2026', '0.4',
+                               'Servizio della numerazione; configurazione; scostamenti',
+                               'Allineata all’analisi v3.54. Il servizio della numerazione si '
+                               'chiama be-numeratore-comunale e il contratto riporta le sole quattro '
+                               'operazioni descritte dal servizio (creaRichiesta, cercaNumeri, '
+                               'utilizzaNumero, scartaNumero) sul percorso /api/v1/numerazione-'
+                               'comunale; le dieci operazioni precedenti sono tolte. La '
+                               'configurazione del concentratore operativo passa dalla terna '
+                               'evento-operazione-casistica agli UC per tipo atto e ai loro campi '
+                               'con l’alias SIPO; la baseline si nomina con il numero; la '
+                               'supervisione è per municipio. Dichiarati tre nuovi scostamenti.']):
         set_par(c.paragraphs[0], v)
 
 # ----------------------------------------------------------------------- helper
@@ -220,7 +236,7 @@ tabella(['ID', 'Documento', 'Contenuto'], [
     ['R2', 'Naming_convention_X_DB_v1.01.docx',
      'Standard gemello per i modelli dati. I nomi dei campi delle rappresentazioni derivano dai '
      'nomi delle colonne secondo la corrispondenza dei prefissi di ruolo.'],
-    ['R3', 'ANALISI_Integrazione-ANSC_v3.39.docx',
+    ['R3', 'ANALISI_Integrazione-ANSC_v3.54.docx',
      'Analisi tecnico-funzionale dell’integrazione. Definisce l’architettura, i componenti, il '
      'modello dati e il modello di esecuzione presidiato che queste interfacce realizzano.'],
     ['R4', 'ansc/docs/openapi/ (R001–R024, R901)',
@@ -255,9 +271,14 @@ p('Lo standard prescrive il contrario. Fra i suoi principi generali figura la tr
   'nell’indirizzo una scelta di distribuzione destinata a cambiare.')
 p('Il contratto segue invece il deployable, perché è con il deployable che viene versionato e '
   'rilasciato. Da qui la combinazione adottata: un solo contesto, un contratto per componente.')
+p('Il servizio della numerazione comunale fa eccezione: espone le operazioni con le quali è '
+  'descritto, sul proprio percorso di base /api/v1/numerazione-comunale e con le proprie forme '
+  'di richiesta e di risposta. Gli scostamenti che ne derivano sono dichiarati al paragrafo '
+  'seguente.')
 
 h('Scostamenti dichiarati dallo standard', 2)
-p('Lo standard richiede che ogni scostamento consapevole sia motivato e tracciato. Sono tre.')
+p('Lo standard richiede che ogni scostamento consapevole sia motivato e tracciato. Sono sei: '
+  'i primi tre riguardano tutti i contratti, gli altri il solo servizio della numerazione.')
 tabella(['Scostamento', 'Regola', 'Motivazione'], [
     ['Nome dei file di contratto',
      'Il file si chiama con il contesto seguito dalla versione.',
@@ -272,6 +293,22 @@ tabella(['Scostamento', 'Regola', 'Motivazione'], [
      'Le operazioni non conformi al modello CRUD si esprimono con un sostantivo deverbale.',
      'La collezione delle azioni di back-office raccoglie operazioni rare ed eterogenee. È la '
      'deroga che lo standard stesso ammette, usata una volta sola.'],
+    ['Contesto proprio della numerazione',
+     'Un solo contesto di dominio, /ansc/v1, per tutte le operazioni.',
+     'Il servizio della numerazione espone /api/v1/numerazione-comunale. Il contratto riporta le '
+     'operazioni come il servizio le descrive.'],
+    ['Risposte senza busta applicativa',
+     'Busta con esito, messaggi e dati; errori con codice applicativo stabile.',
+     'Il servizio risponde con corpi nudi: un elenco per lo stacco, una pagina (PagedModel con '
+     'content e page) per la ricerca, nessun contenuto (204) per i cambi di stato. Gli errori '
+     'sono dichiarati come codice HTTP e messaggio, senza codice applicativo.'],
+    ['Nomi di percorsi, campi e parametri della numerazione',
+     'Collezioni al plurale con sostantivi; prefissi di ruolo sui campi; paginazione con '
+     'numPagina e numElementi; istanti con fuso esplicito.',
+     'Percorsi con i nomi delle azioni (/richiesta, /ricerca, /utilizza, /scarta); campi senza '
+     'prefisso di ruolo (anno, numero, numeroElementi); paginazione con pageOffset e pageSize; '
+     'dataRichiesta nella forma gg/MM/yyyy. Autenticazione e ruoli non sono dichiarati dal '
+     'servizio.'],
 ], [1.6, 2.0, 3.0])
 
 h('Come si accede', 1)
@@ -286,8 +323,9 @@ p('L’autenticazione è quella interna a SIPO, con token di sessione fra moduli
   'concentratore operativo con il certificato server e non transita mai per il front-end.')
 
 h('Convenzioni comuni', 1)
-p('Le convenzioni che seguono valgono per tutte le operazioni di tutti i contratti e non sono '
-  'ripetute nelle singole schede.')
+p('Le convenzioni che seguono valgono per tutte le operazioni dei contratti e non sono '
+  'ripetute nelle singole schede, con l’eccezione del servizio della numerazione, che segue le '
+  'forme con cui è descritto: gli scostamenti sono dichiarati al capitolo sul perimetro.')
 tabella(['Aspetto', 'Convenzione'], [
     ['Formato', 'JSON, codifica UTF-8.'],
     ['Notazione dei campi',
@@ -355,7 +393,8 @@ for nome, ruolo, file_yaml, _ in POD:
                 ['Titolo breve', op.get('summary', '')],
                 ['Metodo e percorso', f'{metodo.upper()} {percorso}'],
                 ['Raggruppamento', ', '.join(op.get('tags', []))],
-                ['Sicurezza', f'Token di sessione interno a SIPO. Ruoli ammessi: {ruoli}.'],
+                ['Sicurezza', op.get('x-sicurezza') or
+                 f'Token di sessione interno a SIPO. Ruoli ammessi: {ruoli}.'],
                 ['Effetti', (op.get('x-effetti') or '—').strip().replace('**', '').replace('`', '')],
             ]
             if op.get('x-vincoli'):
@@ -512,7 +551,7 @@ p('La lista di controllo prevista dallo standard prima della pubblicazione, appl
   'contratti.')
 tabella(['Controllo', 'Esito', 'Nota'], [
     ['Nomi', 'Superato',
-     'Percorsi, parametri, campi e artefatti conformi. I tre scostamenti sono dichiarati al '
+     'Percorsi, parametri, campi e artefatti conformi, salvo i sei scostamenti dichiarati al '
      'capitolo sul perimetro.'],
     ['Completezza della scheda', 'Superato',
      'Tutti gli elementi obbligatori compilati per ciascuna delle operazioni.'],
@@ -522,7 +561,8 @@ tabella(['Controllo', 'Esito', 'Nota'], [
      'Ogni codice di stato restituibile è dichiarato. Le operazioni che contattano ANSC dichiarano '
      'anche l’esito indeterminato, che è la condizione più insidiosa dell’integrazione.'],
     ['Errori', 'Superato',
-     'Ogni codice applicativo compare nell’elenco unico con la condizione che lo produce.'],
+     'Ogni codice applicativo compare nell’elenco unico con la condizione che lo produce. Il '
+     'servizio della numerazione non ne dichiara: i suoi errori sono codice HTTP e messaggio.'],
     ['Esempi', 'Superato',
      'Presenti per il caso positivo e per l’errore più frequente delle operazioni che ne hanno uno. '
      'I valori sono realistici e inventati: nessun dato personale reale.'],
@@ -570,8 +610,16 @@ tabella(['Nell’analisi', 'In questo documento', 'Perché'], [
     ['— (assente)', 'contratto del processo di automazione',
      'Il componente esisteva nella topologia senza alcuna interfaccia.'],
     ['— (assente)', 'contratto del servizio della numerazione comunale',
-     'La numerazione comunale era descritta nell’analisi (tabelle, sequence, percorsi) senza '
-     'alcuna interfaccia: aggiunto nella v0.2.'],
+     'La numerazione comunale era descritta nell’analisi senza alcuna interfaccia: aggiunto '
+     'nella v0.2 con dieci operazioni, riscritto nella v0.4 sulle quattro operazioni del servizio '
+     'be-numeratore-comunale.'],
+    ['configurazione per evento, operazione e casistica (.../configurazione/operazioni)',
+     '.../configurazione/casi-uso e .../casi-uso/{idUcCfg}/campi',
+     'La configurazione è per UC e per tipo atto di SIPO (ANSC_CFG_UC); i campi portano l’alias '
+     'SIPO compilato a mano (ANSC_CFG_CAMPO) e la baseline si nomina con il proprio numero.'],
+    ['filtro e instradamento per ufficiale',
+     'filtro e instradamento per municipio',
+     'Lo store di stato non registra l’ufficiale: la supervisione è per municipio.'],
 ], [2.1, 2.2, 2.3])
 
 # ------------------------------------------------------------------ punti aperti

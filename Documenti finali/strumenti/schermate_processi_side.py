@@ -5,9 +5,9 @@
     nella cornice di Roma Capitale del disegno del back-office (wireframe_bo.py). Senza il
     registro: dalla v3.41 dell'analisi la serie è una sola per anno, di sei cifre.
       pr_num_menu.png       la voce di menu, al posto del sottomenu dei registri di Side
-      pr_num_richiesta.png  la pagina di richiesta, con la registrazione a posteriori
-      pr_num_utilizzato.png la finestra «Segna come utilizzato», che chiede l'idAnsc
-      pr_num_ricerca.png    la pagina di ricerca e consultazione, con le serie e i buchi
+      pr_num_richiesta.png  la pagina di richiesta (POST /richiesta)
+      pr_num_utilizzato.png la finestra «Segna come utilizzato» (PUT /utilizza)
+      pr_num_ricerca.png    la pagina di ricerca e consultazione (GET /ricerca)
   · PROCESSO_Attestato-Conformita: la pagina sta nel percorso di SIPO, quindi nello stile di
     SIPO delle ipotesi del documento del workflow (schermate_sipo_wf.py), come schermata
     separata con il banner di arrivo. Tre stati, gli stessi delle schermate di Side:
@@ -46,9 +46,8 @@ def num_menu(dest):
     voci = [('Supervisione atti', 'gli atti che non hanno concluso il percorso ordinario'),
             ('Notifiche ANSC', 'proposte di annotazione, prese visione, solleciti'),
             ('Numerazione comunale', 'richiesta, ricerca e consultazione dei numeri'),
-            ('Configurazione casi d’uso', 'UC adottati, sezioni, campi, allegati, formule'),
-            ('Catalogo UC di ANSC', 'ciò che ANSC pubblica — sola consultazione'),
-            ('Logiche di scelta', 'le espressioni che determinano UC, sezioni e campi')]
+            ('Configurazione casi d’uso', 'UC adottati, campi, allegati, formule'),
+            ('Catalogo UC di ANSC', 'ciò che ANSC pubblica — sola consultazione')]
     w, h, gap = (C - 2 * 18) // 3, 62, 18
     for i, (t, s) in enumerate(voci):
         W.card(dr, X + (i % 3) * (w + gap), y + (i // 3) * (h + gap), w, h, t, s)
@@ -75,9 +74,8 @@ def num_menu(dest):
 def num_richiesta(dest):
     im, dr, y = W.pagina(L, 940, BRICIOLE + ['Richiesta'], 'Numerazione comunale — richiesta',
                          distintivo=('OTP', True), sotto=SOTTO)
-    y = W.riga_campi(dr, X, y, C - 200, [('Anno', ANNO, 'select', 2),
-                                         ('Numero di elementi', '3', 'testo', 2),
-                                         ('Atto SIPO (facoltativo)', '', 'testo', 3)])
+    y = W.riga_campi(dr, X, y, (C - 200) * 4 // 7, [('Anno', ANNO, 'select', 2),
+                                                  ('Numero di elementi', '3', 'testo', 2)])
     W.bottoni_dx(dr, X + C, y - 52, [('RICHIEDI', W.BLU, True)])
     y += 2
     righe = []
@@ -89,26 +87,20 @@ def num_richiesta(dest):
                   [110, 170, 130, 70, 100, 250, 110, 140, 112], righe)
     y = W.nota(dr, X, y + 4, C,
                'I tre numeri di un parto trigemino escono consecutivi: gli stacchi sono '
-               'serializzati. La spunta segna il numero come Utilizzato e chiede '
-               'l’identificativo nazionale; la croce lo segna come Scartato, dopo conferma. '
-               'Scartato ed Evento acquisito sono stati finali.')
+               'serializzati (POST /richiesta). La spunta segna il numero come Utilizzato '
+               '(PUT /utilizza) e chiede l’atto di SIPO, facoltativo; la croce lo segna come '
+               'Scartato (PUT /scarta), dopo conferma. Scartato è uno stato finale.')
     y += 6
-    y = W.pannello(dr, X, y, C, 'Registrazione a posteriori — numero usato sulla web app '
-                                'mentre SIPO non era disponibile', alt=100)
-    y = W.riga_campi(dr, X + 16, y + 6, C - 232, [
-        ('Anno', ANNO, 'select', 2), ('Numero usato', '118.396', 'testo', 2),
-        ('Identificativo nazionale', idansc('118.396'), 'testo', 5)])
-    W.bottoni_dx(dr, X + C - 16, y - 52, [('REGISTRA', W.BLU, True)])
-    y += 8
     W.nota(dr, X, y, C,
-           'Il numero entra nella serie come Utilizzato. Se è uguale o superiore al prossimo, la '
-           'serie avanza fino a lì, così che nessuno lo riceva di nuovo; se è inferiore e libero '
-           'colma un buco; se è già registrato la registrazione è respinta.', W.GIALLO)
+           'Registrazione a posteriori di un numero usato sulla web app mentre SIPO non era '
+           'disponibile: il servizio be-numeratore-comunale non ha ancora un’operazione per '
+           'farla (OP-79 dell’analisi). La pagina la accoglierà quando l’operazione esisterà.',
+           W.GIALLO)
     return W.salva(im, dest, 'pr_num_richiesta.png')
 
 
 def num_utilizzato(dest):
-    larg, alt = 760, 330
+    larg, alt = 760, 370
     im = Image.new('RGB', (larg, alt), '#8a8d93')
     dr = ImageDraw.Draw(im)
     x0, y0, x1, y1 = 30, 24, larg - 30, alt - 24
@@ -117,10 +109,11 @@ def num_utilizzato(dest):
     dr.line([(x0, y0 + 56), (x1, y0 + 56)], fill=W.RIGA)
     y = W.riga_campi(dr, x0 + 24, y0 + 80, x1 - x0 - 48, [
         ('Anno', ANNO, 'lettura', 1), ('Numero comunale', '118.402', 'lettura', 1)])
-    y = W.riga_campi(dr, x0 + 24, y + 14, x1 - x0 - 48, [
-        ('Identificativo nazionale *', idansc('118.402'), 'testo', 3),
-        ('Atto SIPO', '', 'testo', 1)])
-    W.bottoni_dx(dr, x1 - 24, y + 14, [('ANNULLA', W.MUTED), ('CONFERMA', W.BLU, True)])
+    y = W.riga_campi(dr, x0 + 24, y + 14, (x1 - x0 - 48) // 2, [
+        ('Atto SIPO (facoltativo)', '4581330', 'testo', 1)])
+    dr.text((x0 + 24, y + 6), 'L’identificativo nazionale non si registra: PUT /utilizza non lo '
+            'porta (OP-79).', font=W.fnt(W.F_ITA, 13), fill=W.MUTED)
+    W.bottoni_dx(dr, x1 - 24, y + 40, [('ANNULLA', W.MUTED), ('CONFERMA', W.BLU, True)])
     dest = os.path.join(dest, 'pr_num_utilizzato.png')
     im.save(dest)
     return dest
@@ -129,19 +122,8 @@ def num_utilizzato(dest):
 def num_ricerca(dest):
     im, dr, y = W.pagina(L, 1080, BRICIOLE + ['Ricerca e consultazione'],
                          'Numerazione comunale — ricerca e consultazione',
-                         distintivo=('OTP', True), azioni_dx=['CREA SERIE'], sotto=SOTTO)
-    y = W.pannello(dr, X, y, C, 'Serie della numerazione', alt=142)
-    y = W.tabella(dr, X + 16, y, C - 32,
-                  ['Anno', 'Sequence', 'Prossimo numero', 'Disponibili', 'Utilizzati',
-                   'Scartati', 'Evento acquisito', 'Buchi'],
-                  [90, 250, 150, 120, 120, 110, 150, 170], [
-                      ['2026', 'SEQ_NUM_COMUNALE_2026', '118.405', '4', '117.893', '391',
-                       '112', ('2 — vedi', W.GIALLO)],
-                      ['2025', 'SEQ_NUM_COMUNALE_2025', '144.286', '0', '143.702', '468',
-                       '115', '0'],
-                  ])
-    y += 10
-    y = W.pannello(dr, X, y, C, 'Filtri di ricerca', alt=150)
+                         distintivo=('OTP', True), sotto=SOTTO)
+    y = W.pannello(dr, X, y, C, 'Filtri di ricerca (GET /ricerca)', alt=150)
     y = W.riga_campi(dr, X + 16, y + 6, C - 32, [
         ('Richieste da *', '22/10/2026', 'data', 3), ('Richieste a *', '22/10/2026', 'data', 3),
         ('Operatore', 'RSSMRA70A01H501U', 'select', 3), ('Stato', 'Tutti', 'select', 2),
@@ -152,26 +134,24 @@ def num_ricerca(dest):
                   ['ID richiesta', 'Operatore', 'Data richiesta', 'Anno', 'Numero', 'ID ANSC',
                    'Atto SIPO', 'Stato', 'Azioni'],
                   [100, 160, 120, 60, 90, 250, 100, 150, 162], [
-                      ['90198', 'BNCLRA75B41H501K', '22/10/2026', ANNO, '118.398',
-                       idansc('118.398'), '4581270', ('UTILIZZATO', W.BLU), ['vedi']],
+                      ['90198', 'BNCLRA75B41H501K', '22/10/2026', ANNO, '118.398', '—',
+                       '4581270', ('UTILIZZATO', W.BLU), []],
                       ['90204', 'RSSMRA70A01H501U', '22/10/2026', ANNO, '118.399', '—', '—',
-                       ('SCARTATO', W.MUTED), ['vedi']],
-                      ['90207', 'VRDGPP68C12H501T', '22/10/2026', ANNO, '118.400',
-                       idansc('118.400'), '—', ('UTILIZZATO', W.BLU), ['vedi', 'mod']],
-                      ['90209', 'RSSMRA70A01H501U', '22/10/2026', ANNO, '118.401',
-                       idansc('118.401'), '4581302', ('EVENTO ACQUISITO', W.VIOLA), ['vedi']],
+                       ('SCARTATO', W.MUTED), []],
+                      ['90207', 'VRDGPP68C12H501T', '22/10/2026', ANNO, '118.400', '—', '—',
+                       ('UTILIZZATO', W.BLU), []],
                       ['90211', 'RSSMRA70A01H501U', '22/10/2026', ANNO, '118.402', '—', '—',
                        ('DISPONIBILE', W.VERDE), ['ok', 'no']],
                   ])
     y = W.paginazione(dr, X, y + 4, C, totale='37', pagine=8)
     W.nota(dr, X, y, C,
            'Ordine per ID richiesta e numero, crescenti. I numeri degli atti formati in SIPO li '
-           'stacca il concentratore all’anteprima, a nome dell’operatore, e nascono già legati '
-           'all’atto: si riconoscono dalla colonna Atto SIPO. La '
-           'matita su un numero Utilizzato lega l’atto di SIPO e lo porta a Evento acquisito, '
-           'quando l’atto formato sulla web app viene agganciato. Un buco è un numero preso '
-           'dalla sequence e mai registrato: non ha una riga, e lo mostra solo la tabella delle '
-           'serie. CREA SERIE è riservato all’amministratore.', W.GIALLO)
+           'stacca il concentratore all’anteprima, a nome dell’operatore, e li lega all’atto con '
+           'PUT /utilizza al deposito riuscito: si riconoscono dalla colonna Atto SIPO. Spunta e '
+           'croce valgono sui soli numeri Disponibili. La colonna ID ANSC resta vuota e lo stato '
+           'Evento acquisito non compare: nessuna operazione del servizio li scrive. Mancano anche '
+           'la tabella delle serie con i buchi e la creazione anticipata della serie (OP-79).',
+           W.GIALLO)
     return W.salva(im, dest, 'pr_num_ricerca.png')
 
 

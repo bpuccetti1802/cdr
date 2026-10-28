@@ -287,7 +287,7 @@ def pulsantiera(dr, y, sinistra, destra):
 # schermata si apre con l'esito del passaggio che l'ha aperta: è lì che la transizione si vede.
 ARRIVI = (
     ("Da Anteprima:", "anteprima confermata con VALIDA. Numero comunale 13617 staccato "
-     "(num-ansc-sipo); modello evento costruito e salvato (revisione 7)."),
+     "(be-numeratore-comunale); modello evento costruito e salvato (revisione 7)."),
     ("Da Validazione:", "validazione riuscita (R009). ANSC ha assegnato l’identificativo "
      "nazionale " + "2026-10527619-13617-058091" + "; stato ANSC 2 CONFERMATO."),
     ("Da Firme dei dichiaranti:", "firme acquisite. ANSC ha portato l’atto a 4 FIRMATO DAL "
@@ -370,7 +370,7 @@ def validazione(dest, separate=False):
     y = y0 + 132 + 16
 
     y = pulsantiera(dr, y, [("INDIETRO", True)],
-                    [("SOSPENDI", True), ("VALIDA", True), ("VALIDA CON FORZATURA", False),
+                    [("INTERROMPI", True), ("VALIDA", True), ("VALIDA CON FORZATURA", False),
                      ("AVANTI", False)])
     return ritaglia(im, y, dest)
 
@@ -426,7 +426,7 @@ def firme(dest, separate=False):
                "dopo, solo se tutti i firmatari sono in condizione di firmare di nuovo.", 'info')
     y = pulsantiera(dr, y, [("INDIETRO", True), ("TORNA ALLA COMPILAZIONE", True)],
                     [("ELIMINA EVENTO", True), ("VERIFICA STATO EVENTO", True),
-                     ("SOSPENDI", True), ("AVANTI", False)])
+                     ("INTERROMPI", True), ("AVANTI", False)])
     return ritaglia(im, y, dest)
 
 
@@ -543,7 +543,7 @@ def conformita(dest, separate=False):
     y = y0 + 110 + 16
 
     y = pulsantiera(dr, y, [("INDIETRO", True), ("TORNA ALLA COMPILAZIONE", False)],
-                    [("ELIMINA EVENTO", True), ("SOSPENDI", True), ("CONTINUA", False),
+                    [("ELIMINA EVENTO", True), ("INTERROMPI", True), ("CONTINUA", False),
                      ("FIRMA", True)])
     return ritaglia(im, y, dest)
 
@@ -575,7 +575,7 @@ def firma_usc(dest, separate=False):
                "diventano procedimenti di ANSC (annotazione, rettifica, annullamento).",
                'attenzione')
     y = pulsantiera(dr, y, [("INDIETRO", True)],
-                    [("ELIMINA EVENTO", True), ("SOSPENDI", True), ("CHIUDI", True)])
+                    [("ELIMINA EVENTO", True), ("INTERROMPI", True), ("CHIUDI", True)])
     return ritaglia(im, y, dest)
 
 
