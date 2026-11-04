@@ -1568,108 +1568,104 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   Copre le schede di operazione complete, i modelli di dati per pod, l'elenco unico dei codici di errore, la
   lista di controllo di conformità, gli interventi di allineamento rispetto alla v2.6 e i punti aperti
   PS-1…PS-7. Cfr. il blocco «SPECIFICA DELLE API DI TUTTI I POD» in «Stato attuale del lavoro».
-- **`STUDIO_Identificativi-ANSC-verso-ANPR_v0.3.docx`** (27/10/2026, `strumenti/idansc_v0_3.py`
-  dalla v0.2 di `idansc_v0_2.py`, dalla v0.1 di `genera_idansc_anpr.py`,
-  generato dal template DAD) — se e dove si possa passare ad ANPR un identificativo di ANSC, partendo
-  dai processi che aggiornano ANPR. 9 capitoli, 7 tabelle, 6 punti aperti AN-01…AN-06.
-  ⚠️ **LA RISPOSTA È DOPPIA, e le due metà non vanno confuse. Per il SOGGETTO NON si può**:
-  `TipoIdentificativi` dello schema ANPR ha **un solo campo, `idANPR`**, e nessun tipo porta un
-  identificativo di soggetto di provenienza esterna — giusto così, perché è ANSC a consumare l'id di
-  ANPR, non il contrario. La corrispondenza resta da noi, in `ANSC_SOGGETTO_IDENTIFICATIVI`.
-  **Per l'ATTO si può**: lo schema ha **`TipoAttoANSC`** (`idANSC`, `comuneRegistrazione`, `anno`
-  obbligatori · `numeroComunale` **obbligatorio**, quindi la forma ANSC non sostituisce il numero
-  comunale · `ufficioMunicipio`, `dataFormazioneAtto`, `trascritto` facoltativi), e `TipoAttoANPR` è
-  il contenitore che ammette `atto` **oppure** `attoANSC`.
-  ⚠️ **IL CLIENT LO FA GIÀ E COMMUTA DA SÉ**, su `atto.getIdAttoAnsc() != null`, in due punti:
-  `Richiesta5008XmlGenerator.java:343-358` e `AnprUtilities.generateTipoAttoANPR` (`:427-449`, usata
-  da `Richiesta2001XmlGenerator:172`, `5008:705` e `:1036`). ⚠️ **Letto per REFLECTION**
-  (`getMethod("getIdAttoAnsc")`): invisibile a una ricerca per nome di campo — è per questo che
-  sembra non esistere — e un oggetto senza quel getter dà **errore**, non valore nullo (l'`AttoVO`
-  del concentratore non lo ha).
-  ⚠️ **SOLO 2 GENERATORI DI SCRITTURA SU 15 lo trattano**: 5008 e 2001. **Tutte le iscrizioni**
-  (1001, 1002, 1013, 1014), le altre cancellazioni (2003, 2011), le altre mutazioni (5001, 5010,
-  5012, 5013) e l'AIRE (A001, A002, A006) accettano **solo la forma classica**.
-  **Dove si interrompe la catena**: non nello schema e non nel client, ma in
-  **`all-anpr-sipo/.../common/Convert.java:1033`** (`generateAtto`, e `attoConverter` a `:177`), che
-  ricostruisce l'`Atto` dai dati del legacy e **non tocca le colonne ANSC** — il concentratore ha
-  **zero** occorrenze di ANSC. ⚠️ Il valore **non può venire dal legacy**:
-  `EstremiAttodiStatoCivile` non ha il campo; va letto da `ANAG_USR.ATTO` (`ID_ATTO_ANSC`,
-  `ANNO_ANSC`, `NUMERO_COMUNALE`, `DATA_ANSC` — `Atto.java:161,164,175,180`), che però oggi
-  **l'operatore scrive a mano** dalle maschere: `AttoAnscBL.creaAttoAnsc` è chiamata solo da
-  `varana-be/SoggettoController:1827,2864` e `MatrimonioController:342,695,750,1080,2272` → **AN-01**
-  (se per gli atti dei batch quelle colonne siano popolate) e **AN-02** (con quale chiave ritrovare
-  l'atto dal codice individuale).
-  **Esito per processo**: decessi = **caso più favorevole** (2001 e 5008 lo trattano già: basta la
-  conversione, nessun tocco al client condiviso — ed è la famiglia del pilota) · nascite = a metà
-  (la mutazione sì, l'**iscrizione no**: 1001/1002 da estendere) · matrimoni = in parte (5012/5013 da
-  estendere) · elettorale e CRI online = **non pertinenti**, non portano atti di stato civile.
-  ⚠️ **IL CLIENT NON È IL CONTRATTO DI ANPR — ERRORE DI METODO CORRETTO NELLA v0.2 su rilievo
-  dell'utente.** La v0.1 concludeva che `idSoggettoAnsc` non si può passare ad ANPR deducendolo **dai
-  soli tipi generati nel client**: quelli sono la **fotografia della versione di schema con cui SIPO
-  è stato compilato**, non il contratto. Che cosa ANPR preveda si verifica sulla **sua**
-  documentazione. ⚠️ **Da non ripetere su nessun altro tema.**
-  **La risposta vera**: in `anpr-9.2.9/src/wsdl/ansc/xsd/` c'è l'interfaccia **«Predisposizione
-  Anagrafica»** (3 XSD, ~2.000 righe, 245 tipi, 9 esempi), e il tipo **`tipoGeneralita`** porta
-  **QUATTRO identificativi affiancati, tutti facoltativi**: `idSchedaSoggettoComune` ·
-  `idSchedaSoggettoANPR` (num. max 16) · **`idSoggettoANSC`** (num. max 16) · **`idANPR`**
-  (alfanumerico di **9**) — cioè **entrambi** i codici chiesti dall'utente. Compaiono su
-  intestatario, padre e madre negli esempi. Quindi **il limite è del CLIENT, non di ANPR**, e ha la
-  forma di **un'interfaccia intera che SIPO non implementa** (zero occorrenze del namespace in tutto
-  il codice).
-  **Testata**: `codMittente` = «codice ISTAT **del comune che effettua la richiesta**» ·
-  `idTipoNotifica` = **SC01, SC02…** (sono le notifiche anagrafiche di **ANSC_93**: questa interfaccia
-  **è** il canale del cancello anagrafico, visto dal lato di chi emette) · `idTipoContenuto`
-  (1 ATTO/2 ANNOTAZIONE/3 TRASCRIZIONE/4 ANNOT. AUTOMATICA) · `idTipoEvento` (1–5) · `idUsecase`.
-  **Corpo**: `intestatario` 1..N **obbligatorio** (da qui il parto plurimo), `atto` **obbligatorio**,
-  più i blocchi per famiglia.
-  ⚠️ **DUE `tipoAttoANSC` OMONIMI IN NAMESPACE DIVERSI, da non confondere**: quello di **ANPR**
-  (`sogei.it/ANPR/tipoDato`, usato da 5008 e 2001, `idANSC`, anno e numero comunale **obbligatori**,
-  ha `ufficioMunicipio` e `trascritto`) e quello di **ANSC**
-  (`sogei.it/ansc/predisposizioneAnagrafica`, `idAnsc`, **tutti facoltativi**, ha
-  **`composizioneCompleta`** = il testo dell'atto).
-  ⚠️ **TRE CAUTELE**: **non c'è WSDL** (solo xsd + esempi → il trasporto non è dichiarato, AN-07) ·
-  il namespace è **di ANSC** pur stando nel repository ANPR · **chi emette il messaggio non è deciso
-  da quei file** (AN-08: gestionale comunale o ANSC per conto del comune?). Nuovo **AN-09** (se la
-  Predisposizione sia alternativa o complementare alle mutazioni dei batch) e **AN-10**.
-  ⚠️ **`anpr-9.2.9/` NON È SUL DISCO**: è esclusa dal `.gitignore` e la documentazione esiste solo
-  nella copia **`anpr-9.2.9 2/`**. È **la ragione per cui questa interfaccia non era stata vista** in
-  mesi di analisi — e il rischio si ripresenterà: **la cartella va ripristinata al suo posto**
-  (AN-10).
-  ⚠️ **v0.3 — L'OBIETTIVO DELL'UTENTE È `idSoggettoAnsc` VERSO ANPR, e la risposta è NO,
-  verificata stavolta sugli SCHEMI 9.2.9 e non sul client**: in tutti gli XSD di
-  `anpr-9.2.9 2/src/wsdl/comuni/` la stringa «ansc» compare **8 volte, tutte riferite all'ATTO**
-  (`tipoAttoANSC` 4 · `tipoNumeroAttoANSC` 2 · `idANSC` 1 · `attoANSC` 1). **Nessun identificativo di
-  soggetto di provenienza esterna**: le operazioni individuano la persona con `idANPR` (9 caratteri)
-  e con le schede. ⚠️ `tipoIdSoggettoNazionale` di `E000Vocabolario.xsd:524` **non è** un'alternativa:
-  è 9 caratteri come `idANPR`, cioè l'identificativo di ANPR con altro nome, e sta nei servizi Enti.
-  **Quindi l'unica strada per il soggetto resta la Predisposizione Anagrafica** (AN-07/AN-08) e
-  ⚠️ **RIGENERARE IL CLIENT NON SERVE A QUELL'OBIETTIVO**: serve all'atto.
-  ⚠️ **GLI XSD IMBARCATI NEL CLIENT SONO ANTERIORI AD ANSC** (`AnprClient/src/main/resources/`, [S9]):
-  `tipoDato.xsd` del modulo ha **0** occorrenze di `tipoAttoANSC`, la 9.2.9 ne ha **11**; e tutti gli
-  schemi sono più corti (tipoDato 3.632 vs **4.405** · vocabolario5000mutazione 550 vs **788** ·
-  2000cancellazione 214 vs **247**). ⚠️ Conseguenze: (a) la **9.2.9 prevede `attoNascitaANPR` anche
-  nell'ISCRIZIONE (2 elementi) e nell'AIRE (2)**, non solo nella mutazione (1) — quindi le iscrizioni
-  **non** sono impossibili, il client è indietro; (b) **gli XSD del modulo non descrivono più il Java
-  dello stesso modulo** (il Java ha `TipoAttoANSC`, i suoi XSD no) → **non usarli come sorgente di
-  rigenerazione** (AN-11 da quale versione rigenerare, AN-12 quale sia la sorgente di verità).
-  **AN-04 RIFORMULATO**: non è «estendere i generatori», è **rigenerare** e poi estendere.
-  **ARCHITETTURA DEL CLIENT** (cap. nuovo): **685 classi, 80.233 righe**, di cui **~64.700 generate**
-  (`tipoDato` 105 · `vocabolario*` · involucri · port) e **~15.500 scritte a mano**
-  (`xmlRequestGenerator` 32/8.402 · `sicurezza` 50/4.154 · `common` 3/1.427 · il resto 14/~1.500).
-  Percorso: `AnprClient.callAnprClient` → `generateXmlRequest` (switch su **36 casi**) →
-  `Richiesta<N>XmlGenerator` che produce **XML come STRINGA** → `DispatchHandler` (switch su **11
-  famiglie**) → `Op<N>Handler` (uno per operazione, ~90 righe) che firma e **ri-deserializza** la
-  stringa nella classe generata. ⚠️ I **nomi ufficiali delle 36 operazioni** stanno nei commenti del
-  primo switch (1001 iscrizione per nascita · 2001 cancellazione per morte · 5008 mutazioni dati
-  generali stato civile · 5010 mutazioni liste elettorali · A001 iscrizione AIRE per nascita ·
-  P001/P002/P003 elenco/dettaglio/aggiorna…): **non sono negli schemi**.
-  **Costo di un'operazione nuova**: 1 `Op<N>Handler` + 1 case in `DispatchHandler` + 1 case in
-  `generateXmlRequest` + 1 generatore + le classi rigenerate. Nessun registro: **tutto per switch**.
-  ⚠️ **TRE DIFETTI, e il primo va sciolto PRIMA di qualunque prova**: `EnvironmentHandler.TEST`
-  **cablato** in `callAnprClient:78`, da cui dipende il portachiavi di firma
-  (`RequestHandler:44`, `/config/<ENV>_Keystore.properties`) → **non si può collaudare fuori da TEST**
-  (= DV-33) · XML come stringa poi ri-deserializzato · tutto per reflection.
-  11 capitoli, 20 tabelle, **12 punti aperti AN-01…AN-12**.
+- **`STUDIO_Identificativi-ANSC-verso-ANPR_v0.4.docx`** (**corrente**; v0.1→v0.3 superate).
+  ⚠️ **IL FILE CONSEGNATO È STATO RIVISTO A MANO DALL'UTENTE (01/11) e committato: si modifica IL FILE
+  REALE, NON si rigenera da `strumenti/idansc_v0_4.py`** — lo script produrrebbe la mia stesura e
+  perderebbe le sue modifiche. Che cosa ha cambiato: cap. 2 «La risposta, in breve» → **«Si può
+  registrare l'Id dell'atto ANSC su ANPR?»**, **eliminato il capitolo «Da dove viene oggi
+  l'identificativo dell'atto»** (i suoi contenuti — `AttoAnscBL.creaAttoAnsc` chiamata solo dalle
+  maschere, asimmetria fra i due `ATTO` — restano in AN-01 e nel blocco qui sotto), «Come è fatta la
+  catena» → «Come sono fatti i processi», «Tre **difetti**» → «Tre **issue**».
+  **Stato del file consegnato: 9 capitoli, 13 tabelle, 1 figura, 0 commenti, 9 punti aperti
+  AN-01…AN-09, interventi I1…I6.**
+  ⚠️ **PERIMETRO RISTRETTO DALL'UTENTE (30/10): SOLO L'IDENTIFICATIVO DELL'ATTO.** «È il soggetto
+  che non interessa» → tolto il capitolo sulla Predisposizione Anagrafica e ogni occorrenza della
+  parola «soggetto» (zero nel documento). **Non reintrodurre la metà sul soggetto.**
+  **LA RISPOSTA: sì, l'id dell'atto ANSC si può passare, e per i decessi funziona già.**
+  `tipoAttoANSC` (`tipoDato.xsd:2129`, ns `http://sogei.it/ANPR/tipoDato`) = 7 campi, **4 obbligatori**:
+  `idANSC`, `comuneRegistrazione`, `anno`, **`numeroComunale`** (⚠️ la forma ANSC **non** sostituisce la
+  numerazione comunale) + `ufficioMunicipio`/`dataFormazioneAtto`/`trascritto`. `tipoAttoANPR` è un
+  **`xs:choice`** fra `atto` e `attoANSC`, e negli schemi di operazione i due elementi sono **gemelli
+  affiancati** (`attoEvento`+`attoEventoANPR`, `attoNascita`+`attoNascitaANPR`) → l'adozione è
+  **additiva e reversibile, un'operazione alla volta**.
+  ⚠️ **QUATTRO punti del client la trattano (non due, come diceva la v0.3)**, commutando su
+  `getIdAttoAnsc() != null` **per reflection**: `Richiesta5008XmlGenerator:118` e `:357` (atto di nascita
+  in mutazione), `:1036` (evento morte), `Richiesta2001XmlGenerator:172`, **`AnprUtilities:297` e `:352`**
+  (blocco `tipoDatiEvento`, usato anche dallo scioglimento di unione). La funzione è
+  `AnprUtilities.generateTipoAttoANPR:435`; fa `object.getAtto()` e poi `getIdAttoAnsc()` sull'`Atto` JPA
+  **che quel metodo ce l'ha** → nessun errore di reflection, torna solo sempre null.
+  ⚠️ **LA COMMUTAZIONE LEGGE CINQUE COLONNE, NON UNA** (il dettaglio che si sbaglia più facilmente):
+  `ID_ATTO_ANSC`→`idANSC` · **`ID_COMUNE`** (`Atto.java:169`, **terza colonna di comune**, distinta da
+  iscrizione/trascrizione) →`comuneRegistrazione` · `ANNO_ANSC`→`anno` · `NUMERO_COMUNALE`→`numeroComunale`
+  · `DATA_ANSC`→`dataFormazioneAtto`. `NUMERO_NAZIONALE` **non** viene letto. Valorizzare il solo
+  `ID_ATTO_ANSC` dà un payload **invalido**. Le sei colonne sono un blocco: `AttoAnscBL.creaAttoAnsc` le
+  scrive insieme, `eliminaAttoAnsc` le azzera insieme.
+  **STATO PER OPERAZIONE — tre livelli distinti (schema del client / classe Java / codice)**:
+  5008 nascita · 5008 evento morte · 2001 · `tipoDatiEvento` = **sì/sì/sì, funziona oggi** ·
+  **A001/A002 AIRE** = slot **sì** (`A000aire.xsd:46` e `:112`) ma **manca il campo in
+  `RichiestaA001.java`** → rigenerare la classe + estendere il generatore · **1001/1002 iscrizione** =
+  slot **assente nel client**, presente in 9.2.9 → riallineare lo schema, poi rigenerare, poi estendere ·
+  2000/3000/P000 = nessuno slot in entrambi gli alberi.
+  ⚠️⚠️ **DUE AFFERMAZIONI DELLA v0.3 SONO SBAGLIATE — non ripeterle** (AN-11/AN-12 riscritti):
+  (a) **gli schemi imbarcati nel client NON sono «anteriori ad ANSC»**: `tipoDato.xsd` del modulo e
+  quello di 9.2.9 concordano su **ogni** nome ANSC (`tipoAttoANSC` 4 e 4, `idANSC` 1 e 1,
+  `idSchedaSoggettoANPR` 2 e 2) e divergono per **due soli complexType**, `tipoDatiPoligamia` e
+  `tipoPoligamie`; **lo scostamento reale è UNO: 3 slot in `1000iscrizione.xsd`** (0 contro 3), e i
+  restanti **7 schemi di operazione su 8 sono allineati** (4000estrazione 5/5, 5000mutazione 2/2,
+  6001 1/1, A000aire 2/2, gli altri 0/0). (b) «gli XSD non descrivono il Java» è vero **ma va nei DUE
+  sensi**: per `tipoAttoANSC` ci sono entrambi, per `attoNascitaANPR` dell'AIRE c'è l'XSD e **manca il
+  Java**. È questo il fatto da dichiarare a chi rigenera, non «gli schemi sono vecchi».
+  **I PROCESSI SCHEDULATI — 6 toccano ANPR, solo 3 portano atti** (solo `@Scheduled`, nessun
+  pianificatore esterno): `int-be/BatchModController:38` **23:00** alimenta la coda (non chiama ANPR) ·
+  `all-nas-be/AllineamentoNasciteBL:34`, `all-dec-be/AllineamentoDecCittBL:32`,
+  `all-matr-be/AllineamentoMatrimonioBL:29` tutti e tre alle **05:00** · `prog-be/AnprManager` 01:00
+  (elettorale, zero «atto») · `cri-on-anpr-be/RecuperaPraticheCriAnpr` 04/11/17 (P001/P002/P003 +
+  3002, zero «atto») → **gli ultimi due non sono pertinenti**.
+  ⚠️ **I TRE BATCH NON CHIAMANO ANPR: chiamano `all-anpr-sipo`.** Sequenza: `/getListaCodiciEvento` (coda
+  NOTEVE di INASAIA, porta 9393) → `ClientSuperNetVA.recuperaInfoAnagrafica(codiceIndividuale)` su
+  **AGGIOR** → `RequestAnprSipo` (persona+codiceIndividuale+tipoEvento+codiceFamiglia) → endpoint del
+  concentratore (`/allineamentoNascita`, `/allineamentoDecesso`, `/allineamentoVedovanza`,
+  `/allineamentoCittadinanza`, `/matrimonio`, `/rettificaMatrimonio`, `/cessazioneMatrimonio`…). Le
+  operazioni ANPR le sceglie il concentratore: nascita → **1001/1002/A001/A002/A006** per
+  l'iscrizione (`AllineamentoNascitaAnpr:204-229`, secondo AIRE+motivo+idSchedaAnpr) e **5008** per la
+  mutazione (`:108`); dec/citt → **2001, 2003, 2011, 5001, 5008**; matrimoni → **5008, 5012, 5013**.
+  ⚠️ **DOVE SI ROMPE LA CATENA — CINQUE STRATI, il difetto è nel 3° e il 4° spiega perché**:
+  (1) il batch passa dati **di AGGIOR**, che non ha il campo · (2) gli endpoint scelgono bene
+  l'operazione · (3) **`common/Convert.java` — `generateAtto:1033`, `attoConverter:177`,
+  `generateAttoDaAggior:1250` non valorizzano le colonne ANSC**; nel modulo la sigla ANSC non compare mai ·
+  (4) **le strutture di trasporto non portano il campo**: `EstremiAttodiStatoCivile` = 7 campi
+  (comuneRegistrazione, tipoRegistrazione, anno, numero, parte, serie, esponente), `dtoSC/AttoVO` = 9
+  (idComuneIscrizione/Trascrizione, numeroAtto, anno, parte, serie, trascritto, idTipoAtto, esponente) ·
+  (5) il client è pronto e **non va modificato**.
+  ⚠️ **DUE CONVERTITORI DISTINTI, non confonderli**: **`Convert.java`** = percorso dei **batch**
+  (sorgente AGGIOR) · **`ConvertSC.java`** = percorso **in linea** dello stato civile (sorgente `AttoVO`
+  di SIPO, `generateAtto:655`, `generateAttoCittadinanza:694`). ⚠️ `ConvertSC.generateAtto` valorizza
+  `comuneIscrizione`/`comuneTrascrizione` e **non** `comune`: anche lì il comune di registrazione
+  resterebbe vuoto.
+  **GLI INTERVENTI (I1…I6) e l'ordine**: **I1/I2/I3 nel concentratore** (leggere l'atto di
+  `ANAG_USR.ATTO` e valorizzare le 5 colonne in `Convert`) → **sblocca i tre batch in una volta**,
+  perché condividono il convertitore, e **decessi+matrimoni finiscono qui** senza toccare il client
+  (1° gradino, è anche la famiglia del pilota) · **I4** AIRE: rigenerare `RichiestaA001/A002` +
+  estendere i 3 generatori · **I5** iscrizione: riallineare `1000iscrizione.xsd` + rigenerare + estendere ·
+  **I6** percorso in linea (`AttoVO` + `ConvertSC`). ⚠️ **Decisione d'impianto dichiarata: arricchisce il
+  CONCENTRATORE, non il batch** (ha già la base dati e i repository; i batch dialogano per servizi) —
+  l'alternativa è in documento con il suo pregio. ⚠️ **Finché I5 non è fatto la nascita è mista**:
+  forma ANSC in mutazione, forma classica in iscrizione.
+  **AN-01 è il prerequisito di tutto**: oggi `AttoAnscBL.creaAttoAnsc` è chiamata **solo dalle maschere**
+  (`varana-be/SoggettoController:1827,2864`, `MatrimonioController:342,695,750,1080,2272`), nessun processo
+  automatico → se per gli atti dei batch quelle colonne sono vuote, gli interventi non hanno dato da
+  trasportare. AN-02 con quale criterio ritrovare l'atto dall'evento (SIPO non ha ricerca per id nazionale
+  né per numero comunale) · AN-03 quale numero comunale · AN-04 comportamento di ANPR in esercizio ·
+  AN-05 versione di schema in esercizio · AN-06 sorgente di verità degli schemi · AN-07 atti trascritti ·
+  AN-08 se allineare anche il percorso in linea · AN-09 regola per l'identificativo incompleto.
+  ⚠️ **D1 è bloccante per il collaudo**: `AnprClient.java:78` cabla l'ambiente a TEST e da lì dipende il
+  keystore di firma (`RequestHandler.java:44`) → **da sciogliere prima di scrivere codice** (= DV-33).
+  ⚠️ **APICI INVERSI: `docx_comune.segmenta` conosce solo `**`** e lascia passare gli apici inversi
+  letterali → nella **v0.3 ne sono finiti 128 nel documento consegnato**. `idansc_v0_4.py` ha `pezzi_di()`
+  che rende `` `così` `` in Courier New; ⚠️ e la **testa di `voce()` va passata dallo stesso interprete**,
+  altrimenti ne restano (ci sono ricascato: 12). ⚠️ **`D.storia()` non interpreta `**`**: niente asterischi
+  nelle sintesi della Storia. Utile in chiusura: contare nel .docx le occorrenze dei termini vietati, gli
+  apici inversi, i `**` residui e i caratteri combinanti (accenti decomposti).
 - **`verifica-conteggi.py`** — controllo di coerenza da eseguire **prima di consegnare** ogni nuova
   versione di un `.docx` (vedi il dettaglio in «Come leggere/scrivere i file»). **40 regole**, di cui 31
   verificate direttamente sulle sorgenti ANSC (decodifiche, mapping dei casi d'uso, **changelog dei
