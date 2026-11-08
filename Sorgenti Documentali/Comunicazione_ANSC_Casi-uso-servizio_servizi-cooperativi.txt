@@ -1,0 +1,47 @@
+Comunicazione ANSC — disabilitazione di alcuni casi d'uso di servizio tramite servizi cooperativi
+(testo fornito dal committente il 07/11/2026; in vigore dal 9 settembre 2024; nel Changelog ANSC
+corrisponde alla voce del rilascio 1.33.0 «Disabilitazione casi d'uso di servizio lato servizi
+cooperativi (ID 120)»)
+
+Si comunica che, in vista dell'apertura a livello nazionale del sistema ANSC (Archivio Nazionale informatizzato dei registri dello Stato Civile) e della progressiva adesione di tutti i comuni, saranno disabilitati alcuni casi d'uso di servizio gestiti tramite servizi cooperativi, come riportato dettagliatamente di seguito.
+
+I casi d’uso di servizio, infatti, non consentono di:
+
+• generare annotazioni automatiche
+• avere un controllo sui metadati
+• predisporre le comunicazioni automatiche di aggiornamento anagrafico.
+
+Si rende necessario, pertanto, un loro uso monitorato e limitato ai soli casi strettamente necessari. L’utilizzo dei casi d’uso di servizio, ad esempio, è particolarmente sconsigliato per le trascrizioni delle sentenze di adozione. Infatti, mentre l’utilizzo del caso specifico garantisce la segretezza delle informazioni e l’emissione della copia integrale solo in determinate condizioni, il caso di servizio non fornisce le medesime imprescindibili garanzie.
+
+Dal 9 settembre 2024, non saranno più disponibili, tramite servizi cooperativi, i seguenti casi d’uso di servizio:
+11999999    Caso d'uso di servizio (dichiarazioni nascita)
+12999999    Caso d'uso di servizio (riconoscimenti)
+2199    Caso d'uso di servizio (dichiarazioni di morte)
+319999    Caso d'uso di servizio (matrimoni con rito civile)
+329999    Caso d'uso di servizio (matrimoni con rito religioso)
+349999    Caso d'uso di servizio separazioni e divorzi
+51999    Caso d'uso di servizio dichiarazioni di cittadinanza
+359999    Caso d'uso di servizio (riconciliazioni)
+419999    Caso d'uso di servizio (unioni civili)
+449999    Caso d'uso di servizio (scioglimenti)
+Saranno ancora disponibili, tramite servizi cooperativi, i seguenti casi d’uso di servizio necessari per la gestione della fase ibrida (che si concluderà solo quando tutti i comuni avranno aderito ad ANSC), in particolare quelli necessari per le trascrizioni degli atti tra comuni:
+1399    Caso d'uso di servizio (trascrizioni nascita)
+14400000    Caso d'uso di servizio annotazione (comunicazione da altri comuni)
+14500000    Caso d'uso di servizio annotazione (comunicazioni da altre amministrazioni)
+2299    Caso d'uso di servizio (trascrizioni di morte)
+2310    Caso d'uso di servizio annotazione (comunicazione da altri comuni)
+339999    Caso d'uso di servizio (trascrizioni matrimonio)
+366999    Caso d'uso di servizio (comunicazione da altri comuni)
+367999    Caso d'uso di servizio (comunicazioni da altre amministrazioni)
+439999    Caso d'uso di servizio (trascrizioni unioni civili)
+52999    Caso d'uso di servizio (trascrizioni di cittadinanza)
+2320    Caso d'uso di servizio annotazione (comunicazione da altre amministrazioni)
+456999    Caso d'uso di servizio annotazione (comunicazione da altri comuni)
+457999    Caso d'uso di servizio annotazione (comunicazione da altre amministrazioni)
+53599    Caso d'uso di servizio annotazione (comunicazione da altri comuni)
+53699    Caso d'uso di servizio annotazione (comunicazione da altre amministrazioni)
+Sarà sempre possibile accedere alla totalità dei casi d’uso di servizio tramite web application.
+
+L’utilizzo, tramite web application, dei casi d’uso di servizio elencati al punto 1, richiede all’ufficiale dello stato civile, di indicare il motivo per il quale si presenta la necessità di ricorrervi. Questo, da un lato consente il monitoraggio nell’utilizzo, dall’altro permette di far emergere immediatamente nuove casistiche che saranno oggetto di interventi correttivi o evolutivi.
+
+Si suggerisce, alle case software, di prevedere lo sviluppo di servizi che possano consentire il recupero di atti eventualmente registrati tramite web application per mantenere l’allineamento con i sistemi gestionali locali e poter svolgere agevolmente gli adempimenti successivi alla registrazione.

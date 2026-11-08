@@ -427,10 +427,13 @@ def controlla_conteggi(doc):
 
 # ------------------------------------------------- riferimenti pendenti
 def definiti(doc, prefisso, intestazioni):
-    t = doc.tabella(*intestazioni)
-    if t is None:
-        return set()
-    return {c.text.strip().upper() for r in t.rows[1:]
+    # Tutte le tabelle con quell'intestazione, non solo la prima: dalla v3.56 dell'analisi
+    # il capitolo sull'annullamento ha una propria tabella OP-80…OP-84 con la stessa
+    # intestazione del registro, e leggendo solo la prima il registro spariva (79 falsi KO).
+    tabelle = [t for t in doc.d.tables
+               if all(i.lower() in ' | '.join(c.text.strip() for c in t.rows[0].cells).lower()
+                      for i in intestazioni)]
+    return {c.text.strip().upper() for t in tabelle for r in t.rows[1:]
             for c in (r.cells[0],) if c.text.strip().upper().startswith(prefisso)}
 
 

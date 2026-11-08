@@ -196,6 +196,57 @@ def validazione():
     return d.salva('wf_sd_validazione.png')
 
 
+def validazione_v6():
+    """WORKFLOW v0.6: validazione al caricamento, forzatura con finestra, esito con messaggio."""
+    d = Diagramma(1700, 1020, "Validazione: gli stati della pagina",
+                  "R009 /validazione/evento; i tempi scaduti e l’OTP seguono il "
+                  "comportamento comune")
+    d.iniziale(40, 300)
+    d.stato('V0', 90, 150, 380, 100, 'blu', "Apertura della pagina",
+            "in ANSC nessun atto; modello evento e numero comunale presenti")
+    d.stato('V1', 90, 350, 380, 100, 'viola', "Da rivalidare (stato 0)",
+            "atto già confermato in ANSC, dati cambiati dopo la validazione")
+    d.passo([(40, 289), (40, 200), ('V0', 'o')])
+    d.passo([(40, 311), (40, 400), ('V1', 'o')])
+    d.stato('V2', 640, 250, 400, 100, 'giallo', "Validazione in corso",
+            "R009 /validazione/evento")
+    d.stato('V3', 1230, 120, 420, 100, 'rosso', "Respinta",
+            "400, 404, 416: errori elencati per pagina; in ANSC nulla")
+    d.stato('V4', 1230, 330, 420, 110, 'rosso', "Forzabile",
+            "anomalie superabili e codice di forzatura concesso da ANSC")
+    d.stato('V5', 640, 560, 400, 120, 'verde', "Validata",
+            "messaggio di esito; ANSC 2 CONFERMATO, idAnsc salvato")
+    d.uscita('XD', 1230, 600, 420, "Pagine dei dati: Dettaglio, Riepilogo, Anteprima")
+    d.uscita('XF', 330, 840, 380, "Firme dei dichiaranti")
+    d.uscita('XC', 970, 840, 380, "Conformità")
+
+    d.passo([('V0', 'e'), ('V2', 'o', 0.3)], VERDE)
+    d.etichetta("R009 automatica", 500, 168, VERDE)
+    d.passo([('V1', 'e'), (560, 400), (560, 320), ('V2', 'o', 0.7)], VERDE)
+    d.etichetta("R009 automatica, riferita\nall’atto esistente: numero\ncomunale e idAnsc", 480, 420,
+                VERDE)
+    d.passo([('V2', 'n', 0.7), (920, 170), ('V3', 'o')], ROSSO)
+    d.etichetta("400, 404, 416", 960, 146, ROSSO)
+    d.passo([('V2', 'e', 0.7), (1135, 320), (1135, 385), ('V4', 'o')], ROSSO)
+    d.etichetta("errori con\nforcingCode", 1080, 400, ROSSO)
+    d.passo([('V2', 's'), ('V5', 'n')], VERDE)
+    d.etichetta("200: atto depositato", 856, 470, VERDE)
+    d.passo([('V3', 'e', 0.5), (1680, 170), (1680, 628), ('XD', 'e')], ROSSO)
+    d.etichetta("CORREGGI\nNEL DETTAGLIO o\nTORNA AI DATI", 1520, 232, ROSSO)
+    d.passo([('V4', 's', 0.3), ('XD', 'n', 0.3)], G.ARROW)
+    d.etichetta("TORNA ALLA\nCOMPILAZIONE", 1250, 500)
+    d.passo([('V4', 'n', 0.15), (1293, 290), (1000, 290), (1000, 250)], G.ARROW)
+    d.etichetta("FORZA LA VALIDAZIONE → PROSEGUI\nACCETTANDO LE ANOMALIE (USC)", 1050, 214, G.ARROW)
+    d.passo([('V5', 'e', 0.7), ('XD', 'o', 0.7)], VIOLA, True)
+    d.etichetta("TORNA AI DATI e modifica\ndei dati → stato 0", 1060, 660, VIOLA)
+    d.passo([('V5', 's', 0.25), (740, 760), (520, 760), ('XF', 'n')], VERDE)
+    d.etichetta("PROSEGUI [ci sono firmatari]", 450, 730, VERDE)
+    d.passo([('V5', 's', 0.75), (940, 760), (1160, 760), ('XC', 'n')], VERDE)
+    d.etichetta("PROSEGUI [nessun firmatario]", 1000, 730, VERDE)
+    d.legenda(950)
+    return d.salva('wf_sd_validazione_v6.png')
+
+
 # ------------------------------------------------------------------- firme dichiaranti
 def firme():
     d = Diagramma(1700, 1330, "Firme dei dichiaranti: gli stati della pagina",
