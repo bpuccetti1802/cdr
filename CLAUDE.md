@@ -1711,6 +1711,126 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   via `ANSC_CFG_CAMPO.ALIAS_CAMPO_SIPO`) → aggiornamento senza riaprire l'atto. Figure `diagrammi_annullamento.py`
   (`nota_tecnica_webapp.png`, `rettifica_tecnica_flusso.png`). AR-10…AR-13.
   ⚠️ Word non esporta in PDF via AppleScript quando ci sono altri documenti aperti (timeout -1712).
+- **`PROPOSTA_Osservabilita-OpenTelemetry_v0.1.docx`** (09/11/2026, `strumenti/genera_otel.py`,
+  wireframe `strumenti/wireframe_otel.py` → `img/otel_bo_errori.png`, `otel_bo_traccia.png`) —
+  proposta di adottare **OpenTelemetry** per diagnosi e supporto. 14 capitoli, 23 tabelle, 9 punti
+  aperti OT-01…OT-09. Nasce da un rilievo dell'utente: `ANSC_LOG_AUDIT` è troppo semplice per il
+  debugging. **Quattro scelte decise con l'utente**: perimetro = i 4 pod nuovi + i BE della catena
+  dell'atto + i front-end (Angular **e** Thymeleaf); OTel **affianca** l'audit (probatorio) e non lo
+  sostituisce; Oracle è preferenza e non vincolo; il front-end si tratta in entrambi i mondi.
+  ⚠️ **NUMERI DELLO STATO DI FATTO, verificati — non rifare la conta**: **39 `logBack.xml`** (⚠️ con
+  la **B maiuscola**: `find -name "logback*.xml"` non li trova) ma **solo 11 moduli li dichiarano**
+  con `logging.config` → **negli altri 28 il file NON viene caricato**, girano con la configurazione
+  predefinita di Spring Boot (è **OT-07**: finché resta così, modificarli non ha effetto) ·
+  **78 ConsoleAppender, 2 FileAppender, 2 SyslogAppender** · **0 campi MDC (`%X{...}`)** in tutti i
+  pattern · **0 moduli con `spring-boot-starter-actuator`** (nessun endpoint di salute o metriche) ·
+  `logstash-logback-encoder` **7.4 in 9 pom** ma usato da **una sola** configurazione,
+  `common/profilazione-utente` · `logging.file=c:/temp/my-log/app.log` (percorso Windows) in 7-8
+  moduli e `logging.level.com.zaxxer.hikari=TRACE` in altri 7 · ⚠️ **`all-anpr-sipo` non ha alcun
+  file di configurazione del log.**
+  ⚠️ **I QUATTRO LIMITI DI `ANSC_LOG_AUDIT`** (9 colonne: ID_AUDIT, ID_STATO_ATTO, FASE, RICHIESTA,
+  RISPOSTA, ESITO, DURATA_MS, OPERATORE, TS_REGISTRAZIONE): nessun identificativo di correlazione ·
+  nessun componente che ha scritto la riga · nessuna severità · **la FK verso `ANSC_STATO_ATTO` lega
+  ogni riga a un atto**, quindi dizionari, numerazione, notifiche, baseline, back-office e front-end
+  non hanno dove essere registrati. Il quarto non si risolve allargando la tabella (è quel legame a
+  darle valore probatorio): si risolve con **`ANSC_LOG_EVENTO`** accanto, partizionata per giorno,
+  senza FK, con gli identificativi per valore.
+  ⚠️ **CORRELAZIONE SU TRE LIVELLI** — una traccia vive secondi, un atto settimane: (1) **tecnico**
+  `trace_id`/`span_id` con `traceparent` W3C; (2) **di dominio**, i **TRE PIANI indicati
+  dall'utente**, che sono colonne distinte e non una chiave unica polimorfa — **1 atto/pratica**
+  (`ID_ATTO_SIPO`, `ID_ANSC`, `NUMERO_ATTO`, `COD_MUNICIPIO`, ufficiale, data) · **2 allegati**
+  (`ID_ALLEGATO`, `ID_ANSC_ALLEGATO`) ⚠️ **è il piano che rompe il modello a chiave unica: un
+  allegato esiste PRIMA di appartenere a un atto** · **3 intestatari e soggetti**
+  (`ID_SOGGETTO_SIPO`, `ID_ANSC_SOGGETTO`, `ID_SCHEDA_ANPR`, `ID_UNICO_NAZIONALE`); ⚠️ dentro ogni
+  piano gli identificativi **si riempiono per gradi** (il numero comunale all'anteprima, l'idAnsc al
+  deposito) → ogni evento porta quelli noti, tutti facoltativi; (3) **esterno**.
+  ⚠️ **SUL LIVELLO ESTERNO IL MECCANISMO ESISTE GIÀ E NESSUNO LO USA**: `idOperazioneComune` viaggia
+  nella richiesta **e torna nella risposta** sia in ANSC (`testataRisposta`) sia in **ANPR**
+  (`tipoTestataRisposta`), e accanto il servizio restituisce il proprio (`idOperazione` /
+  `idOperazioneANPR`). Vincoli verificati: **ANSC `type: string` SENZA maxLength** (la traccia entra
+  com'è, 32 car.) · **ANPR `tipoIdOperazioneComune` alfanumerico max 30** → base 36 di 128 bit = **25
+  caratteri**, entra. Oggi SIPO lo compone con `AnprUtilities.generateIdOperazioneComune` =
+  `servizio+anno+sequenza`, e **`null` se il chiamante non lo passa**. ⚠️ **`XMLGenerator.java:32`
+  che lo mette a `"1"` è in `src/test/java`: NON è il percorso vivo** (ci sono quasi cascato).
+  ⚠️ **ORACLE: non esiste un exporter OpenTelemetry per Oracle** — cercato, nessun componente pronto
+  scrive su DB relazionale: serve un collector con uno **scarico su misura**. Il documento lo dichiara
+  invece di prometterlo, e raccomanda di **strumentare subito e decidere la destinazione dopo** (è il
+  senso della separazione codice/collector). Proposti **6 livelli** (TRACE…FATAL con severità OTel
+  1-24, regola: *il livello dichiara chi deve guardarlo e quando*, non la gravità) e **7 origini**
+  (`FE BE DB ANSC ANPR INFRA CONF`, regola: *l'origine dice a quale gruppo compete*, non dove
+  l'errore è comparso). **OT-01 è il punto che viene prima di tutti**: la versione di Oracle in
+  esercizio (indizi contraddittori — `ojdbc8` sta su 12c+, ma 2 moduli dichiarano `Oracle10gDialect`).
+- ⚠️ **I DUE FLUSSI DEL MATRIMONIO (05/11/2026)** — `strumenti/diagrammi_matrimonio_pptx.py` →
+  `img/flusso_matr_diretta.pptx` e `flusso_matr_differito.pptx` (+ PNG). Modificabili in PowerPoint
+  come il workflow: **se l'utente li ritocca diventano la fonte e non si rigenerano**. Cinque corsie,
+  perché lo stato vive in tre posti: `ID_STATO_PRATICA` · `COD_FASE` dello store · `ANSC_11`.
+  ⚠️ **VINCOLO DELL'UTENTE: i testimoni NON si acquisiscono in anticipo**, possono cambiare
+  all'ultimo momento. E **ANSC li pretende al deposito**: `numeroTestimoni` è `Obbligatorio=SI` con
+  condizione «obbligatoria» (cioè senza condizioni) e ogni testimone dichiarato ha **8 campi
+  obbligatori** fra cui `flagFirmatario`; la condizione di sezione `numeroTestimoni,<,N` è di
+  **ESCLUSIONE** (Testimone N non si applica se i testimoni sono meno di N). → **R009 non si può
+  chiamare prima della cerimonia**, e l'unica scelta è *quando* chiamarlo dopo.
+  ⚠️ **CORREZIONE D'IMPIANTO dell'utente**: l'obiettivo è **l'atto DIGITALE**, non un cartaceo da
+  riportare su ANSC; il cartaceo è un «di cui». La prima stesura dei diagrammi faceva della carta
+  l'atto e di ANSC la sua trascrizione — **capovolto**. Nel flusso A fino alla cerimonia si lavora
+  solo in SIPO e **l'unica chiamata ad ANSC è R005 sugli intestatari, in sola lettura**.
+  ⚠️ **IL DIFFERIMENTO NON È UNA VARIANTE ORGANIZZATIVA: CAMBIA L'UC.** Un atto formato fuori dal
+  percorso rientra con `Matr_999_1/2`, `Matr_Riconc_999`, dove **`motivoRecupero` è
+  `Obbligatorio=SI`**; e ANSC_96 ha 6 valori (1 indisp. gestionale · 2 fuori casa comunale · 3 UC non
+  previsto · 4 indisp. sistema centrale · 5 validità chiusa · 101 ALTRO), **nessuno dei quali
+  significa «differimento scelto»**. B va collocato come **percorso degradato = modalità di
+  emergenza (RF-15)**, non promosso a ordinario.
+  **FIRMATARI DEL MATRIMONIO (da `Sorgenti Documentali/Tabella SOGGETTI_USECASE.csv`)**: gli UC di
+  celebrazione hanno **16-17 firmatari**, di cui **5-6 obbligatori** (OFFICIANTE, [SEGRCOM], SPOSO,
+  SPOSA, **TESTIMONE1, TESTIMONE2**); testimoni 3-4 condizionati ma firmatari. Su 278 UC compilati,
+  **solo 12 hanno testimoni firmatari: 7 matrimoni e 5 unioni civili**, zero altrove. Le trascrizioni
+  (341000…350000) hanno 2 soli firmatari, gli sposi.
+  ⚠️ **R006 NON È UNA FIRMA ELETTRONICA**: `/firmadichiarante/upload` carica un **file base64** (un
+  allegato: ANSC_08/09/10) con **`listaFirmatari`** (`FirmatarioDTO`: nome, cognome, CF, sesso, data
+  nascita) → **un caricamento per tutti**. **R012 invece è UNA CHIAMATA PER FIRMATARIO**
+  (`emailDichiarante` singolare, `firmatario` un solo `ModelSoggetto`, risposta `idPresaVisione`) →
+  **con 5-6 firmatari in sala non è praticabile**. Da qui: il foglio firmato in sala è un **allegato**
+  dell'atto digitale, non l'atto. Da confermare se R006 sia richiamabile più volte sullo stesso atto.
+  **SIPO OGGI**: `R_ATTI_TESTIMONI` è un puro raccordo (ID_ATTO + ID_TESTIMONE + ID_SOGGETTO),
+  **nessuna firma, nessuna data, nessun flag**; i testimoni si inseriscono in
+  **`finalizzazioneAtto2.html`** (`TestimoneController.insertTestimoni`, `saveAll`). ⚠️ In **tutto**
+  SIPO la firma è modellata in 2 soli punti: `SOGGETTO_INTERPRETE.FLG_NO_FIRMA`/`MOTIVO_NO_FIRMA` e
+  `ATTO_TESTO_LIBERO.FIRMA`. `ATTO_MATRIMONIO` ha `DATA_CELEBRAZIONE` **e** `DATA_FORMAZIONE`, ma
+  ⚠️ **`DATA_FORMAZIONE` non è MAI scritta**: verso ANPR la data di formazione è
+  `ATTO.DATA_DEFINIZIONE_ATTO` (`ImplFlow:1562,1997,2122`), valorizzata a `new Date()` da
+  `/finalizzaAtto`. Unico vincolo fra le due date: `CreazioneAtto2Parte2Validator:538` rifiuta
+  `dataAtto` **precedente** a `dataMatrimonio`. La catena `ID_LAVORAZIONE_PADRE`/`STEP_LAVORAZIONE`
+  esiste ma è della **cittadinanza**, non dei matrimoni. `composizioneCompleta` è obbligatorio in
+  **46 UC** su tutte e 7 le famiglie; per i matrimoni in `Matr_018` e in **tutti i casi di servizio**
+  — cioè serve al flusso B, non al flusso A.
+- ⚠️ **COME SIPO GENERA L'ANTEPRIMA E L'ATTO (verificato 06/11/2026). NON è un'immagine: è un PDF
+  con testo vero.** `AnteprimaAttoController` (`statocivile-be`) → `PdfGenerator` di
+  `common/pdf-gen-sc` → **JasperReports + iText**. ⚠️ **Il template NON sta nei sorgenti**: arriva dal
+  blob della tabella Oracle `TEMPLATE` (`TemplateMatrim.template`, `byte[]`), scelto per area e
+  modello via `CONF_TIPO_MODELLO_ATTO`; nei sorgenti ci sono però le copie in
+  `common/pdf-gen-sc/PdfGen/src/main/resources/jasper_templates/` (300+ fra `.jrxml` e `.jasper`;
+  il più recente è `Spalla/2023_Spalla_Dx_A4.jrxml`). Il data source `JRPdfGenDataSource` risolve i
+  campi **per reflection** (`get<NomeCampo>()` su `AttoModel`, che estende `PdfModel` — **i campi
+  immagine stanno nella classe padre**).
+  ⚠️ **Perché sembra un'immagine**: il template ha **22 `<textField>` e 2 sole `<image>`**, entrambe
+  **a pagina intera** e alternative su `FlgAnteprima`: `atto.png` = la **filigrana diagonale
+  «ANTEPRIMA»** (800×600) e `blankBackground.png` = il **foglio bianco A4** (794×1123, cioè **96 dpi**
+  stirato su tutta la pagina: sgrana e dà l'aria di una scansione). Il testo sopra è vettoriale, con
+  `markup="html"`. Anteprima e atto definitivo **sono lo stesso PDF**: cambia solo lo sfondo.
+  ⚠️ Per gli **estratti** invece l'immagine è davvero il modulo: `extraict_nascita/decessi/matrimoni.png`
+  sono scansioni in grigio del prestampato, e i template si sdoppiano in `…ConFoglioBianco` /
+  `…ConFoglioPrestampato`.
+  ⚠️ **IL TESTO DELL'ATTO È GIÀ UN DATO, non serve estrarlo dal PDF**: `/generaAnteprimaAtto`
+  **restituisce l'`AttoModel` in JSON**. Catena: `PKG_FORMULARI.FORMULARIO_GENERA_MODELLO` (stored
+  procedure) → scrive in **`GTT_TMP_ATTO`** e torna `ID_GENERAZIONE` → si rilegge dalla vista
+  **`V_GTT_TMP_ATTO_A4`** (`INTESTAZIONE · OCCHIO · CORPO · PIEDIPAGINA · ANNOTAZIONE_A4`) →
+  `AttoModel`. ⚠️ **`GTT_TMP_ATTO` è una GLOBAL TEMPORARY TABLE: il testo NON è conservato**, è
+  ricomposto a richiesta — quindi «esportare il testo di un atto vecchio» significa **rigenerarlo con
+  il formulario di oggi**, che può essere cambiato (stesso argomento di `TXT_EVENTO`: se il testo
+  conta, va conservato). ⚠️ L'anteprima passa `IN_OPT1="ANTEPRIMA=1;"`, che **salta l'inserimento
+  delle annotazioni contestuali e automatiche** su `ANNOTAZIONE_ATTO`: anteprima e generazione
+  definitiva **non hanno gli stessi effetti**. ⚠️ `/definisciAtto` genera **solo il PDF**; a cambiare
+  stato (1→2) e a scrivere `DATA_DEFINIZIONE_ATTO` è `/finalizzaAtto`.
 - **`verifica-conteggi.py`** — controllo di coerenza da eseguire **prima di consegnare** ogni nuova
   versione di un `.docx` (vedi il dettaglio in «Come leggere/scrivere i file»). **40 regole**, di cui 31
   verificate direttamente sulle sorgenti ANSC (decodifiche, mapping dei casi d'uso, **changelog dei
