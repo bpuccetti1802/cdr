@@ -1711,6 +1711,24 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   via `ANSC_CFG_CAMPO.ALIAS_CAMPO_SIPO`) → aggiornamento senza riaprire l'atto. Figure `diagrammi_annullamento.py`
   (`nota_tecnica_webapp.png`, `rettifica_tecnica_flusso.png`). AR-10…AR-13.
   ⚠️ Word non esporta in PDF via AppleScript quando ci sono altri documenti aperti (timeout -1712).
+  **v0.3** (`strumenti/annullamento_v0_3.py`, 10/11/2026, **corrente**, sul file reale della
+  v0.2): nuovo cap. **«Le annotazioni rettificative: errore materiale (art. 98) e rettifica
+  (art. 95)»** prima di «Dove e come inserirsi» (decisione utente: sta QUI, non nell'analisi
+  degli atti a testo libero; art. 98 al centro, art. 95 insieme, modificativa e R017 come
+  confronto; proposta SIPO in due fasi; atti cartacei inclusi). Fatti: R013 1.4.0, due
+  operazioni senza operationId, risposta senza idEvento/idAnsc/forcingCode propri; **10 UC** (2 per
+  registro) con **mapping identici byte per byte** in nascita/morte/matrimonio/unione
+  (cittadinanza +13 facoltativi); art. 98 = formula 888, correzione in `composizioneCompleta`,
+  14 campi/13 obbligatori, nessun ente; art. 95 = formula 190, `dettaglioRettifica`, 21/18;
+  **nessun dato anagrafico nei mapping**: la correzione strutturata è `eventoModificato` (atto
+  intero corretto), `idTipoRettifica` = 1 solo da nota di processo ed esempio; competenza =
+  comune di formazione (guida §9.2.1); firma solo USC con R007. **Atti cartacei**: «Annotazione
+  modificativa su atto cartaceo» (1.33.0, ID 95), UC `*_998_4`/`Dic_Nasc_998_5`, formula 998
+  testo libero, `evento.eventoCollegato` con gli estremi, servizio non dichiarato. Proposta:
+  `creaAnnotazioneRettificativa` + tabella delle annotazioni in ANSC_USR (ANSC_STATO_ATTO è
+  chiave sull'atto). Figura `strumenti/diagrammi_rettificative.py` →
+  `img/annullamento/errore_materiale_flusso.png` (Figura 5; le successive rinumerate 6, 7).
+  AR-14…AR-21.
 - **`PROPOSTA_Osservabilita-OpenTelemetry_v0.1.docx`** (09/11/2026, `strumenti/genera_otel.py`,
   wireframe `strumenti/wireframe_otel.py` → `img/otel_bo_errori.png`, `otel_bo_traccia.png`) —
   proposta di adottare **OpenTelemetry** per diagnosi e supporto. 14 capitoli, 23 tabelle, 9 punti
@@ -1760,6 +1778,70 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   (`FE BE DB ANSC ANPR INFRA CONF`, regola: *l'origine dice a quale gruppo compete*, non dove
   l'errore è comparso). **OT-01 è il punto che viene prima di tutti**: la versione di Oracle in
   esercizio (indizi contraddittori — `ojdbc8` sta su 12c+, ma 2 moduli dichiarano `Oracle10gDialect`).
+  **v0.2** (`strumenti/otel_v0_2_api.py`): capitolo «Le interfacce» (libreria in processo, OTLP,
+  `creaEventi` solo per il browser, 5 letture su `be-osservabilita` `/api/v1/osservabilita`).
+  ⚠️ L'utente ha poi scritto a mano nella v0.2 le risposte: **OT-01 = Oracle 12 · OT-02 = nel
+  cluster non c'è nulla, si fa ex novo · OT-05 = la telemetria del browser non esce dalla rete ·
+  OT-07 = i 28 logBack.xml restano come sono**; e la tabella aveva perso OT-10…12.
+  **v0.3** (`strumenti/otel_v0_3.py`, 10/11/2026, **corrente**, dal FILE REALE della v0.2 — non
+  rieseguire gli script precedenti): 17 capitoli, 45 tabelle, OT-01…OT-15. Nuovi: sezione
+  «Con che cosa si arricchisce un evento» (automatico/sviluppatore/mai, vocabolario chiuso degli
+  attributi, `Registro.corrente().atto(…)` una volta per richiesta); cap. **«Guida all’uso»**
+  (dieci regole, punti obbligati, esempio `DepositoService`, così no/così sì, codice evento
+  `ORIGINE-AREA-FATTO`, verifiche); cap. **«Il catalogo dei codici di errore»** (6 tabelle per
+  area dai 21 codici ANSC + `x-codici-errore` dei contratti + infrastruttura) e tabella
+  **`ANSC_CFG_CODICE_EVENTO`** (chiave = codice, scostamento da [R5]); sezione **«Nella
+  transizione»** con figura `strumenti/diagrammi_otel.py` → `img/otel_transizione.png`:
+  ⚠️ **lo scarico verso Oracle è `be-osservabilita` che riceve OTLP/HTTP dal collector**
+  (collector standard, non una distribuzione propria); nuova **`ANSC_LOG_SPAN`** (mancava:
+  `leggiTraccia` restituiva span che nessuna tabella teneva), senza PK di proposito.
+  ⚠️ **Oracle 12: `TS_EVENTO`/`TS_INIZIO` sono `TIMESTAMP` in UTC**, perché la chiave di un
+  partizionamento per intervallo non ammette il fuso; Partitioning e IS JSON da verificare (OT-14).
+  OT-05 «dettaglio visibile» → **OT-13**; OT-15 = chi cura il catalogo.
+  **v0.4** (`strumenti/otel_v0_4.py`, 10/11/2026, **corrente**, dalla v0.3 RIVISTA A MANO
+  dall'utente — titoli «Perché OT in un’architettura a microservizi», «Gestire i log del
+  front-end»; non rieseguire `otel_v0_3.py`): diagramma ER `diagrammi_otel.erd()` →
+  `img/otel_erd.png` (Figura 4) in «Le tabelle sottese e i loro legami» + tabella dei legami.
+  Una sola FK (audit → stato atto), il resto per valore (anche perché una FK fra tabelle
+  partizionate per giorno impedirebbe il DROP PARTITION). ⚠️ **OT-16 = difetto dell'analisi
+  v3.60**: `ANSC_STATO_ATTO` ha PK `ID_ATTO_SIPO` e non ha più `ID_STATO_ATTO`, ma la FK di
+  `ANSC_LOG_AUDIT` e la tabella descrittiva la richiamano ancora.
+- **`ANALISI_Certificazioni-Stato-Civile_SIPO-ANSC_v0.1.docx`** (10/11/2026,
+  `strumenti/genera_certificazioni.py` dal template DAD, figura
+  `strumenti/diagrammi_certificazioni.py` → `img/certificazioni/instradamento.png`).
+  **Decisioni dell'utente**: solo certificazioni di STATO CIVILE (non i certificati di
+  postazione di `screen-app-certificati.docx`); **atto con identificativo ANSC → si emette da
+  ANSC** (instradamento per atto); fuori perimetro ufficio certificati (`cert-web`/`cert-be`,
+  ANAG_USR, ANPR 6001), portale online, R024; **i difetti del codice SIPO trovati sono un tema
+  separato** (controllo `CONTROLLO_ESTRATTO` ignorato a `FormularioServiceImpl:208`,
+  `/scaricaAttoScansionato` e `/generaEstrattoDaFormulario` senza @PreAuthorize,
+  `CERTIFICAZIONE_SOSPESA` applicata solo in cert-be, F2 «Ricerca soggetto estratti» che attende
+  `FileWrapper` e non registra, switch senza break in `AttiScansionatiController:270`).
+  ⚠️ **Fatti**: R002 (1.49.0) `/certificato` + `/certificato-semplice` (permesso SCCSE, 1.51.0);
+  `idTipoCertificato` 1 semplice · 2 riassunto · 3 copia integrale **senza decodifica**;
+  **`parametriFirma` (firma remota USC con OTP) SOLO per 2 e 3** — il semplice esce con sigillo
+  del Ministero + QR (1.17.0, QR 6 mesi dalla 1.38.0) → **corregge [R1]** che diceva «ogni
+  certificato consuma un OTP di firma» e «la certificazione resta in SIPO»; R019 plurilingue
+  (ANSC_114, 4 tipi, firma non dichiarata); ANSC_113 uso (6), ANSC_115 non richiamata; bollo
+  assente in ANSC. SIPO: estratti da `PKG_ESTRATTI` (corpo assente), plurilingue 884/851/872-874,
+  copia conforme in `ATTO_SCANSIONATO.DOCUMENTO_CONFORME`, registro `ESTRATTI_DOWNLOAD_LOG`,
+  **nessuna firma digitale, nessun riferimento ANSC**. Proposta: 6 operazioni nuove del
+  concentratore (da aggiungere ad `ansc-v1.yaml`) e tabella `ANSC_CERTIFICATO`. CE-01…CE-14.
+- **`ANALISI_Recupero-Atti-WebApp_SIPO-ANSC_v0.1.docx`** (10/11/2026,
+  `strumenti/genera_recupero_webapp.py` dal template DAD, figure `strumenti/diagrammi_recupero.py`
+  → `img/recupero/livelli.png`, `dopo.png`): atti formati sulla web app con numero staccato in
+  SIPO. **Quattro livelli di presenza** L0 numero · L1 riferimento (store con canale WEBAPP +
+  colonne ANSC di ANAG_USR.ATTO) · L2 scheda essenziale (MATR_USR.ATTO + area + intestatari +
+  testo) · L3 importazione completa; proposta L1 per tutti, L2 come regola, L3 solo UC ordinari.
+  ⚠️ Fatti: **ANSC non avvisa, non ha recupero, non registra il canale** (nomeApplicativo solo in
+  testata della richiesta) → SIPO deve registrarlo; R005 senza criterio di stato, `idComunale`
+  «codificato ANPR_03» (ambiguo), `dataDa/dataA` senza dire quale data; R010 vuole l'intero
+  ModelEvento; **la web app suggerisce il proprio numero (1.18.4) e accetta 5 caratteri (1.20.0)
+  vs 6 cifre della serie SIPO** (RW-02/RW-03); anagrafe = predisposizione ANSC via ANPR 4005, che
+  SIPO non tratta → **per un atto recuperato SIPO non chiama ANPR**. SIPO: **nessun canale crea
+  MATR_USR.ATTO dall'esterno**; `/finalizzaAtto` NON si riusa (rigenera PDF e rifà ANPR); le
+  annotazioni di SIPO legano ANAG_USR↔MATR_USR **per estremi identici**; ricerche con join
+  interne e serie/esponente in uguaglianza. Corpi PKG_PRATICA e viste da chiedere al DBA. RW-01…RW-14.
 - ⚠️ **I DUE FLUSSI DEL MATRIMONIO (05/11/2026)** — `strumenti/diagrammi_matrimonio_pptx.py` →
   `img/flusso_matr_diretta.pptx` e `flusso_matr_differito.pptx` (+ PNG). Modificabili in PowerPoint
   come il workflow: **se l'utente li ritocca diventano la fonte e non si rigenerano**. Cinque corsie,
