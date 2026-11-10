@@ -1842,6 +1842,20 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   MATR_USR.ATTO dall'esterno**; `/finalizzaAtto` NON si riusa (rigenera PDF e rifà ANPR); le
   annotazioni di SIPO legano ANAG_USR↔MATR_USR **per estremi identici**; ricerche con join
   interne e serie/esponente in uguaglianza. Corpi PKG_PRATICA e viste da chiedere al DBA. RW-01…RW-14.
+  **v0.2** (`strumenti/recupero_v0_2.py`, dalla v0.1 RIVISTA A MANO dall'utente: tolto RW-13,
+  RW-14 risolto = numero a «Scartato» dopo n giorni configurabili; non rieseguire
+  `genera_recupero_webapp.py`): cap. «La pagina del back-office per il recupero» — elenco
+  (numeri in attesa + ricerca R005 con abbinamento calcolato da SIPO: ABBINABILE · SENZA NUMERO
+  SIPO · INCOERENTE · NON FIRMATO · ANNULLATO O CANCELLATO · GIÀ IN SIPO), aggancio (rilettura
+  R005 all'apertura e alla conferma, livello L1/L2/L3), esito; stessa operazione `agganciaAtto`
+  delle pagine SIPO di [R2]. Wireframe `strumenti/pagine_bo_recupero.py` → `img/recupero/bo_rec_*.png`
+  (Figure 2-4). RW-15 (chi usa la pagina), RW-16 (be-numeratore-comunale non sa che un numero è
+  per la web app). Il DISEGNO_Back-Office va allineato.
+  **v0.3** (`strumenti/recupero_v0_3.py`, dal file reale della v0.2): rilievo utente — il
+  pulsante dell'OTP sta nella TESTATA (barra di servizio, accanto all'utente): «OTP ANSC
+  assente» rosso + RICHIEDI OTP · «valido · h min» verde + RINNOVA OTP · giallo sotto i 15 min;
+  finestra del codice = Figura 2 (`pagine_bo_recupero.otp()` → `bo_rec_otp.png`), figure
+  successive rinumerate. Il disegno del back-office mette ancora lo stato accanto al titolo.
 - ⚠️ **I DUE FLUSSI DEL MATRIMONIO (05/11/2026)** — `strumenti/diagrammi_matrimonio_pptx.py` →
   `img/flusso_matr_diretta.pptx` e `flusso_matr_differito.pptx` (+ PNG). Modificabili in PowerPoint
   come il workflow: **se l'utente li ritocca diventano la fonte e non si rigenerano**. Cinque corsie,
