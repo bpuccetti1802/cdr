@@ -1827,6 +1827,51 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   copia conforme in `ATTO_SCANSIONATO.DOCUMENTO_CONFORME`, registro `ESTRATTI_DOWNLOAD_LOG`,
   **nessuna firma digitale, nessun riferimento ANSC**. Proposta: 6 operazioni nuove del
   concentratore (da aggiungere ad `ansc-v1.yaml`) e tabella `ANSC_CERTIFICATO`. CE-01…CE-14.
+  **v0.3** (`strumenti/certificazioni_v0_3.py`, 11/11/2026, **corrente**, dalla v0.2 RIVISTA A
+  MANO dall'utente — cap. «L’attuale processo di richiesta dei certificati» con schermate di
+  CertificatiWeb; non rieseguire `genera_certificazioni.py`): ⚠️ **PERIMETRO ALLARGATO**: l'area
+  «Stato Civile» dell'UFFICIO CERTIFICATI (cert-web/cert-be) è dentro, fuori solo l'area
+  «Anagrafici». Fatti: area = `ANAG_USR.CONF_CERTIFICATO.FLG_ANAG_SC='S'`
+  (ConfCertificatoController:28-70); 3/5/6/25 da ANPR 6001 (`R_CONF_CERT_ANPR`) o in locale se
+  la persona non è in ANPR; 18/44/63/15/13/32-35/7/9 in locale (Jasper 17
+  «Certificato_semplice»); ⚠️ **estratti 17, 19-24, 26 e copie 27-31 sono in catalogo ma NON si
+  producono** («non ancora gestito», cert-be CertificatiController:765-767); il certificato è
+  legato alla PERSONA (atto collegato in ANAG_USR), e `DocCertificatoSempliceComuneRoma:133,153`
+  stampa già `ID_ATTO_ANSC` se manca il numero; «Stampa» = lista certificati della pratica,
+  l'anteprima è il pulsante di riga, «Aggiungi» chiama ANPR 6001 in emissione.
+  ⚠️ **R002**: la risposta è un PDF/A base64 + `idCertificato` + `datavalidita`, NESSUN dato
+  strutturato; NESSUNA anteprima del certificato fra i servizi cooperativi (la web app ce l'ha;
+  R010 è l'anteprima dell'atto) → ogni chiamata è un'emissione; `{version}` = major ANSC «1»;
+  prima di R002 si chiama **R005 `/consultazione/ansc/evento/sintetico/1`** (permesso SCCPA)
+  per `id`→idEvento, `intestatari[].id`, stato, flag dei tipi emissibili; codici d'errore
+  406001/406002 OTP, 406004 firma; esempio del contratto `tipoFile '3'` = TIF (CE-19).
+  Nuovo cap. «R002 in dettaglio» (figura `diagrammi_certificazioni.sequenza_r002()`), CE-15…CE-19.
+  Schermate dell'utente ricomposte (una era flottante dietro il testo, una deformata) e con nome e
+  CF coperti: `img/certificazioni/sportello_*.png`.
+  **v0.4-v0.6** (`certificazioni_v0_4/5/6.py`, ciascuna dal file reale della precedente):
+  flusso intestatario → atto in cert-be (Figura 5), «Come innestare la ricerca ANSC» (passi
+  1-6, `leggiEventoAnsc`/`cercaEventiAnsc`), «La gestione della risposta di R002». La v0.6 è
+  stata ritoccata dall'utente («Come intervenire per permettere la visualizzazione…»).
+  **v0.7** (`strumenti/certificazioni_v0_7.py`, 11/11/2026, **corrente**): nuovo cap.
+  **«Certificati ANSC: la ricerca dell’atto»** = funzione nuova di SIPO, voce di PRIMO livello
+  del menu principale, che cerca l'atto in ANSC come la web app (SOLO la ricerca: il rilascio
+  arriverà con la seconda registrazione dell'utente). Fonte: `Sorgenti Documentali/Ricerca atto
+  per Certificazione.mov` [A13] (fotogrammi con `ffmpeg`, che c'è). ⚠️ Fatti: la ricerca della
+  web app è NAZIONALE (atti di Cedrasco, Venezia… visti da Roma); «ID Atto» della web app = 8
+  cifre, NON l'idAnsc lungo (CE-28); R005 non ha criteri per stato/provincia → filtri locali;
+  R005 soggetto/sintetico restituisce subito gli eventi (la web app passa dai soggetti).
+  ⚠️ **Menu di SIPO**: le voci della barra sono blocchi `<li>` SCRITTI in
+  `common/commo-web/.../fragments/header.html` con gli id delle aree (Municipi = 1,7,9,10,11,13,15,
+  righe 74-98); le voci interne = `CONF_AREE_TEMATICHE`/`CONF_FUNZIONALITA`. Figure:
+  `strumenti/schermate_certificati_ansc.py` (ritagli del filmato con nome coperto + ipotesi SIPO
+  `cansc_*.png`), `diagrammi_certificazioni.ricerca_certificati_ansc()`; figure 9-16. CE-02 in
+  parte risolto (D.M. 18/10/2022 [A14]), CE-28…CE-33, [S5] header.html.
+  **v0.8** (`strumenti/certificazioni_v0_8.py`, **corrente**, decisioni dell'utente): la voce
+  «Certificati ANSC» è la **TERZA dell'area «Certificati» del menu Municipi** (sotto «Gestione
+  certificati» e «Nuovo certificato a sportello»; screenshot in `Sorgenti Documentali/Immagini
+  sipo/menu principale/`) → solo una riga di CONF_FUNZIONALITA, header.html NON cambia; niente
+  voce «Certificati rilasciati». Le schermate SIPO hanno la barra vera (senza voce nuova); le
+  schermate ANSC NON devono mostrare né citare «Recupero evento in bozza» (riquadri coperti).
 - **`ANALISI_Recupero-Atti-WebApp_SIPO-ANSC_v0.1.docx`** (10/11/2026,
   `strumenti/genera_recupero_webapp.py` dal template DAD, figure `strumenti/diagrammi_recupero.py`
   → `img/recupero/livelli.png`, `dopo.png`): atti formati sulla web app con numero staccato in
