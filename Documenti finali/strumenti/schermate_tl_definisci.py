@@ -84,8 +84,10 @@ def anteprima_con_definisci():
 
     bottone(dr, (1640, yb, 1825, yb + 48), 'DEFINISCI', attivo=False)
     pastiglia2(dr, (1640, yb), '5b')
-    dr.text((1825, yb - 16), 'si abilita quando l’atto è stato formato sulla WebApp',
-            font=font(18), fill=GRIGIO, anchor='rm')
+    # v0.7: la scritta stava a destra del bottone e finiva sotto il «5b»; ora è sopra il
+    # bottone, centrata, e dice ciò che lo abilita davvero (lo stato WA sullo store)
+    dr.text((1742, yb - 16), 'abilitato dallo stato WA',
+            font=font(18), fill=GRIGIO, anchor='mm')
     return im
 
 

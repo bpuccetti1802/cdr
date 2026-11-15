@@ -1682,6 +1682,23 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   web app è una scelta prudente. **v0.3** (`strumenti/testo_libero_v0_3.py`, rilievo utente sul §5.4): il terzo
   percorso (tutto in SIPO, R009 con UC di servizio + `composizioneCompleta`) è il PERCORSO DI RIFERIMENTO, da
   provare in preproduzione (TL-02); le due strategie della web app sono il RIPIEGO. ⚠️ **v0.4 SUPERA la v0.3** (`testo_libero_v0_4.py`, comunicazione ANSC [A6]): **DICHIARAZIONI → web app** (Gestione 2 percorso unico, Gestione 1 come deviazione); **TRASCRIZIONI → terzo percorso tutto in SIPO**, transitorio (fase ibrida). TL-11 = automatismi che il UC di servizio non produce. Schermate del percorso «Riepilogo senza UC → WebApp» (passi 1-6 dettati dall'utente: messaggio, CONFERMA inibito, DATI PER ANSC, anteprima col numero comunale, COPIA TESTO, attesa dell'idAnsc): `strumenti/schermate_testo_libero.py` → `img/testo_libero/tl_1…tl_3*.png` + `tl_sequenza.png`, ritoccando tre schermate REALI di SIPO copiate in `Sorgenti Documentali/Immagini sipo/sipo_*.png`. Dal 07/11 (2ª richiesta): pagina 2 con il NUMERO COMUNALE in alto; la pagina di attesa è sostituita dal RECUPERO via R005 — `strumenti/schermate_recupero_ansc.py` → tl_3 «Atti del giorno» (R005 /consultazione/ansc/evento con dataDa/dataA, idComuneRegistrazione = **8165 = ROMA nell'archivio comuni ANPR** (l'esempio 2780 del contratto è Cesena), idTipoEvento; ⚠️ **R005 NON ha un criterio di stato**: «stato 5 FIRMATO DA USC» si filtra in SIPO), tl_4 «Ricerca puntuale» (idAnsc / idComunale+date · soggetto/sintetico), tl_5 riepilogo (idAnsc, UC, intestatari), tl_6 conferma, `tl_flusso_recupero.png` (flusso logico). **v0.5** (`strumenti/testo_libero_v0_5.py`, dalla v0.4 RIVISTA A MANO dall'utente alle 15:01: §5.4 rinominato «La trascrizione formata interamente in SIPO non è possibile», tolta la tabella dei passi, inserita la comunicazione ANSC in un riquadro) = nuovo cap. 5 «Le pagine di SIPO: dal Riepilogo senza UC al recupero dell’atto» (figure 2-8), R005 soggetto/sintetico fra i servizi, TL-12 (numero comunale diverso). ⚠️ Restano dal ritocco dell'utente: rinvio del cap. 7 al paragrafo «Il terzo percorso» (non c'è più), riga R009 e riga «Configurazione dei tipi atto» che danno le trascrizioni in SIPO, titolo del §6.4 in contrasto con il suo primo paragrafo.
+  **v0.7** (`strumenti/testo_libero_v0_7.py`, 13/11/2026, **corrente**, dal FILE REALE della v0.6
+  ristrutturata dall'utente; 2 commenti preservati): ⚠️ **STRATEGIA ADOTTATA = SINTESI delle due
+  gestioni** (cap. 4 «La strategia adottata»): compilazione e testo in SIPO (dalla G1), numero
+  comunale staccato da SIPO prima della WebApp (dalla G2), ritorno con **DEFINISCI** = aggancio
+  all'atto ANSC + /finalizzaAtto (2 DEFINITO), **nessuna importazione**; stato store
+  **WA · ATTESA WEBAPP** (non più «YY · SOSPESO»), atto SIPO resta 1 IN LAVORAZIONE. Vale anche per
+  il tipo atto a testo libero (dalla pagina del testo libero a DATI PER ANSC) e per le
+  **trascrizioni** (niente più «terzo percorso» tutto in SIPO). **Secondo punto di accesso** (§5.2):
+  atto formato interamente sulla WebApp, numero staccato prima dal back-office o con POST
+  /richiesta ([R3] = PROCESSO_Numerazione v0.5), pagina «Recupero Atto ANSC» con colonna «In SIPO»
+  e **ACQUISISCI** (crea l'atto SIPO già 2 DEFINITO). Figure: `diagramma_strategia_pptx.py` →
+  `DIAGRAMMI_Atti-Non-Gestiti-SIPO-ANSC_v0.3.pptx` (PNG via `qlmanage` →
+  `img/testo_libero/strategia_adottata.png`), `diagrammi_testo_libero.py` (flussi §5.1/§5.2),
+  `schermate_tl_acquisizione.py` (tl_7…tl_10; tl_3…tl_6 non più usate). TL-01/TL-04 chiusi,
+  TL-13 (livello di acquisizione per UC ordinari, cfr. [R4] recupero) e TL-14 (menu/chi usa la
+  pagina). ⚠️ Nella v0.6 il cap. «Considerazioni» era finito DENTRO la cella del riquadro della
+  comunicazione ANSC (titoli Heading in una tabella): tolto, il riquadro è tornato nel §2.3.
   SIPO ha già `MATR_USR.ATTO.FLG_ATTO_TESTOLIBERO` + `ATTO_TESTO_LIBERO`. R005 cerca l'evento anche per
   `idComunale`. Proposta: Gestione 2 percorso unico, Gestione 1 come deviazione; terzo percorso tutto in SIPO
   se ANSC lo consente. TL-01…TL-10. Figura = `DIAGRAMMI_Atti-Non-Gestiti-SIPO-ANSC_v0.2.pptx` (nomi v3.54)
@@ -1729,6 +1746,29 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   chiave sull'atto). Figura `strumenti/diagrammi_rettificative.py` →
   `img/annullamento/errore_materiale_flusso.png` (Figura 5; le successive rinumerate 6, 7).
   AR-14…AR-21.
+  **v0.4** (`strumenti/annullamento_v0_4.py`, 14/11/2026, **corrente**, dal FILE REALE della v0.3
+  arricchita a mano dall'utente con il cap. «Annotazioni - Il flusso in SIPO – Punti di
+  intervento»: non rieseguire `annullamento_v0_3.py`). ⚠️ **Decisioni utente (14/11)**:
+  (a) annullamento e annotazioni rettificative con **DUE PERCORSI ENTRAMBI DISPONIBILI** —
+  **A** web app + «RIALLINEA DA ANSC», **B** formazione da SIPO con R013 (non più «fase 1 / fase
+  2»); verificato su ANSC: guida §9.2.1 (web app), R013 cooperativo con idTipoRettifica 0
+  (changelog 1.15.0, 1.21.0, 1.43.0 [SC]), firma USC delle rettifiche SC 1.32.2→1.37.0; gli UC
+  2341/14630000/… non sono UC di servizio (la disattivazione ID 120 non li tocca); (b) le tabelle
+  nuove **`ANSC_ANNOTAZIONE` + `ANSC_ANNOTAZIONE_CORREZIONE` stanno in MATR_USR** «per rapidità,
+  tappandoci il naso» → FK verso `ANNOTAZIONE_ATTO.ID` e `ANSC_STATO_ATTO.ID_ATTO_SIPO`, colonna
+  **`COD_CANALE`** (SIPO | WEBAPP), **AR-25** = riallineare con l'analisi v3.60 che tiene
+  `ANSC_USR`. ERD in PowerPoint `strumenti/img/annullamento/erd_annotazioni_matr_usr.pptx`
+  (`diagramma_annotazioni_erd_pptx.py`; PNG via `qlmanage`); schermate delle pagine in
+  `strumenti/schermate_ricerca_idansc.py` (ricerca A/B, elenco, dettaglio, annullamento R013,
+  proposta art. 98). ⚠️ **La competenza è del COMUNE di formazione, non dello stesso USC** (il
+  testo dell'utente chiedeva di confrontare le persone: corretto). Tolti i doppioni del capitolo
+  sulle rettificative e riordinato (pagine e DDL ora sotto «La proposta per SIPO» → «Percorso
+  B»); vecchia tabella `ID_ANNOTAZIONE_RETT` in ANSC_USR sostituita; DDL resa eseguibile;
+  18 figure tutte con didascalia; nomi/codici di persone e nome dell'operatore coperti nelle
+  schermate di sipotest. ⚠️ «Per regola diciamo…» NON è un paragrafo doppio: è una **casella di
+  testo** (Word la salva due volte, `wps` + fallback VML) — e il paragrafo che la contiene ha
+  testo proprio che un'estrazione per regex `<w:p>…</w:p>` perde. AR-07/16/21 riformulati,
+  AR-22…AR-26. 8 capitoli, 32 tabelle, 17 immagini, nessun commento.
 - **`PROPOSTA_Osservabilita-OpenTelemetry_v0.1.docx`** (09/11/2026, `strumenti/genera_otel.py`,
   wireframe `strumenti/wireframe_otel.py` → `img/otel_bo_errori.png`, `otel_bo_traccia.png`) —
   proposta di adottare **OpenTelemetry** per diagnosi e supporto. 14 capitoli, 23 tabelle, 9 punti
