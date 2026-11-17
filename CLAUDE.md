@@ -1941,6 +1941,22 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   assente» rosso + RICHIEDI OTP · «valido · h min» verde + RINNOVA OTP · giallo sotto i 15 min;
   finestra del codice = Figura 2 (`pagine_bo_recupero.otp()` → `bo_rec_otp.png`), figure
   successive rinumerate. Il disegno del back-office mette ancora lo stato accanto al titolo.
+- **`ANALISI_Nascite-Gemellari_SIPO-ANSC_v0.1.docx`** (17/11/2026, `strumenti/genera_nascite_gemellari.py`
+  dal template DAD; figure = 6 SEGNAPOSTO grigi, chiesti dall'utente): parti plurimi con ciascun nato
+  vivo / nato morto / nato vivo e poi deceduto. ⚠️ Fatti SIPO: tipo atto «gemelli» accanto a «un figlio»
+  sullo STESSO Modello (1515/1429 → 30; maschera `attoNascitaTipo03`); 145 tipi atto gemellari su 338,
+  774 atti su 42.239; **pratica unica** (`ATTO_NASCITA.N_TOT_GEMELLI`, `ATTO_NASCITA_SOGGETTO.POS_GEMELLO`)
+  **divisa in N atti** da `PKG_PRATICA.CREA_ATTI_NASCITA_FIGLI` (`/performAttiPlurigemellari`), legati da
+  **`ATTO.ID_LAVORAZIONE_PADRE`** (⚠️ quindi la catena NON è solo della cittadinanza); DEFINISCI GEMELLI
+  = `/finalizzaAtto` per tutti in sequenza; flag per nato; il nato morto non va in ANPR, il «morto prima
+  della denuncia» non ha effetti nel Java (iscritto come vivo, nessun atto di morte). ⚠️ Fatti ANSC: 108
+  dichiarazioni in terne 0/1/2 (36+36+36; certificato medico, formule 41/40, luogoFiliazione);
+  `partoGemellare`/`numeroGemelli`/`progressivoGemello`/`attiGemelliPrec|Succ` in NESSUN mapping;
+  ANSC_107 = 1/2/3; R009 `/prenota/evento` (`numeroGemelliNatiVivi`, `listaNumeriComunali`, UN solo
+  `idUsecase`); la guida fa completare con il caso di servizio, non più cooperativo dal 09/09/2024 → due
+  percorsi: **A** tutto da SIPO (pulsante PRENOTA GEMELLI dopo la divisione, come Side) / **B** web app +
+  DEFINISCI. Tabella `ANSC_USR.ATTI_GEMELLARI` ripresa da Side [M1] = «Processo di Gestione Numeri atti
+  gemellari v1.4». GE-01…GE-12.
 - ⚠️ **I DUE FLUSSI DEL MATRIMONIO (05/11/2026)** — `strumenti/diagrammi_matrimonio_pptx.py` →
   `img/flusso_matr_diretta.pptx` e `flusso_matr_differito.pptx` (+ PNG). Modificabili in PowerPoint
   come il workflow: **se l'utente li ritocca diventano la fonte e non si rigenerano**. Cinque corsie,
