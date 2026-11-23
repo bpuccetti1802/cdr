@@ -1,0 +1,1 @@
+ObjC.import('PDFKit');ObjC.import('AppKit');function run(a){var d=$.PDFDocument.alloc.initWithURL($.NSURL.fileURLWithPath(a[0]));for(var i=2;i<a.length;i++){var n=parseInt(a[i]);var im=d.pageAtIndex(n-1).thumbnailOfSizeForBox($.NSMakeSize(1700,2200),0);im.TIFFRepresentation.writeToFileAtomically(a[1]+'/p'+n+'.tiff',true);}return 'ok';}

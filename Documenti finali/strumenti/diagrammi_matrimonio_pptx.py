@@ -189,7 +189,8 @@ def _blocchi(passi, indice, prosegue=True):
     Con `prosegue`, le bande ereditano l'etichetta precedente e non spezzano il blocco."""
     out, corrente = [], None
     for i, p in enumerate(passi):
-        et = p[indice] if (p[0] == PAGINA or not prosegue) else corrente
+        # una banda eredita l'etichetta precedente, salvo che ne dichiari una propria
+        et = p[indice] if (p[0] == PAGINA or not prosegue or p[indice]) else corrente
         if not et:
             corrente = None
             continue
@@ -201,7 +202,9 @@ def _blocchi(passi, indice, prosegue=True):
     return out
 
 
-def genera(passi, titolo, sottotitolo, percorso, rilievi=None, nota=None, colore_nota='verde'):
+def genera(passi, titolo, sottotitolo, percorso, rilievi=None, nota=None, colore_nota='verde',
+           non_ritorno=True, fasi_viola=('Celebrazione', 'Recupero'), etichetta_viola='cerimonia',
+           sottotitolo_niente='fino alla validazione'):
     righe = len(passi)
     coda = (2.62 if rilievi else 0.0) + (1.00 if nota else 0.0) + 0.45
     h_pagina = y(righe - 1) + RH + 0.30 + coda
@@ -222,7 +225,7 @@ def genera(passi, titolo, sottotitolo, percorso, rilievi=None, nota=None, colore
 
     # ── striscia delle fasi
     for et, da, a in _blocchi(passi, 7, prosegue=False):
-        cerimonia = et in ('Celebrazione', 'Recupero')
+        cerimonia = et in fasi_viola
         B.riquadro(sl, STRIP[0], y(da), STRIP[1], y(a) + RH - y(da),
                    'viola' if cerimonia else 'grigio',
                    [(et.split(' —')[0] if not cerimonia else '◆', 13, True,
@@ -256,7 +259,7 @@ def genera(passi, titolo, sottotitolo, percorso, rilievi=None, nota=None, colore
         prec = None
         for et, da, a in _blocchi(passi, indice):
             vuoto = et in (NIENTE, '—')
-            testi = ([(NIENTE, 7.5, True, None), ('fino alla validazione', 6.2, False, B.MUTED)]
+            testi = ([(NIENTE, 7.5, True, None), (sottotitolo_niente, 6.2, False, B.MUTED)]
                      if et == NIENTE else
                      [(r, 7.5 if k == 0 else 6.5, k == 0, None)
                       for k, r in enumerate(et.split('\n'))])
@@ -267,11 +270,12 @@ def genera(passi, titolo, sottotitolo, percorso, rilievi=None, nota=None, colore
             prec = s
 
     # ── punto di non ritorno, subito dopo la firma dell'ufficiale
-    i_usc = next(i for i, p in enumerate(passi) if p[1].startswith('Firma dell'))
-    yn = y(i_usc + 1) - GAP / 2
-    B.linea(sl, 0.2, yn, COL['C'][0] - 0.06, yn, 'b03a48')
-    B.testo(sl, 2.6, yn + 0.010, COL['C'][0] - 0.06 - 2.6, 0.10, 'punto di non ritorno',
-            6.5, True, 'b03a48', PP_ALIGN.RIGHT)
+    i_usc = next((i for i, p in enumerate(passi) if p[1].startswith('Firma dell')), None)
+    if non_ritorno and i_usc is not None:
+        yn = y(i_usc + 1) - GAP / 2
+        B.linea(sl, 0.2, yn, COL['C'][0] - 0.06, yn, 'b03a48')
+        B.testo(sl, 2.6, yn + 0.010, COL['C'][0] - 0.06 - 2.6, 0.10, 'punto di non ritorno',
+                6.5, True, 'b03a48', PP_ALIGN.RIGHT)
 
     # ── coda
     yb = y(righe - 1) + RH + 0.26
@@ -293,7 +297,7 @@ def genera(passi, titolo, sottotitolo, percorso, rilievi=None, nota=None, colore
     yb += 0.24
     voci = [('blu', 'pagina di SIPO · store locale'), ('bianco', 'servizio chiamato'),
             ('verde', 'stato in SIPO'), ('giallo', 'stato in ANSC (ANSC_11)'),
-            ('viola', 'cerimonia')]
+            ('viola', etichetta_viola)]
     if rilievi:
         voci.append(('rosso', 'interruzione e rilievi'))
     for k, (col, t) in enumerate(voci):

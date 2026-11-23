@@ -1957,6 +1957,133 @@ Prodotti in `Documenti finali/` (**versione corrente in grassetto**):
   percorsi: **A** tutto da SIPO (pulsante PRENOTA GEMELLI dopo la divisione, come Side) / **B** web app +
   DEFINISCI. Tabella `ANSC_USR.ATTI_GEMELLARI` ripresa da Side [M1] = «Processo di Gestione Numeri atti
   gemellari v1.4». GE-01…GE-12.
+  **v0.2** (`strumenti/gemellari_v0_2.py`, 19/11/2026, **corrente**, dal FILE REALE della v0.1
+  rivista dall'utente: figure 1-2 sono suoi screenshot, la 3 è «Errore nella divisione» — NON
+  rieseguire `genera_nascite_gemellari.py`): ⚠️ **ANSC_STATO_ATTO = una riga per gemello** (chiave
+  ID_ATTO_SIPO; il gemello 1 È l'atto della pratica, ID_LAVORAZIONE_PADRE vuoto, gli altri puntano a
+  lui — AttoMatrRepository:139-145, RicercaController nascita-be:2687); righe 2…N inserite a PRENOTA
+  GEMELLI; nuovo COD_FASE PRENOTATO e fase audit PRENOTAZIONE (GE-14); idAnsc abbinato per NUMERO
+  comunale contenuto nell'idAnsc, non per ordine (GE-13). ATTI_GEMELLARI raggruppa per
+  `id_lavorazione_padre` (UK con il progressivo), FK `id_atto_sipo` → ANSC_STATO_ATTO, tolto
+  nr_atto_comunale. Figure PowerPoint modificabili `strumenti/diagrammi_gemellari_pptx.py` →
+  `img/gemellari/gem_{panoramica,flusso_a,flusso_b,erd}.pptx` (PNG con `qlmanage`; i flussi riusano
+  `diagrammi_matrimonio_pptx.genera`, che ha ora parametri facoltativi), schermate
+  `schermate_gemellari.py`, figura web app = figure 38-40 della guida ANSC p. 41-42 (PDFKit/JXA).
+  Restano segnaposto le figure 3 e 4 (schermate reali di SIPO).
+  **v0.3** (`strumenti/gemellari_v0_3.py`, 20/11/2026, **corrente**, dal file reale della v0.2):
+  nel § «Il completamento di ciascun atto» la sottosezione «Che cosa si può fare con i servizi
+  cooperativi» — ⚠️ **prenotazione (R009 /prenota/evento) e firme (R006, R007) sì; completamento
+  con il caso di servizio 11999999 NO dal 09/09/2024** (guida p. 43 + [A7]); vie non dichiarate
+  (bozza con UC ordinario = payload di test 11111000, prenotazione con altro UC, nascite singole:
+  scartata); `numeroGemelliNatiVivi` e il nato morto (GE-03). **Percorso B = il solo oggi
+  interamente coerente con ANSC; A condizionato a GE-01** (aperture del cap. integrazione e GE-01
+  riallineate).
+  **v0.4** (`strumenti/gemellari_v0_4.py`, 21/11/2026, **corrente**, dal file reale della v0.3):
+  ⚠️ **i percorsi A/B diventano CASI DECISI DAGLI UC DEI NATI** (issue pubbliche di italia/ansc,
+  NON la 882/892 citate dall'utente: 882 = comunicazione sui casi di servizio, 892 = divorzio):
+  **#571** (ANSC 31/01/2025: tramite SC la prenotazione porta l'UC SPECIFICO e le bozze si
+  completano con quello; la web app usa sempre il caso di servizio), **#611** (numeroGemelliNatiVivi
+  = TOTALE, nati morti compresi → GE-03 chiuso), **#3333/#3399** (10/06/2026: UC diversi → caso
+  d'uso di servizio con la «tipologia di nascita» nei dati generali; correzioni con art. 98),
+  **#3380** aperta senza risposta, #2299 (bozze prenotate senza composizione), #1858. **Caso 1**
+  (stesso UC) tutto da SIPO; **caso 2** (UC diversi) web app — decisioni utente: pratica completa
+  in SIPO, numeri in blocco dopo la divisione (pulsante DATI PER ANSC), UN recupero per l'intero
+  parto (RECUPERA GEMELLI, R005 per numero comunale, esiti ABBINATO/NON TROVATO/NON FIRMATO/
+  INCOERENTE), poi DEFINISCI GEMELLI, nessuna importazione. ⚠️ **Tabella nuova
+  `ANSC_USR.ANSC_SOGGETTO_ATTO`, A PARTE da ATTI_GEMELLARI** (scelta utente): soggetto ↔ atto
+  ANSC via FK su ANSC_STATO_ATTO (ID_ANSC non ripetuto), `ID_NASCITA_SOGGETTO` + `ID_SOGGETTO`,
+  COD_RUOLO, ID_ANSC_SOGGETTO, COD_ORIGINE PRENOTAZIONE/RECUPERO/VALIDAZIONE, UK (atto, ruolo).
+  ⚠️ Perché `ID_NASCITA_SOGGETTO`: **il nato ha una riga in MATR_USR.SOGGETTO solo DOPO
+  l'iscrizione ANPR della /finalizzaAtto** (`AttoNasciteFlow:405-430`, clona dall'anagrafe e scrive
+  ATTO_NASCITA.ID_SOGGETTO_DEFINITO / ATTO_NASCITA_SOGGETTO.ID_SOGGETTO_INTERESSATO). Figure
+  `diagrammi_gemellari_v0_4_pptx.py` → `img/gemellari/gem4_*.pptx` (le gem_* della v0.2 restano),
+  schermate `schermate_gemellari_v0_4.py` (gem4_dati_ansc, gem4_recupero). GE-15…GE-18, [A9]…[A12].
+  **v0.5** (`strumenti/gemellari_v0_5.py`, 21/11/2026, **corrente**, dal file reale della v0.4).
+  ⚠️ **Decisioni utente sul caso 1**: NIENTE più passo/pulsante PRENOTA GEMELLI (nella v0.4 il
+  flusso lo mostrava due volte: numeri e R009 erano due righe dello stesso pulsante). Dopo la
+  divisione: pagina **«Riepilogo gemelli»** con UC e **numero comunale PREVISTO, non riservato**
+  (be-numeratore-comunale non ha una lettura del prossimo numero → GE-19); **un solo DEFINISCI** =
+  stacco + R009 /prenota/evento, poi un gemello alla volta: documenti → Anteprima·Validazione
+  (R009) → firma dichiarante (R006) → conformità (R007) → firma USC (R007) → **/finalizzaAtto del
+  gemello SUBITO dopo la sua firma USC** (non tutti alla fine). Errori: esito certo → RIPROVA o
+  SOSPENDI (codici ANSC 406001 OTP non valido, 406002 OTP scaduto, 406004 firma); esito incerto →
+  R005. **Ripresa**: il riepilogo aperto su un parto avviato diventa pagina di ripresa (RIPRENDI):
+  R005 per gemello, lo stato letto in ANSC prevale sullo store, nessun nuovo stacco né nuova
+  prenotazione; **RINUNCIA AL PARTO** (R011 + PUT /scarta) solo finché nessun gemello è a 5.
+  Figure `diagrammi_gemellari_v0_5_pptx.py` (gem5_flusso_1/_2, gem5_panoramica, gem5_ripresa; la
+  panoramica della v0.4 ha ora il parametro `caso1`), schermate `schermate_gemellari_v0_5.py`
+  (gem5_riepilogo, gem5_definisci, gem5_ripresa). Corretto «Passo del caso 1NSC», residuo della
+  sostituzione «percorso A»→«caso 1» della v0.4 (⚠️ sostituire parole intere, non prefissi).
+  GE-09 risolto in parte, GE-12 integrato, GE-19…GE-22. 28 tabelle, 15 didascalie di figura.
+  ⚠️ La v0.5 è stata poi **RIVISTA A MANO dall'utente** (11:02): casella di testo «I record nella
+  tabella vengono inseriti…» al posto della voce «Quando nasce la riga» (una casella: python-docx
+  `p.text` la vede vuota, Word la salva due volte), «Nel caso 2» → «Nel caso di gemelli con stato
+  eterogeneo», tolti «Punti da chiarire» e la colonna «Fonte» → NON rieseguire `gemellari_v0_5.py`.
+  **v0.6** (`strumenti/gemellari_v0_6.py`, 21/11/2026, **corrente**, dal file reale della v0.5).
+  ⚠️ **Decisione utente: ANSC_SOGGETTO_ATTO porta TUTTO** (denormalizzata di proposito, contro la
+  mia proposta «ATTI_GEMELLARI + vista»): `ID_ANSC` e `ID_UC_ANSC` = **copie** di ANSC_STATO_ATTO
+  (scritte solo dal concentratore nella stessa transazione dello store, confrontate alla ripresa;
+  se la validazione cambia l'idAnsc → GE-02 si riallineano riga e fratelli adiacenti),
+  `NUM_PROGRESSIVO_GEMELLO`, `ID_TIPO_NASCITA` (ANSC_107: 1 nato vivo · 2 nato morto · 3 nato vivo
+  ma successivamente deceduto = `tipoNascitaSoggetto` del modello evento, controllato sulla
+  decodifica e non con un CHECK), **`ID_ANSC_GEMELLO_PREC`/`_SUCC` = idAnsc del gemello ADIACENTE**
+  (scelta utente; le liste attiGemelliPrec/Succ seguono la catena), CK che vieta i riferimenti
+  senza progressivo, indice su ID_ANSC. Tipi come lo store v3.60 (ID_ANSC 50, ID_UC_ANSC 20).
+  ATTI_GEMELLARI resta (struttura Side): posizione e UC coincidono per regola. ERD
+  `diagrammi_gemellari_v0_6_pptx.py` → `gem6_erd` (la `erd()` della v0.4 ha ora `righe_sa`, `y_sa`).
+  ⚠️ La v0.6 è stata **ritoccata a mano dall'utente** (11:35: «Sul DB ci dovrà essere una riga per
+  gemello…», paragrafo sul costo del caso 2) → non rieseguire `gemellari_v0_6.py`.
+  **v0.7** (`strumenti/gemellari_v0_7.py`, 21/11/2026, dal file reale della v0.6).
+  ⚠️ **Decisione utente («strada 1»): ATTI_GEMELLARI (tabella di Side) NON SI CREA** — dopo la
+  v0.6 ripeteva atto, posizione e UC di ANSC_SOGGETTO_ATTO. **ANSC_SOGGETTO_ATTO è l'unica tabella
+  dei gemelli**: nuova `ID_LAVORAZIONE_PADRE` (= ID_ATTO del gemello 1; **FK verso
+  ANSC_STATO_ATTO.ID_ATTO_SIPO del gemello 1**, la cui riga esiste dalla fase dei dati),
+  `UK_ANSC_SOGG_ATTO_PARTO (ID_LAVORAZIONE_PADRE, NUM_PROGRESSIVO_GEMELLO)`, CK: parto e posizione
+  insieme, PREC/SUCC solo con la posizione. Le altre colonne di Side: id_richiesta_prenotazione,
+  cd_operatore, ts_operazione → ANSC_LOG_AUDIT (fase PRENOTAZIONE) e campi tecnici; nr_gemelli →
+  conteggio delle righe del parto (SIPO: N_TOT_GEMELLI); fg_stesura_atto → stato 5 nello store
+  (adattamenti dichiarati nella tabella «Scelta di Side | Per Roma | Ragione»). Nel caso 2 la riga
+  nasce al recupero: prima il parto si riconosce in SIPO da ATTO.ID_LAVORAZIONE_PADRE.
+  Interrogazione del parto su ANSC_SOGGETTO_ATTO (COD_RUOLO = 'INTESTATARIO'). Figure
+  `diagrammi_gemellari_v0_7_pptx.py` (gem7_erd con FK come connettori dritti — ⚠️ `B.gomito` mette
+  la punta sull'estremo inferiore indipendentemente dall'ordine dei punti, gem7_panoramica con il
+  nuovo parametro `piede`, gem7_flusso_2, gem7_ripresa con `righe_parto`). 27 tabelle.
+  **v0.8** (`strumenti/gemellari_v0_8.py`, 21/11/2026, dal file reale della v0.7).
+  ⚠️ **Decisioni utente**: (a) [⚠️ SBAGLIATO, corretto nella v0.9] **caso 1: il testo dell'atto lo compone ANSC** (l'UC ordinario non ha
+  `composizioneCompleta`: nella nascita 6 mapping su 289, i casi di servizio; `/prenota/evento` non
+  porta testo) → SIPO lo **recupera da ANSC e lo riporta su SIPO**: R010 `/anteprima/evento` con
+  `presaVisione` (senza filigrana, **solo per l'atto CONFERMATO**, altrimenti 400) dopo la
+  validazione; alla definizione diventa `MATR_USR.ATTO_SCANSIONATO.DOCUMENTO`. ⚠️ `/finalizzaAtto`
+  oggi rigenera il PDF dal formulario e lo scrive lì (InitFlow) → non deve sovrascriverlo (GE-24).
+  Copia firmata = certificato copia integrale R002 con OTP (issue #418, GE-23). (b) **caso 2: PRATICA
+  GUIDATA** come per gli atti a testo libero, un gemello alla volta (numero in grande, tipologia di
+  nascita, testo SIPO con COPIA TESTO, promemoria non vincolante); in SIPO resta il PDF di SIPO
+  (GE-25). (c) **FINESTRA DI RACCORDO dei numeri comunali** in entrambi i casi (schede per gemello:
+  numero in grande, idAnsc con il numero evidenziato, esito): caso 1 dopo la prenotazione, caso 2
+  prima della web app e dopo RECUPERA GEMELLI. (d) **sequenze delle schermate** dei due casi
+  (tabella + figura a miniature in serpentina). Fatti di codice: SIPO compone il testo a richiesta
+  (`PKG_FORMULARI.FORMULARIO_GENERA_MODELLO` → GTT_TMP_ATTO) e conserva solo il PDF in
+  ATTO_SCANSIONATO (finalizzazione, `/generaPDFAttoFromFormularioGemelli` per gemello,
+  `/generaAttoTemporaneo`); scorrimento gemelli già presente (`getNextATTONascitaGemello`,
+  `checkPartoPlurimoAndGemSucc/Prec`). Figure `schermate_gemellari_v0_8.py` (gem8_c1_*, gem8_c2_*,
+  gem8_seq_caso1/2) e `diagrammi_gemellari_v0_8_pptx.py` (gem8_flusso_1/2, gem8_panoramica;
+  `G4.panoramica` ha ora il parametro `caso2`). GE-23…GE-26, [A13], [S6]. 29 tabelle, 23 didascalie.
+  **v0.9** (`strumenti/gemellari_v0_9.py`, 21/11/2026, **corrente**, dal file reale della v0.8 rivista
+  a mano dall'utente alle 16:07 — non rieseguire `gemellari_v0_8.py`). ⚠️ **IL TESTO DELL'ATTO DEI
+  GEMELLI LO GENERA SIPO** (decisione utente). Fonte decisiva: **issue #2299** (ANSC, 25/11/2025):
+  con la prenotazione da gestionale «gli atti in bozza vengono generati dal sistema senza la
+  composizione»; «la composizione la trasmettete voi con il servizio di validazione successivo
+  dell'atto» (errore R010 «Il campo evento.composizioneCompleta mancante» prima della validazione).
+  Guida operativa p. 44: minuta completa con formule 35/36/37 e idAnsc dei gemelli. ⚠️ La guida
+  p. 22/28 («composizione che si auto completa») vale per l'atto ORDINARIO sulla web app, NON per i
+  gemelli prenotati: è da lì che la v0.8 aveva tratto la conclusione sbagliata. Ora: formulario SIPO
+  (PKG_FORMULARI) → concentratore → `evento.composizioneCompleta` in R009; R010 rilegge (riscontro);
+  /finalizzaAtto invariata (il PDF di SIPO ha lo stesso testo). GE-23 = composizione assente dal
+  mapping degli UC ordinari ma chiesta da ANSC (Sogei); GE-24 = forma della composizione (parti del
+  testo, marcatura di stampa); GE-26 = colonne da cui il formulario legge numero e idAnsc dei
+  fratelli. Figure `schermate_gemellari_v0_9.py` (gem9_c1_gemello/_definito/_esito, gem9_seq_caso1),
+  `diagrammi_gemellari_v0_9_pptx.py` (gem9_flusso_1, gem9_panoramica).
+  **v1.0** (`strumenti/gemellari_v1_0.py`, 22/11/2026, **corrente**, dal file reale della v0.9): proposta della pagina unica ACCETTATA (`PROPOSTA_Pagina-Gemelli_SIPO-ANSC_v0.4.pptx` — ⚠️ ritoccata a mano dall'utente, 12 slide: NON rieseguire `proposta_gemellari_pagina_v0_4_pptx.py` — + `DIMOSTRATORE_Pagina-Gemelli_SIPO-ANSC_v0.1.html`, un file vanilla JS con chiamate simulate). Il cap. «La modalità di integrazione» è un **manuale per lo sviluppatore**: P1 Riepilogo (documenti e firmatari per atto), P2 «Gemelli del parto», modali M1…M13; per ogni azione servizi, tabelle lette/scritte e stato dopo; transizioni ANSC_11 · COD_FASE · ID_STATO_PRATICA. ⚠️ Numeri e prenotazione alla divisione in ENTRAMBI i casi (caso 2 con 11999999, verificato dal Comune); testo in ANSC_SOGGETTO_ATTO.TXT_TESTO_ATTO; COD_FASE PRENOTATO/RECUPERATO. Trascrizioni da ospedale nel perimetro [M3]. GE-27…GE-31. Figure `diagrammi_gemellari_v1_0_pptx.py` → `img/gemellari/gem10_*`.
 - ⚠️ **I DUE FLUSSI DEL MATRIMONIO (05/11/2026)** — `strumenti/diagrammi_matrimonio_pptx.py` →
   `img/flusso_matr_diretta.pptx` e `flusso_matr_differito.pptx` (+ PNG). Modificabili in PowerPoint
   come il workflow: **se l'utente li ritocca diventano la fonte e non si rigenerano**. Cinque corsie,

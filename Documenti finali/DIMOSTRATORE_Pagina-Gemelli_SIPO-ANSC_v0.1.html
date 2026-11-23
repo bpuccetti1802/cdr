@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pagina gemelli · dimostratore</title>
+<!--
+  Dimostratore della pagina «Gemelli del parto» (SIPO → ANSC), v0.1 del 22/11/2026.
+  Accompagna PROPOSTA_Pagina-Gemelli_SIPO-ANSC_v0.4.pptx e l'analisi delle nascite gemellari.
+  Un solo file, nessuna dipendenza esterna, dati fittizi. Le chiamate ai servizi sono SIMULATE e
+  annotate nel «Registro delle chiamate» in fondo alla pagina: nomi di servizi e operazioni sono
+  quelli dei contratti ANSC (R001, R005, R006, R007, R009, R010, R011, R012) e dei servizi di SIPO
+  (/performAttiPlurigemellari, /finalizzaAtto, be-numeratore-comunale).
+  La barra gialla «Dimostratore» non fa parte della pagina: serve a scegliere il caso e gli esiti.
+-->
+<style>
+:root{
+  --rosso:#8c0029; --rosso-f:#f6e6eb; --ink:#222; --muted:#666; --grigio:#b0b0b0; --grigio-f:#f2f2f2;
+  --verde:#3f8f5f; --verde-f:#e3f3e8; --blu:#2f5f9f; --blu-f:#e4edf8; --giallo:#b58900; --giallo-f:#fff6d5;
+  --evid:#fff176; --bianco:#fff; --bordo:#d9d9d9;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#ececec;color:var(--ink);font:13px/1.4 Arial,Helvetica,sans-serif}
+button{font:inherit}
+.barra-sipo{background:var(--rosso);color:#fff;display:flex;align-items:center;gap:16px;padding:8px 16px;flex-wrap:wrap}
+.barra-sipo b{font-size:15px}
+.barra-sipo .sp{flex:1}
+.otp{border-radius:12px;padding:3px 10px;font-weight:bold;font-size:12px;background:var(--verde-f);color:var(--verde);border:1px solid var(--verde)}
+.demo{background:#fffbe6;border:2px dashed var(--giallo);margin:12px 16px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.demo .tit{font-weight:bold;color:var(--giallo)}
+.demo label{display:flex;gap:6px;align-items:center}
+.demo select{font:inherit;padding:2px}
+main{margin:0 16px 16px}
+.testata{background:var(--grigio-f);border:1px solid var(--grigio);padding:10px 12px;display:grid;grid-template-columns:1.2fr 1.4fr auto;gap:6px 24px}
+.testata h2{margin:0 0 4px;font-size:14px;color:var(--rosso)}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:2px 8px;font-size:12px}
+.kv span:nth-child(odd){font-weight:bold}
+.kv span:nth-child(even){color:var(--muted)}
+.cmd{display:flex;gap:8px;align-items:flex-end;justify-content:flex-end;flex-wrap:wrap}
+.btn{border-radius:5px;border:1px solid var(--rosso);background:#fff;color:var(--rosso);font-weight:bold;padding:5px 10px;cursor:pointer;font-size:12px}
+.btn.prim{background:var(--rosso);color:#fff}
+.btn:disabled{background:var(--grigio-f);border-color:var(--grigio);color:var(--grigio);cursor:not-allowed}
+.btn.fatto{background:var(--verde-f);border-color:var(--verde);color:var(--verde);cursor:default}
+.btn.nonserve{background:#fff;border:1px dashed var(--grigio);color:var(--grigio);font-style:italic;font-weight:normal;cursor:default}
+.link{background:none;border:none;color:var(--blu);font-weight:bold;cursor:pointer;padding:2px 4px;font-size:11px}
+.link:disabled{color:var(--grigio);cursor:default}
+.avviso{margin-top:10px;padding:10px 12px;border:1px solid;border-radius:6px}
+.avviso.rosso{background:var(--rosso-f);border-color:var(--rosso);color:var(--rosso)}
+.avviso.giallo{background:var(--giallo-f);border-color:var(--giallo)}
+.avviso.verde{background:var(--verde-f);border-color:var(--verde);color:var(--verde)}
+.griglia{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:12px;margin-top:10px}
+@media (max-width:1000px){.griglia,.testata{grid-template-columns:1fr}.cmd{justify-content:flex-start}}
+.card{background:#fff;border:1px solid var(--grigio);border-radius:10px;padding:8px 10px;margin-bottom:8px;cursor:pointer}
+.card.sel{border:2px solid var(--rosso);background:#fffafb}
+.card .riga1{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card .riga1 b{font-size:14px}
+.pill{border-radius:10px;padding:2px 10px;font-size:11px;font-weight:bold;border:1px solid;white-space:nowrap}
+.p-blu{color:var(--blu);background:var(--blu-f);border-color:var(--blu)}
+.p-rosso{color:var(--rosso);background:var(--rosso-f);border-color:var(--rosso)}
+.p-verde{color:var(--verde);background:var(--verde-f);border-color:var(--verde)}
+.p-giallo{color:var(--giallo);background:var(--giallo-f);border-color:var(--giallo)}
+.p-grigio{color:var(--muted);background:var(--grigio-f);border-color:var(--grigio)}
+.card .corpo{display:flex;justify-content:space-between;gap:8px}
+.card .dati{color:var(--muted);font-size:12px}
+.card .info{color:var(--ink);font-size:11px;margin-top:2px}
+.num{text-align:right}
+.num small{display:block;color:var(--muted);font-size:10px}
+.num b{font-size:28px;color:var(--rosso);line-height:1}
+.ida{font-family:"Courier New",monospace;font-size:12px;margin-top:4px}
+.ida mark{background:var(--evid);font-weight:bold}
+.passi{display:grid;grid-template-columns:repeat(4,1fr) 1.1fr;gap:5px;margin-top:8px}
+.passi .btn{padding:5px 4px;font-size:11px}
+.chip{border-radius:12px;border:1px solid var(--grigio);color:var(--grigio);font-size:11px;font-weight:bold;display:flex;align-items:center;justify-content:center;padding:4px}
+.chip.ok{border-color:var(--verde);color:var(--verde);background:var(--verde-f)}
+.chip.ko{border-color:var(--rosso);color:var(--rosso);background:var(--rosso-f)}
+.sec{display:flex;gap:4px;align-items:center;margin-top:4px;flex-wrap:wrap}
+.sec .nota{color:var(--muted);font-style:italic;font-size:11px}
+.pannello{background:#fff;border:1px solid var(--grigio);padding:10px;display:flex;flex-direction:column;min-height:540px}
+.pannello h3{margin:0;font-size:14px}
+.pannello .fonte{color:var(--muted);font-size:11px;margin:3px 0 8px}
+.pannello textarea{flex:1;min-height:360px;width:100%;resize:vertical;font:12px/1.5 Arial,Helvetica,sans-serif;padding:10px;border:1px dashed var(--blu);background:#fcfcfc}
+.pannello textarea[readonly]{border:1px solid var(--grigio);background:var(--grigio-f)}
+.pannello .piede{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center}
+.pannello .nota{color:var(--muted);font-style:italic;font-size:11px;margin-top:6px}
+details{background:#fff;border:1px solid var(--grigio);margin-top:12px;padding:8px 12px}
+summary{cursor:pointer;font-weight:bold;color:var(--rosso)}
+table{border-collapse:collapse;width:100%;font-size:12px}
+th{background:var(--rosso);color:#fff;text-align:left;padding:5px 6px}
+td{padding:5px 6px;border-bottom:1px solid #eee;vertical-align:top}
+tr:nth-child(even) td{background:#fafafa}
+.log td:first-child{white-space:nowrap;color:var(--muted)}
+.log code{font-size:11px}
+/* modali */
+.velo{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-start;justify-content:center;padding:40px 12px;overflow:auto;z-index:10}
+.modale{background:#fff;width:min(820px,100%);border-radius:4px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+.modale header{background:var(--rosso);color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
+.modale header b{font-size:15px}
+.modale header button{background:none;border:none;color:#fff;font-size:20px;cursor:pointer}
+.modale .sotto{color:var(--muted);font-size:12px;padding:6px 14px 0}
+.modale .contenuto{padding:6px 14px 10px}
+.modale footer{border-top:1px solid var(--bordo);padding:10px 14px;display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap}
+.modale footer .nota{flex:1;color:var(--muted);font-style:italic;font-size:11px}
+.modale h4{color:var(--rosso);margin:12px 0 6px;border-bottom:2px solid var(--rosso-f);padding-bottom:2px;font-size:13px}
+.campo{display:grid;grid-template-columns:170px 1fr 30px;gap:6px;align-items:center;margin:3px 0}
+.campo label{color:var(--muted);font-size:11px}
+.campo .val{border:1px solid #ddd;background:#fafafa;padding:3px 6px;min-height:22px;font-size:12px}
+.campo input{font:inherit;padding:3px 6px;border:1px solid #bbb}
+.copia{border:1px solid var(--rosso);background:#fff;color:var(--rosso);border-radius:3px;cursor:pointer;height:22px}
+.blocco{border:1px solid var(--grigio);background:#fbfbfb;padding:8px 10px;margin:8px 0;border-radius:4px}
+.blocco .chi{font-weight:bold}
+.opz{display:flex;gap:20px;margin:6px 0;flex-wrap:wrap}
+.riga-az{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.esito{border:1px solid;border-radius:4px;padding:8px 10px;margin:6px 0}
+.esito.ok{border-color:var(--verde);background:var(--verde-f)}
+.esito.warn{border-color:var(--giallo);background:var(--giallo-f)}
+.esito.err{border-color:var(--rosso);background:var(--rosso-f)}
+.avanz{display:flex;flex-direction:column;gap:5px}
+.avanz div{border:1px solid var(--grigio);border-radius:12px;padding:4px 10px;font-size:12px;font-weight:bold;color:var(--grigio)}
+.avanz div.ok{border-color:var(--verde);color:var(--verde);background:var(--verde-f)}
+.avanz div.ko{border-color:var(--rosso);color:var(--rosso);background:var(--rosso-f)}
+.avanz div.corso{border-color:var(--giallo);color:var(--giallo);background:var(--giallo-f)}
+.linguette{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0}
+.linguette button{border:1px solid var(--rosso);background:#fff;color:var(--rosso);font-weight:bold;font-size:11px;padding:4px 8px;cursor:pointer}
+.linguette button.on{background:var(--rosso);color:#fff}
+.anteprima{border:1px solid var(--grigio);padding:16px;font-family:Georgia,serif;font-size:13px;position:relative;white-space:pre-wrap;background:#fff}
+.anteprima::after{content:attr(data-filigrana);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:54px;color:rgba(140,0,41,.10);transform:rotate(-20deg);pointer-events:none;font-family:Arial}
+.toast{position:fixed;bottom:16px;right:16px;background:#333;color:#fff;padding:8px 14px;border-radius:4px;z-index:20;opacity:0;transition:opacity .2s}
+.toast.on{opacity:1}
+@media print{.barra-sipo,.demo,details,.velo,.toast{display:none}}
+</style>
+</head>
+<body>
+<div class="barra-sipo"><b>SIPO · Stato Civile · Nascite</b><span>Gestione del parto plurimo</span><span class="sp"></span>
+  <span>Ufficiale dello Stato Civile · Municipio I</span><span class="otp" id="otp">OTP ANSC valido · 3 h 12 min</span></div>
+<div class="demo" id="demo"></div>
+<main id="pagina"></main>
+<div id="velo"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* ───────────────────────── dati fittizi ───────────────────────── */
+const ISTAT = '058091';
+function crea(caso){
+  const base = caso === 1
+    ? [['1','M','1 nato vivo','11111000','13617','10527618','10.41'],
+       ['2','F','1 nato vivo','11111000','13618','10527619','10.43'],
+       ['3','F','1 nato vivo','11111000','13619','10527620','10.46']]
+    : [['1','M','1 nato vivo','11999999','13640','10531102','10.41'],
+       ['2','F','2 nato morto','11999999','13641','10531103','10.43'],
+       ['3','M','3 nato vivo poi deceduto','11999999','13642','10531104','10.46']];
+  const dich = [[{ruolo:'Padre', nome:'COGNOME NOME', email:'p****@****.it'}],
+                [{ruolo:'Padre', nome:'COGNOME NOME', email:'p****@****.it'},
+                 {ruolo:'Madre', nome:'COGNOME NOME', email:'m****@****.it'}],
+                []];
+  const ucVero = ['11111000','11111100','11111200'];
+  return base.map((b,i)=>({
+    pos:b[0], sesso:b[1], tip:b[2], uc:b[3], ucSpecifico: caso===1 ? b[3] : ucVero[i],
+    num:b[4], ida:`2026-${b[5]}-${b[4]}-${ISTAT}`, ora:b[6],
+    nome:`NATO ${b[0]} — COGNOME NOME`,
+    docs: i===0 ? ['Attestazione di nascita · PDF','Documento del dichiarante · PDF']
+               : ['Certificato medico · PDF','Documento del dichiarante · PDF','Delega · P7M'],
+    dich: caso===1 ? dich[i].map(d=>({...d})) : [{ruolo:'Padre', nome:'COGNOME NOME', email:'p****@****.it'}],
+    // caso 1
+    stato:'BOZZA', carta:false, salvato:false, salvErr:false, incerto:false, firme:{},
+    // caso 2
+    passi:{dati:false, web:false}, rec:null,
+    testo:null, testoSalvato:null
+  }));
+}
+const S = {
+  caso:1, sel:1, cancellata:false, divisione:'ok', ruolo:'USC',
+  scen:{validazione:'ok', salvataggio:'ok', firmaIncerta:false, webapp:'firmato'},
+  G:[], log:[]
+};
+function inizia(caso){
+  S.caso = caso; S.G = crea(caso); S.cancellata = false; S.sel = 1;
+  S.G.forEach(g=>{ g.testo = componi(g); g.testoSalvato = g.testo; });
+  if (caso===1){ // situazione di partenza del pptx: gemello 1 concluso
+    const g = S.G[0]; g.stato='FIRMATO_USC'; g.salvato=true; g.firme={0:'elettronica'};
+  } else {
+    const g = S.G[0]; g.passi={dati:true, web:true};
+  }
+  S.log = [];
+  registra('/performAttiPlurigemellari', 'divisione della pratica in 3 atti (SIPO)');
+  registra('POST /api/v1/numerazione-comunale/richiesta', '3 numeri comunali (be-numeratore-comunale)');
+  registra('R009 POST /prenota/evento/1', `numeroGemelliNatiVivi=3 · idUsecase=${caso===1?'11111000':'11999999'} · listaNumeriComunali`);
+}
+const STATO_LAB = {
+  BOZZA:['BOZZA (prenotato)','p-blu'], CONFERMATO:['CONFERMATO','p-rosso'],
+  FIRMATO_DICH:['FIRMATO DAL DICHIARANTE','p-rosso'], FIRMATO_CONF:['FIRMATO PER CONFORMITÀ','p-rosso'],
+  FIRMATO_USC:['FIRMATO DA USC','p-verde'], CANCELLATO:['CANCELLATO','p-grigio']
+};
+const ORD = ['BOZZA','CONFERMATO','FIRMATO_DICH','FIRMATO_CONF','FIRMATO_USC'];
+const dopo = (g,s)=> ORD.indexOf(g.stato) > ORD.indexOf(s);
+
+function componi(g){
+  const fr = S.G.filter(x=>x!==g).map(x=>`${x.ida} (${+x.pos < +g.pos ? 'precedente':'successivo'})`).join(', ');
+  const nasc = g.tip.startsWith('2') ? (g.sesso==='F'?'è nata morta una bambina':'è nato morto un bambino')
+             : (g.sesso==='F'?'è nata una bambina':'è nato un bambino');
+  const ord = ['primo','secondo','terzo'][+g.pos-1];
+  return `ATTO DI NASCITA n. ${g.num} · parte I · serie A
+
+L'anno duemilaventisei, addì diciotto del mese di novembre, nella casa comunale, avanti a me, Ufficiale dello Stato Civile, è comparso COGNOME NOME, il quale mi ha dichiarato che il giorno diciotto novembre alle ore ${g.ora}, nel Policlinico, dalla sua unione con COGNOME NOME ${nasc}, ${ord} di un parto gemellare di tre nati [formula 36], cui è dato il nome di NOME.
+${g.tip.startsWith('3') ? '\nIl nato è successivamente deceduto [formula 37].\n' : ''}
+Gli atti dei fratelli: ${fr}.
+
+Letto, confermato e sottoscritto.`;
+}
+
+/* ───────────────────────── utilità ───────────────────────── */
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function ora(){ const d=new Date(); return d.toTimeString().slice(0,8); }
+function registra(chiamata, dettaglio){ S.log.unshift({t:ora(), chiamata, dettaglio}); }
+let tT;
+function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('on'); clearTimeout(tT); tT=setTimeout(()=>t.classList.remove('on'),1800); }
+function copia(testo, cosa){
+  const ok=()=>toast('Copiato: '+(cosa||'valore'));
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(testo).then(ok, ()=>vecchia());
+  else vecchia();
+  function vecchia(){ const a=document.createElement('textarea'); a.value=testo; document.body.appendChild(a); a.select();
+    try{document.execCommand('copy'); ok();}catch(e){toast('Copia non riuscita');} a.remove(); }
+}
+function stampa(titolo, html){
+  const w = window.open('', '_blank'); if(!w){toast('Finestra di stampa bloccata dal browser'); return;}
+  w.document.write(`<!doctype html><meta charset="utf-8"><title>${esc(titolo)}</title><body style="font:13px Arial;padding:24px">${html}<script>print()<\/script>`);
+  w.document.close();
+}
+const attendi = ms=>new Promise(r=>setTimeout(r,ms));
+const ida = s=>{ const p=s.split('-'); return `idAnsc ${p[0]}-${p[1]}-<mark>${p[2]}</mark>-${p[3]}`; };
+const bloccata = ()=> S.cancellata || S.divisione==='ko';
+
+/* ───────────────────────── barra del dimostratore ───────────────────────── */
+function demo(){
+  const sel=(id,lab,opz,val)=>`<label>${lab}<select data-scen="${id}">${opz.map(([v,t])=>`<option value="${v}" ${v===val?'selected':''}>${t}</option>`).join('')}</select></label>`;
+  let h = `<span class="tit">DIMOSTRATORE · non fa parte della pagina</span>
+   <label>Caso <select id="caso"><option value="1" ${S.caso===1?'selected':''}>1 · stesso UC (servizi cooperativi)</option><option value="2" ${S.caso===2?'selected':''}>2 · UC diversi (web app)</option></select></label>
+   <button class="btn" id="riparti">Riparti</button>
+   ${sel('divisione','Divisione',[['ok','numeri e prenotazione riusciti'],['ko','numeri o prenotazione non riusciti']],S.divisione)}
+   ${sel('ruolo','Ruolo',[['USC','ufficiale dello stato civile'],['OP','operatore']],S.ruolo)}`;
+  if (S.caso===1){
+    h += sel('validazione','Esito R009',[['ok','positivo'],['warn','anomalie superabili'],['err','errori bloccanti']],S.scen.validazione)
+       + sel('firmaIncerta','Firma USC',[['no','esito certo'],['si','esito incerto (timeout)']],S.scen.firmaIncerta?'si':'no')
+       + sel('salvataggio','Salvataggio SIPO',[['ok','riesce'],['ko','non riesce']],S.scen.salvataggio)
+       + S.G.map((g,i)=>sel('dich'+i,`Dichiaranti G${g.pos}`,[['0','nessuno'],['1','uno'],['2','due']],String(g.dich.length))).join('');
+  } else {
+    h += sel('webapp','Esito sulla web app',[['firmato','atto firmato dall’USC'],['nonfirmato','non ancora firmato'],['incoerente','intestatario diverso']],S.scen.webapp);
+  }
+  $('#demo').innerHTML = h;
+  $('#caso').onchange = e=>{ inizia(+e.target.value); disegna(); };
+  $('#riparti').onclick = ()=>{ inizia(S.caso); disegna(); };
+  document.querySelectorAll('[data-scen]').forEach(s=>s.onchange=e=>{
+    const k=e.target.dataset.scen, v=e.target.value;
+    if (k==='divisione') S.divisione=v;
+    else if (k==='ruolo') S.ruolo=v;
+    else if (k==='firmaIncerta') S.scen.firmaIncerta = v==='si';
+    else if (k.startsWith('dich')){
+      const g=S.G[+k.slice(4)];
+      if (g.stato!=='BOZZA'){ toast('I dichiaranti si cambiano nel Riepilogo, prima della validazione'); disegna(); return; }
+      const tutti=[{ruolo:'Padre',nome:'COGNOME NOME',email:'p****@****.it'},{ruolo:'Madre',nome:'COGNOME NOME',email:'m****@****.it'}];
+      g.dich = tutti.slice(0,+v);
+    } else S.scen[k]=v;
+    disegna();
+  });
+}
+
+/* ───────────────────────── pagina ───────────────────────── */
+function disegna(){
+  demo();
+  const nessunUsc = !S.G.some(g=> S.caso===1 ? g.stato==='FIRMATO_USC' : (g.salvato || (g.rec && g.rec.esito==='FIRMATO')));
+  let h = `<section class="testata">
+    <div><h2>Dichiarazione di nascita · parto plurimo (3 nati)</h2>
+      <div class="kv"><span>Madre</span><span>COGNOME NOME · CF ****************</span>
+      <span>Padre</span><span>COGNOME NOME · CF ****************</span>
+      <span>Documenti, firmatari</span><span>raccolti nel Riepilogo, atto per atto</span></div></div>
+    <div class="kv" style="align-content:start"><span>Data e luogo</span><span>18/11/2026 · Roma, Policlinico</span>
+      <span>Tipo atto</span><span>gemelli · Modello 30 · pratica divisa in 3 atti</span>
+      <span>Caso</span><span>${S.caso===1?'1 · stesso UC · atti prenotati con l’UC specifico':'2 · UC diversi · atti prenotati con 11999999, completati sulla web app'}</span></div>
+    <div class="cmd">
+      ${S.divisione==='ko' && !S.cancellata ? '<button class="btn prim" data-az="recNumeri">RECUPERA NUMERI E PRENOTAZIONE</button>' : ''}
+      <button class="btn" data-az="riepilogo" ${S.divisione==='ko'?'disabled':''}>RIEPILOGO NUMERI</button>
+      <button class="btn" data-az="cancella" ${(S.cancellata||!nessunUsc)?'disabled':''} title="${nessunUsc?'':'non ammessa: un gemello è già firmato dall’USC'}">CANCELLA PRATICA</button>
+    </div></section>`;
+  if (S.cancellata) h += `<div class="avviso rosso"><b>Pratica cancellata.</b> Bozze cancellate in ANSC (R011, stato 9 CANCELLATO), numeri comunali scartati, pratica cancellata in SIPO.</div>`;
+  else if (S.divisione==='ko') h += `<div class="avviso rosso"><b>La divisione è riuscita, ma i numeri comunali o la prenotazione in ANSC no.</b> Gli atti sono separati in SIPO. RECUPERA NUMERI E PRENOTAZIONE legge prima in ANSC (R005) che cosa esiste già, poi completa solo ciò che manca.</div>`;
+  h += `<div class="griglia"><div>${S.G.map((g,i)=> S.caso===1 ? card1(g,i) : card2(g,i)).join('')}</div>${pannello()}</div>`;
+  h += note() + registro();
+  $('#pagina').innerHTML = h;
+  collega();
+}
+
+function bott(t, st, az, i){
+  if (st==='fatto') return `<button class="btn fatto" disabled>✓ ${t}</button>`;
+  if (st==='nonserve') return `<button class="btn nonserve" disabled title="nessuna firma su carta">${t} · non serve</button>`;
+  const dis = st==='disab' || bloccata();
+  return `<button class="btn ${st==='attivo'&&!dis?'prim':''}" ${dis?'disabled':''} data-az="${az}" data-i="${i}">${t}</button>`;
+}
+function chip(g){
+  if (g.salvErr) return `<span class="chip ko">Non salvato in SIPO</span>`;
+  return g.salvato ? `<span class="chip ok">● Salvato in SIPO</span>` : `<span class="chip">○ Salvato in SIPO</span>`;
+}
+function card1(g,i){
+  const st=g.stato, fine=st==='FIRMATO_USC'||st==='CANCELLATO';
+  const pV = st==='BOZZA' ? 'attivo' : (st==='CANCELLATO'?'disab':'fatto');
+  const pF = st==='CONFERMATO' ? 'attivo' : (dopo(g,'CONFERMATO') ? 'fatto' : 'disab');
+  let pC;
+  if (g.carta) pC = st==='FIRMATO_DICH' ? 'attivo' : (dopo(g,'FIRMATO_DICH') ? 'fatto' : 'disab');
+  else pC = dopo(g,'CONFERMATO') ? 'nonserve' : 'disab';
+  let pU = ((st==='FIRMATO_DICH' && !g.carta) || st==='FIRMATO_CONF') ? 'attivo' : (st==='FIRMATO_USC' ? 'fatto' : 'disab');
+  if (g.incerto) pU = 'disab';
+  const [lab,cl] = STATO_LAB[st];
+  const sec = [`<button class="link" data-az="stampa" data-i="${i}">STAMPA</button>`];
+  if (g.salvato) sec.unshift(`<button class="link" data-az="pdf" data-i="${i}">APRI IL PDF</button>`);
+  if (g.salvErr) sec.push(`<button class="link" data-az="riprova" data-i="${i}">RIPROVA IL SALVATAGGIO</button>`);
+  if (g.incerto) sec.push(`<button class="link" data-az="verifica" data-i="${i}">VERIFICA IN ANSC</button>`);
+  let nota = '';
+  if (g.incerto) nota = 'esito della firma incerto: verificare in ANSC prima di ripetere';
+  else if (g.salvErr) nota = 'firmato in ANSC, salvataggio in SIPO non riuscito';
+  else if (g.salvato) nota = '2 DEFINITO in SIPO';
+  else if (st==='BOZZA') nota = `${g.dich.length===0?'nessun dichiarante':g.dich.length===1?'1 dichiarante':'2 dichiaranti'} · lavorabile in qualsiasi ordine`;
+  else if (st==='FIRMATO_DICH') nota = g.carta ? 'una firma su carta: serve la conformità' : 'nessuna firma su carta: si passa alla firma USC';
+  return `<div class="card ${S.sel===i?'sel':''}" data-sel="${i}">
+   <div class="riga1"><b>Gemello ${g.pos} · ${g.sesso}</b><span class="pill ${cl}">${lab}</span></div>
+   <div class="corpo"><div class="dati">${g.nome}<br>${g.tip} · UC ${g.uc} · ${g.docs.length} documenti
+     <div class="ida">${ida(g.ida)}</div></div>
+     <div class="num"><small>n. comunale</small><b>${g.num}</b></div></div>
+   <div class="passi">${bott('Valida',pV,'valida',i)}${bott('Firma dichiaranti',pF,'firmaDich',i)}${bott('Conformità',pC,'conformita',i)}${bott('Firma USC',pU,'firmaUsc',i)}${chip(g)}</div>
+   <div class="sec">${sec.join('')}<span class="nota">${nota}</span></div></div>`;
+}
+function stato2(g){
+  if (g.salvato) return ['FIRMATO DA USC','p-verde'];
+  if (g.rec){ if (g.rec.esito==='FIRMATO') return ['FIRMATO DA USC · DA AGGIORNARE','p-verde'];
+              if (g.rec.esito==='NONFIRMATO') return ['NON FIRMATO','p-giallo'];
+              return ['INCOERENTE','p-rosso']; }
+  return S.cancellata ? ['CANCELLATO','p-grigio'] : ['BOZZA · ATTESA WEBAPP','p-giallo'];
+}
+function card2(g,i){
+  const ok = g.rec && g.rec.esito==='FIRMATO';
+  const pD = g.passi.dati ? 'fatto' : 'attivo';
+  const pW = g.passi.web ? 'fatto' : (g.passi.dati ? 'attivo' : 'abil');
+  const pR = ok ? 'fatto' : (g.passi.web ? 'attivo' : 'abil');
+  const pA = g.salvato ? 'fatto' : (ok ? 'attivo' : 'disab');
+  const [lab,cl] = stato2(g);
+  const ord = ['1°','2°','3°'][+g.pos-1];
+  const nato = g.sesso==='F' ? 'nata' : 'nato';
+  const sec = [`<button class="link" data-az="dettaglio" data-i="${i}">DETTAGLIO</button>`];
+  if (!g.salvato) sec.push(`<button class="link" data-az="copiaTesto" data-i="${i}">COPIA TESTO</button>`);
+  if (g.salvato) sec.push(`<button class="link" data-az="pdf" data-i="${i}">APRI IL PDF</button>`);
+  let nota='';
+  if (g.rec && g.rec.esito==='NONFIRMATO') nota='in ANSC non ancora firmato dall’USC: completare sulla web app';
+  else if (g.rec && g.rec.esito==='INCOERENTE') nota='intestatario diverso da quello di SIPO: nessuna scrittura';
+  else if (ok && !g.salvato) nota=`${g.rec.diff.length} differenze da riportare`;
+  else if (g.salvato) nota='2 DEFINITO in SIPO';
+  return `<div class="card ${S.sel===i?'sel':''}" data-sel="${i}">
+   <div class="riga1"><b>Gemello ${g.pos} · ${g.sesso}</b><span class="pill ${cl}">${lab}</span></div>
+   <div class="corpo"><div class="dati">${g.nome}<br>${g.tip} · UC ${g.uc} (servizio) · in SIPO UC ${g.ucSpecifico}
+     <div class="info">${nato} il 18/11/2026 alle ${g.ora} · Policlinico · ${ord} di 3 · ${g.docs.length} documenti · dichiarante il padre (su carta)</div>
+     <div class="ida">${ida(g.ida)}</div></div>
+     <div class="num"><small>n. comunale</small><b>${g.num}</b></div></div>
+   <div class="passi">${bott('Dati per la web app',pD,'datiWeb',i)}${bott('Web app',pW,'webapp',i)}${bott('Recupera da ANSC',pR,'recupera',i)}${bott('Aggiorna SIPO',pA,'aggiorna',i)}${chip(g)}</div>
+   <div class="sec">${sec.join('')}<span class="nota">${nota}</span></div></div>`;
+}
+function modificabile(g){
+  if (bloccata()) return false;
+  return S.caso===1 ? g.stato==='BOZZA' : !(g.salvato || (g.rec && g.rec.esito==='FIRMATO'));
+}
+function pannello(){
+  const g = S.G[S.sel], mod = modificabile(g), sporco = g.testo!==g.testoSalvato;
+  const fonte = S.caso===1
+    ? (mod ? 'composto da SIPO con gli idAnsc dei fratelli · modificabile fino a Valida, che lo invia come composizioneCompleta'
+           : 'inviato ad ANSC con la validazione (composizioneCompleta) · non più modificabile')
+    : (mod ? 'composto da SIPO come nel caso 1 · da incollare nella composizione libera della bozza prenotata, sulla web app'
+           : 'l’atto è firmato in ANSC: fa fede il testo letto da ANSC');
+  const bt = S.caso===1
+    ? `<button class="btn" data-az="stampaTesto">STAMPA</button><button class="btn" data-az="anteprima" ${dopo(g,'BOZZA')&&g.stato!=='CANCELLATO'?'':'disabled'}>ANTEPRIMA ANSC (R010)</button><button class="btn ${sporco?'prim':''}" data-az="salvaTesto" ${mod&&sporco?'':'disabled'}>SALVA TESTO</button>`
+    : `<button class="btn prim" data-az="copiaTestoSel" ${S.cancellata?'disabled':''}>COPIA TESTO</button><button class="btn" data-az="stampaTesto">STAMPA</button><button class="btn" data-az="salvaTesto" ${mod&&sporco?'':'disabled'}>SALVA TESTO</button>`;
+  return `<section class="pannello"><h3>Testo dell’atto · gemello ${g.pos}</h3><div class="fonte">${fonte}</div>
+    <textarea id="testo" ${mod?'':'readonly'}>${esc(g.testo)}</textarea>
+    <div class="piede">${bt}${sporco?'<span class="nota">modifiche non salvate</span>':''}</div>
+    <div class="nota">${S.caso===1?'Per modificarlo dopo la validazione: TORNA AI DATI dalla modale «Firma dei dichiaranti».':'Gli idAnsc dei fratelli sono noti dalla prenotazione: il testo è completo prima di aprire la web app.'}</div></section>`;
+}
+function note(){
+  return `<details><summary>Note per gli sviluppatori: regole della card e servizi</summary>
+  <table style="margin-top:8px"><tr><th>Caso</th><th>Pulsante</th><th>Si abilita quando</th><th>Servizi</th><th>Esito</th></tr>
+  <tr><td>1</td><td>Valida</td><td>BOZZA (prenotato); di nuovo dopo TORNA AI DATI</td><td>R001 per documento (attesa ANSC_08 = 3 Inserito) · R009 /validazione/evento con composizioneCompleta; anomalie superabili: secondo R009 con forcingCode (solo USC)</td><td>CONFERMATO</td></tr>
+  <tr><td>1</td><td>Firma dichiaranti</td><td>CONFERMATO</td><td>per dichiarante: R012 /firmadichiarante/invio-email + pooling-statoatto, oppure R006 /firmadichiarante/upload (un file, listaFirmatari dei dichiaranti su carta); nessun dichiarante: si prosegue (punto H)</td><td>FIRMATO DAL DICHIARANTE</td></tr>
+  <tr><td>1</td><td>Conformità</td><td>FIRMATO DAL DICHIARANTE e almeno una firma su carta</td><td>R010 /anteprima/attestazione · R007 /attestazione/firma (allegati con flagAttConformita, parametriFirma in base64)</td><td>FIRMATO PER CONFORMITÀ</td></tr>
+  <tr><td>1</td><td>Firma USC</td><td>FIRMATO PER CONFORMITÀ, o FIRMATO DAL DICHIARANTE senza firme su carta</td><td>R010 /anteprima/evento (presaVisione) · R007 /firma_usc · poi /finalizzaAtto da sé; esito incerto: R005, mai una seconda firma alla cieca</td><td>FIRMATO DA USC · chip Salvato in SIPO</td></tr>
+  <tr><td>2</td><td>Dati per la web app</td><td>sempre (anche da DETTAGLIO)</td><td>nessuno: valori della pratica SIPO nelle sezioni del mapping Dic_Nasc_999</td><td>—</td></tr>
+  <tr><td>2</td><td>Web app</td><td>sempre</td><td>apre la web app ANSC sulla bozza prenotata (collegamento esterno)</td><td>—</td></tr>
+  <tr><td>2</td><td>Recupera da ANSC</td><td>sempre; primario dopo Web app</td><td>R005 /consultazione/ansc/evento per idAnsc · controlli di stato, intestatario, tipologia di nascita, numero</td><td>DA AGGIORNARE · NON FIRMATO · INCOERENTE</td></tr>
+  <tr><td>2</td><td>Aggiorna SIPO</td><td>recupero con atto FIRMATO DA USC</td><td>scrittura sull’atto SIPO di tutti i campi obbligatori in ANSC · /finalizzaAtto</td><td>chip Salvato in SIPO</td></tr>
+  <tr><td>1 e 2</td><td>CANCELLA PRATICA</td><td>nessun gemello FIRMATO DA USC</td><td>R011 /evento/elimina sulle bozze · PUT /scarta dei numeri · cancellazione della pratica in SIPO</td><td>pratica cancellata</td></tr>
+  </table>
+  <p>Una card è lavorabile se non è firmata dall’USC; nel caso 1 i gemelli si lavorano in qualsiasi ordine. Il testo dell’atto sta in un campo di ANSC_SOGGETTO_ATTO. Le chiamate di questa pagina sono simulate: vedere il registro.</p></details>`;
+}
+function registro(){
+  return `<details open><summary>Registro delle chiamate (simulate) · ${S.log.length}</summary>
+   <table class="log" style="margin-top:8px"><tr><th>Ora</th><th>Chiamata</th><th>Dettaglio</th></tr>
+   ${S.log.map(l=>`<tr><td>${l.t}</td><td><code>${esc(l.chiamata)}</code></td><td>${esc(l.dettaglio)}</td></tr>`).join('')}</table></details>`;
+}
+
+function collega(){
+  document.querySelectorAll('[data-sel]').forEach(c=>c.addEventListener('click',e=>{
+    if (e.target.closest('button')) return;
+    const i=+c.dataset.sel; if (i!==S.sel){ salvaBozzaTesto(); S.sel=i; disegna(); }
+  }));
+  const ta=$('#testo'); if (ta) ta.oninput=()=>{ S.G[S.sel].testo=ta.value; const p=document.querySelector('.pannello .piede');
+    if(p){ const sp=S.G[S.sel].testo!==S.G[S.sel].testoSalvato; const b=p.querySelector('[data-az="salvaTesto"]'); if(b){b.disabled=!sp; b.classList.toggle('prim',sp);} } };
+  document.querySelectorAll('[data-az]').forEach(b=>b.onclick=e=>{
+    e.stopPropagation(); const i = b.dataset.i!==undefined ? +b.dataset.i : S.sel;
+    if (b.dataset.i!==undefined && i!==S.sel){ salvaBozzaTesto(); S.sel=i; }
+    AZ[b.dataset.az](S.G[i], i);
+  });
+}
+function salvaBozzaTesto(){ /* il testo non salvato resta nella card finché non si salva */ }
+
+/* ───────────────────────── modali ───────────────────────── */
+let M = null;  // stato della modale aperta
+function apri(html){ $('#velo').innerHTML = `<div class="velo" id="velo-in"><div class="modale" role="dialog" aria-modal="true">${html}</div></div>`;
+  $('#velo-in').addEventListener('click',e=>{ if(e.target.id==='velo-in') chiudi(); });
+  document.querySelectorAll('#velo [data-x]').forEach(b=>b.onclick=chiudi); }
+function chiudi(){ $('#velo').innerHTML=''; M=null; disegna(); }
+function testa(t, sotto){ return `<header><b>${t}</b><button data-x aria-label="Chiudi">✕</button></header>${sotto?`<div class="sotto">${sotto}</div>`:''}`; }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape' && M && !M.occupata) chiudi(); });
+
+const AZ = {
+  /* ── testata ── */
+  riepilogo(){
+    const righe = S.G.map(g=>`<tr><td>Gemello ${g.pos}</td><td><b>${g.num}</b></td><td><code>${g.ida}</code></td><td>${S.caso===1?STATO_LAB[g.stato][0]:stato2(g)[0]}</td></tr>`).join('');
+    const tab = `<table><tr><th>Gemello</th><th>N. comunale</th><th>idAnsc</th><th>Stato</th></tr>${righe}</table>`;
+    M={};
+    apri(testa('Riepilogo numeri','Numeri comunali staccati alla divisione e atti prenotati in ANSC')+`<div class="contenuto">${tab}</div>
+      <footer><button class="btn" id="stR">STAMPA</button><button class="btn prim" data-x>CHIUDI</button></footer>`);
+    $('#stR').onclick=()=>stampa('Riepilogo numeri','<h3>Parto plurimo del 18/11/2026 · riepilogo numeri</h3>'+tab);
+  },
+  cancella(){
+    M={};
+    apri(testa('Cancella pratica','Ammessa perché nessun gemello è firmato dall’USC')+`<div class="contenuto">
+      <p>Si eseguono, per tutti i gemelli:</p>
+      <table><tr><th>Passo</th><th>Servizio</th></tr>
+      <tr><td>Cancellazione delle bozze in ANSC (stato 9 CANCELLATO)</td><td>R011 /evento/elimina</td></tr>
+      <tr><td>Scarto dei numeri comunali ${S.G.map(g=>g.num).join(', ')}</td><td>PUT /api/v1/numerazione-comunale/scarta</td></tr>
+      <tr><td>Cancellazione della pratica in SIPO</td><td>/cancellaAnnullaAtto (ANNULLAMENTOPRATICA)</td></tr></table>
+      <div class="esito warn">L’operazione non si annulla. Un esito incerto di R011 si verifica con R005, senza ripetere la chiamata.</div></div>
+      <footer><button class="btn" data-x>ANNULLA</button><button class="btn prim" id="okC">CANCELLA LA PRATICA</button></footer>`);
+    $('#okC').onclick=()=>{
+      S.G.forEach(g=>{ registra('R011 POST /evento/elimina/1',`gemello ${g.pos} · ${g.ida}`); registra('PUT /api/v1/numerazione-comunale/scarta',`numero ${g.num}`); if(S.caso===1) g.stato='CANCELLATO'; });
+      registra('/cancellaAnnullaAtto','operazione ANNULLAMENTOPRATICA'); S.cancellata=true; chiudi();
+    };
+  },
+  async recNumeri(){
+    M={};
+    apri(testa('Recupera numeri e prenotazione','Prima si legge che cosa esiste già, poi si completa')+`<div class="contenuto"><div class="avanz" id="av">
+      <div>1 · Lettura in ANSC degli atti già prenotati (R005)</div><div>2 · Numeri comunali mancanti (POST /richiesta)</div><div>3 · Prenotazione mancante (R009 /prenota/evento)</div></div></div>
+      <footer><button class="btn prim" id="okN">AVVIA</button></footer>`);
+    $('#okN').onclick=async()=>{ $('#okN').disabled=true; const d=[...document.querySelectorAll('#av div')];
+      for (const [k,c,t] of [[0,'R005 POST /consultazione/ansc/evento/1','nessun atto prenotato per questi numeri'],[1,'POST /api/v1/numerazione-comunale/richiesta','3 numeri'],[2,'R009 POST /prenota/evento/1','3 atti in bozza']]){
+        d[k].className='corso'; await attendi(500); registra(c,t); d[k].className='ok'; d[k].textContent='✓ '+d[k].textContent; }
+      S.divisione='ok'; await attendi(300); chiudi(); };
+  },
+
+  /* ── caso 1 ── */
+  valida(g){
+    M={g, fase:'pronto', esito:null};
+    const mancante = g.docs.some(d=>d.includes('P7M')) ? 'in verifica antivirus' : null;
+    const doc = g.docs.map(d=>`<tr><td>${d}</td><td>Riepilogo</td><td class="sd">da inviare (R001)</td></tr>`).join('');
+    apri(testa(`Validazione · gemello ${g.pos} · n. ${g.num}`,`Atto prenotato ${g.ida} · UC ${g.uc} · si inviano ad ANSC i documenti e poi l’atto con il suo testo`)+`<div class="contenuto">
+      <h4>Che cosa si invia</h4>
+      <table><tr><th>Elemento</th><th>Origine</th><th>Stato</th></tr>
+      <tr><td>Dati dell’atto</td><td>pratica SIPO · UC ${g.uc}</td><td>pronto</td></tr>
+      <tr><td>Testo dell’atto (composizioneCompleta)</td><td>campo della tabella dei gemelli</td><td>${g.testo!==g.testoSalvato?'<b style="color:var(--rosso)">modifiche non salvate</b>':'salvato'}</td></tr>
+      ${doc}
+      <tr><td>Firmatari: ${g.dich.length?g.dich.map(d=>d.ruolo.toLowerCase()).join(', '):'nessun dichiarante'}</td><td>Riepilogo</td><td>nel modello evento</td></tr></table>
+      <h4>Esito di ANSC (R009)</h4><div id="es"><div class="esito">Non ancora validato.</div></div></div>
+      <footer><span class="nota" id="nV">Esito positivo: CONFERMATO</span><button class="btn" data-x>ANNULLA</button><button class="btn" id="fz" style="display:none">FORZA LA VALIDAZIONE</button><button class="btn prim" id="vl" ${g.testo!==g.testoSalvato?'disabled':''}>VALIDA</button></footer>`);
+    if (g.testo!==g.testoSalvato) $('#nV').textContent='Salvare prima il testo dell’atto';
+    const esito = async(forza)=>{
+      M.occupata=true; $('#vl').disabled=true; $('#fz').disabled=true;
+      if (!forza){ const sd=[...document.querySelectorAll('.sd')];
+        for (let k=0;k<sd.length;k++){ sd[k].textContent='invio…'; await attendi(350); registra('R001 POST /allegato/1',`gemello ${g.pos} · ${g.docs[k]}`); sd[k].textContent='inviato · Inserito (ANSC_08 = 3)'; } }
+      $('#es').innerHTML='<div class="esito">R009 in corso…</div>'; await attendi(600);
+      const s = forza ? 'ok' : S.scen.validazione;
+      registra('R009 POST /validazione/evento/1', `gemello ${g.pos} · id/idAnsc della bozza prenotata · composizioneCompleta${forza?' · forcingCode':''} → ${s==='ok'?'CONFERMATO':s==='warn'?'anomalie superabili':'errori'}`);
+      M.occupata=false;
+      if (s==='ok'){ $('#es').innerHTML=`<div class="esito ok"><b>CONFERMATO.</b> idAnsc ${g.ida} · nessun errore.</div>`; g.stato='CONFERMATO'; g.firme={}; g.carta=false;
+        $('#fz').style.display='none'; $('#vl').textContent='CHIUDI'; $('#vl').disabled=false; $('#vl').onclick=chiudi; $('#nV').textContent=''; }
+      else if (s==='warn'){ $('#es').innerHTML=`<div class="esito warn"><b>Anomalie superabili · forcingCode restituito</b><br>W · evento.datiDiNascita.oraNascita · ora di nascita successiva a quella del gemello successivo<br><i>${S.ruolo==='USC'?'Come ufficiale puoi forzare: seconda chiamata R009 con il forcingCode.':'Solo l’ufficiale dello stato civile può forzare: correggere i dati o chiamarlo.'}</i></div>`;
+        $('#fz').style.display=''; $('#fz').disabled = S.ruolo!=='USC'; $('#vl').disabled=false; $('#vl').textContent='VALIDA DI NUOVO'; }
+      else { $('#es').innerHTML=`<div class="esito err"><b>Errori bloccanti: l’atto resta in BOZZA.</b><br>E · evento.intestatari[0].nome · campo obbligatorio mancante (400001)<br><i>Correggere i dati nella pratica e validare di nuovo.</i></div>`; $('#vl').disabled=false; $('#vl').textContent='VALIDA DI NUOVO'; }
+    };
+    $('#vl').onclick=()=>esito(false); $('#fz').onclick=()=>esito(true);
+  },
+
+  firmaDich(g){
+    M={g, mod:{}, stato:{}};
+    g.dich.forEach((d,k)=>{ M.mod[k]='elettronica'; M.stato[k]='da firmare'; });
+    if (g.dich.length===2){ M.mod[1]='carta'; }
+    const corpo = ()=>{
+      if (!g.dich.length) return `<div class="esito warn"><b>Nessun dichiarante per questo atto</b> (dal Riepilogo).<br>Non ci sono firme da raccogliere: PROSEGUI porta alla firma dell’USC.<br><i>Da verificare in preproduzione (punto H): come ANSC porta a FIRMATO DAL DICHIARANTE un atto senza dichiaranti.</i></div>`;
+      const carta = g.dich.map((d,k)=>k).filter(k=>M.mod[k]==='carta');
+      let h = g.dich.map((d,k)=>`<div class="blocco"><div class="chi">${d.ruolo} · ${d.nome} · CF ****************</div>
+        <div class="opz"><label><input type="radio" name="m${k}" value="elettronica" ${M.mod[k]==='elettronica'?'checked':''} ${M.stato[k]!=='da firmare'?'disabled':''}> Firma elettronica (R012)</label>
+        <label><input type="radio" name="m${k}" value="carta" ${M.mod[k]==='carta'?'checked':''} ${M.stato[k]!=='da firmare'?'disabled':''}> Firma su carta (R006)</label></div>
+        ${M.mod[k]==='elettronica' ? `<div class="campo"><label>Email del dichiarante</label><input id="em${k}" value="${d.email}" ${M.stato[k]!=='da firmare'?'disabled':''}><span></span></div>
+          <div class="riga-az"><button class="btn" data-inv="${k}" ${M.stato[k]!=='da firmare'?'disabled':''}>INVIA LINK</button>
+          <button class="btn" data-agg="${k}" ${M.stato[k]!=='link inviato'?'disabled':''}>AGGIORNA STATO</button>
+          <button class="link" data-ann="${k}" ${M.stato[k]!=='link inviato'?'disabled':''}>ANNULLA LINK</button></div>` : ''}
+        <span class="pill ${M.stato[k]==='firmato'?'p-verde':M.stato[k]==='link inviato'?'p-giallo':'p-grigio'}">${M.stato[k]}</span></div>`).join('');
+      if (carta.length){ const tutti=carta.every(k=>M.stato[k]==='firmato');
+        h += `<div class="blocco"><div class="chi">Firma su carta · ${carta.map(k=>g.dich[k].ruolo.toLowerCase()).join(' e ')}</div>
+        <div class="riga-az"><button class="btn" id="stM">STAMPA MODULO</button><label class="btn" style="display:inline-block">CARICA FILE FIRMATO<input type="file" id="fl" accept=".pdf,.p7m,.jpg,.tif" hidden ${tutti?'disabled':''}></label>
+        <button class="link" id="flSim" ${tutti?'disabled':''}>simula il caricamento</button></div>
+        <div style="font-size:11px;color:var(--muted);font-style:italic">Un solo file per tutti i dichiaranti su carta: R006 con listaFirmatari. Con una firma su carta si abilita la Conformità.</div></div>`; }
+      return h;
+    };
+    const fatte = ()=> g.dich.every((d,k)=>M.stato[k]==='firmato');
+    const ridisegna = ()=>{ $('#cF').innerHTML=corpo(); legami(); $('#okF').disabled = g.dich.length? !fatte() : false; };
+    apri(testa(`Firma dei dichiaranti · gemello ${g.pos} · n. ${g.num}`, `Dichiaranti dal Riepilogo: ${g.dich.length||'nessuno'} · ciascuno firma in modo elettronico o su carta`)
+      + `<div class="contenuto" id="cF"></div><footer><span class="nota">${g.dich.length?'CONFERMA si abilita a firme complete':''}</span><button class="btn" id="tD">TORNA AI DATI</button><button class="btn" data-x>ANNULLA</button><button class="btn prim" id="okF">${g.dich.length?'CONFERMA LE FIRME':'PROSEGUI'}</button></footer>`);
+    function legami(){
+      document.querySelectorAll('#cF input[type=radio]').forEach(r=>r.onchange=()=>{ M.mod[+r.name.slice(1)]=r.value; ridisegna(); });
+      document.querySelectorAll('[data-inv]').forEach(b=>b.onclick=async()=>{ const k=+b.dataset.inv; registra('R012 POST /firmadichiarante/invio-email/1',`gemello ${g.pos} · ${g.dich[k].ruolo} · ${$('#em'+k).value} → idPresaVisione`); M.stato[k]='link inviato'; M.agg=0; ridisegna(); });
+      document.querySelectorAll('[data-agg]').forEach(b=>b.onclick=()=>{ const k=+b.dataset.agg; M.agg=(M.agg||0)+1;
+        const vis = M.agg>=1; registra('R012 POST /firmadichiarante/pooling-statoatto/1',`idPresaVisione → ${vis?'1 Visionato':'0 Da visionare'}`); if(vis) M.stato[k]='firmato'; ridisegna(); toast(vis?'Presa visione registrata':'Ancora da visionare'); });
+      document.querySelectorAll('[data-ann]').forEach(b=>b.onclick=()=>{ const k=+b.dataset.ann; registra('R012 POST /firmadichiarante/annulla-link/1',`${g.dich[k].ruolo}`); M.stato[k]='da firmare'; ridisegna(); });
+      const caricato=(nome)=>{ const carta=g.dich.map((d,k)=>k).filter(k=>M.mod[k]==='carta');
+        registra('R006 POST /firmadichiarante/upload/1',`gemello ${g.pos} · ${nome} · listaFirmatari: ${carta.map(k=>g.dich[k].ruolo).join(', ')}`); carta.forEach(k=>M.stato[k]='firmato'); ridisegna(); };
+      if ($('#stM')) $('#stM').onclick=()=>{ stampa('Modulo di firma',`<h3>Modulo per la firma del dichiarante · atto n. ${g.num}</h3><pre style="white-space:pre-wrap;font:13px Georgia">${esc(g.testo)}</pre><p>Firma: ______________________</p>`); };
+      if ($('#fl')) $('#fl').onchange=e=>{ if(e.target.files[0]) caricato(e.target.files[0].name); };
+      if ($('#flSim')) $('#flSim').onclick=()=>caricato('modulo_firmato.pdf');
+    }
+    ridisegna();
+    $('#tD').onclick=()=>{ const firmato = g.dich.some((d,k)=>M.stato[k]==='firmato');
+      if (firmato && !confirm('Una firma è già stata raccolta: tornare ai dati richiede che tutti i firmatari possano firmare di nuovo. Proseguire?')) return;
+      registra('R011 non chiamato','ritorno ai dati: stato applicativo 0, nuova validazione dello stesso atto'); g.stato='BOZZA'; chiudi(); };
+    $('#okF').onclick=()=>{ g.carta = g.dich.some((d,k)=>M.mod[k]==='carta'); g.firme={...M.mod}; g.stato='FIRMATO_DICH';
+      if(!g.dich.length) registra('—','nessun dichiarante: si passa alla firma USC (punto H)');
+      chiudi(); };
+  },
+
+  conformita(g){
+    M={g};
+    const carta = g.dich.filter((d,k)=>g.firme[k]==='carta').map(d=>d.ruolo.toLowerCase()).join(' e ');
+    const doc = g.docs.map((d,k)=>`<label style="display:block;margin:4px 0"><input type="checkbox" data-doc ${d.includes('P7M')?'':'checked'}> ${d}${d.includes('P7M')?' · già firmato digitalmente':''}</label>`).join('');
+    apri(testa(`Attestazione di conformità · gemello ${g.pos} · n. ${g.num}`,'L’USC attesta che le copie per immagine dei documenti cartacei sono conformi agli originali')+`<div class="contenuto">
+      <h4>Documenti inclusi nell’attestazione</h4>
+      <label style="display:block;margin:4px 0;color:var(--muted)"><input type="checkbox" checked disabled> Modulo firmato su carta (${carta}) · R006 · sempre incluso</label>${doc}
+      <div class="riga-az"><button class="btn" id="anA">ANTEPRIMA ATTESTAZIONE (R010)</button></div><div id="anAv"></div>
+      <h4>Firma remota dell’USC</h4>
+      <div class="campo"><label>Utente di firma</label><input id="u1" value="utente.firma"><span></span></div>
+      <div class="campo"><label>PIN</label><input id="u2" type="password" value="123456"><span></span></div>
+      <div class="campo"><label>OTP di firma</label><input id="u3" placeholder="6 cifre" inputmode="numeric"><span></span></div>
+      <div style="font-size:11px;color:var(--muted);font-style:italic">Credenziali del servizio di firma remota, inviate in base64: non sono l’OTP della sessione ANSC in testata.</div></div>
+      <footer><span class="nota">Esito: FIRMATO PER CONFORMITÀ</span><button class="btn" data-x>ANNULLA</button><button class="btn prim" id="okC" disabled>FIRMA PER CONFORMITÀ</button></footer>`);
+    $('#u3').oninput=e=>{ $('#okC').disabled = !/^\d{6}$/.test(e.target.value.replace(/\s/g,'')); };
+    $('#anA').onclick=()=>{ registra('R010 POST /anteprima/attestazione/1',`gemello ${g.pos}`); $('#anAv').innerHTML=`<div class="anteprima" data-filigrana="ANTEPRIMA">ATTESTAZIONE DI CONFORMITÀ\n\nSi attesta che le copie per immagine dei documenti allegati all’atto n. ${g.num} sono conformi agli originali cartacei.\n\nDocumenti: modulo firmato${[...document.querySelectorAll('[data-doc]')].map((c,k)=>c.checked?', '+g.docs[k]:'').join('')}.</div>`; };
+    $('#okC').onclick=async()=>{ M.occupata=true; $('#okC').disabled=true; $('#okC').textContent='FIRMA IN CORSO…'; await attendi(700);
+      const incl=[...document.querySelectorAll('[data-doc]')].map(c=>c.checked);
+      registra('R007 POST /attestazione/firma/1',`gemello ${g.pos} · allegati con flagAttConformita: modulo firmato${incl.map((v,k)=>v?', '+g.docs[k]:'').join('')} · parametriFirma (base64)`);
+      g.stato='FIRMATO_CONF'; M.occupata=false; chiudi(); };
+  },
+
+  firmaUsc(g){
+    M={g};
+    const firme = g.dich.length ? g.dich.map((d,k)=>`${d.ruolo.toLowerCase()} (${g.firme[k]==='carta'?'su carta':'elettronica'})`).join(' · ') + (g.carta?' · conformità':'') : 'nessun dichiarante';
+    apri(testa(`Firma dell’USC · gemello ${g.pos} · n. ${g.num}`,'Dopo la firma l’atto è formato: non si torna più ai dati')+`<div class="contenuto">
+      <h4>L’atto</h4>
+      <div class="campo"><label>Numero comunale</label><div class="val">${g.num} · parte I · serie A</div><span></span></div>
+      <div class="campo"><label>idAnsc</label><div class="val">${g.ida}</div><span></span></div>
+      <div class="campo"><label>Intestatario</label><div class="val">${g.nome} · ${g.sesso} · ${g.tip}</div><span></span></div>
+      <div class="campo"><label>Firme raccolte</label><div class="val">${firme}</div><span></span></div>
+      <div class="riga-az"><button class="btn" id="anE">ANTEPRIMA ATTO (R010)</button><label><input type="checkbox" id="letto"> Ho letto il testo dell’atto</label></div><div id="anEv"></div>
+      <h4>Firma remota dell’USC</h4>
+      <div class="campo"><label>Utente di firma</label><input id="u1" value="utente.firma"><span></span></div>
+      <div class="campo"><label>PIN</label><input id="u2" type="password" value="123456"><span></span></div>
+      <div class="campo"><label>OTP di firma</label><input id="u3" placeholder="6 cifre" inputmode="numeric"><span></span></div>
+      <h4>Avanzamento</h4><div class="avanz"><div id="a1">1 · Firma in ANSC (R007) · FIRMATO DA USC</div><div id="a2">2 · Salvataggio in SIPO (/finalizzaAtto) · 2 DEFINITO</div></div></div>
+      <footer><span class="nota" id="nU">Servono la spunta di lettura e l’OTP di firma</span><button class="btn" data-x id="anU">ANNULLA</button><button class="btn prim" id="okU" disabled>FIRMA L’ATTO</button></footer>`);
+    const ab=()=>{ $('#okU').disabled = !($('#letto').checked && /^\d{6}$/.test($('#u3').value.replace(/\s/g,''))); };
+    $('#letto').onchange=ab; $('#u3').oninput=ab;
+    $('#anE').onclick=()=>{ registra('R010 POST /anteprima/evento/1',`gemello ${g.pos} · presaVisione`); $('#anEv').innerHTML=`<div class="anteprima" data-filigrana="">${esc(g.testo)}</div>`; };
+    $('#okU').onclick=async()=>{ M.occupata=true; $('#okU').disabled=true; $('#anU').disabled=true; $('#nU').textContent='';
+      $('#a1').className='corso'; await attendi(800);
+      if (S.scen.firmaIncerta){ registra('R007 POST /firma_usc/1',`gemello ${g.pos} → nessuna risposta (timeout)`); $('#a1').className='ko'; $('#a1').textContent='1 · Esito della firma incerto: nessuna risposta da ANSC';
+        g.incerto=true; $('#nU').textContent='Non ripetere la firma: VERIFICA IN ANSC dalla card'; M.occupata=false; $('#okU').textContent='CHIUDI'; $('#okU').disabled=false; $('#okU').onclick=chiudi; return; }
+      registra('R007 POST /firma_usc/1',`gemello ${g.pos} · parametriFirma (base64) → FIRMATO DA USC`);
+      g.stato='FIRMATO_USC'; $('#a1').className='ok'; $('#a1').textContent='✓ '+$('#a1').textContent;
+      await salva(g, $('#a2')); M.occupata=false; await attendi(400); chiudi(); };
+  },
+  async riprova(g){ M={g}; apri(testa(`Riprova il salvataggio · gemello ${g.pos}`,'L’atto è già FIRMATO DA USC in ANSC: si ripete solo il salvataggio in SIPO')+
+      `<div class="contenuto"><div class="avanz"><div id="a2">Salvataggio in SIPO (/finalizzaAtto) · 2 DEFINITO</div></div></div><footer><button class="btn" data-x>CHIUDI</button><button class="btn prim" id="okR">RIPROVA</button></footer>`);
+    $('#okR').onclick=async()=>{ $('#okR').disabled=true; S.scen.salvataggio='ok'; await salva(g,$('#a2')); await attendi(400); chiudi(); }; },
+  verifica(g){ M={g}; apri(testa(`Verifica in ANSC · gemello ${g.pos}`,'Lettura dello stato dell’atto, senza ripetere la firma')+
+      `<div class="contenuto"><div id="vr" class="esito">R005 in corso…</div><div class="avanz" style="margin-top:8px"><div id="a2">Salvataggio in SIPO (/finalizzaAtto) · 2 DEFINITO</div></div></div><footer><button class="btn prim" data-x>CHIUDI</button></footer>`);
+    (async()=>{ await attendi(600); registra('R005 POST /consultazione/ansc/evento/1',`idAnsc ${g.ida} → stato 5 FIRMATO DA USC`);
+      $('#vr').className='esito ok'; $('#vr').innerHTML='<b>In ANSC l’atto è FIRMATO DA USC.</b> La firma era andata a buon fine: si procede con il salvataggio.';
+      g.incerto=false; g.stato='FIRMATO_USC'; await salva(g,$('#a2')); })(); },
+
+  /* ── caso 2 ── */
+  datiWeb(g){ g.passi.dati=true; schedaWeb(g); },
+  dettaglio(g){ schedaWeb(g); },
+  webapp(g){ g.passi.dati=true; g.passi.web=true; registra('apertura della web app ANSC',`bozza prenotata ${g.ida} (collegamento esterno, nuova scheda)`); toast('Si aprirebbe la web app ANSC sulla bozza '+g.num); disegna(); },
+  recupera(g){
+    M={g};
+    apri(testa(`Recupera da ANSC · gemello ${g.pos} · n. ${g.num}`,`R005 per idAnsc ${g.ida}`)+`<div class="contenuto"><div id="rc" class="esito">R005 in corso…</div><div id="rd"></div></div>
+      <footer><button class="btn" data-x>CHIUDI</button><button class="btn prim" id="okA" disabled>AGGIORNA SIPO</button></footer>`);
+    (async()=>{ await attendi(700);
+      const esito = !g.passi.web ? 'NONFIRMATO' : (S.scen.webapp==='firmato'?'FIRMATO':S.scen.webapp==='nonfirmato'?'NONFIRMATO':'INCOERENTE');
+      const diff = [['Ora · minuto di nascita', g.ora.replace('.',' · '), g.ora.replace('.',' · ').replace(/\d$/, d=>String((+d+9)%10))],['Precisazione del cognome','—','come da dichiarazione'],['Data formazione','18/11/2026','19/11/2026']];
+      g.rec={esito, diff};
+      registra('R005 POST /consultazione/ansc/evento/1',`idAnsc ${g.ida} → ${esito==='FIRMATO'?'stato 5 FIRMATO DA USC':esito==='NONFIRMATO'?'stato 1 BOZZA':'intestatario diverso'}`);
+      const ck=(ok,t)=>`<div class="pill ${ok?'p-verde':'p-rosso'}" style="display:block;margin:4px 0">${ok?'✓':'✕'} ${t}</div>`;
+      $('#rc').className='';
+      $('#rc').innerHTML = `<h4>Controlli</h4>${ck(esito==='FIRMATO','Stato in ANSC: '+(esito==='NONFIRMATO'?'BOZZA (non ancora firmato)':'FIRMATO DA USC'))}${ck(esito!=='INCOERENTE','Intestatario: nome e sesso '+(esito==='INCOERENTE'?'non coincidono':'coincidono'))}${ck(esito!=='INCOERENTE','Tipologia di nascita: '+g.tip)}${ck(true,'Numero comunale nell’idAnsc: '+g.num)}`;
+      if (esito==='FIRMATO'){ $('#rd').innerHTML=`<h4>Differenze ANSC → SIPO</h4><table><tr><th>Campo</th><th>SIPO</th><th>ANSC</th></tr>${diff.map(d=>`<tr><td>${d[0]}</td><td>${d[1]}</td><td><b>${d[2]}</b></td></tr>`).join('')}</table>`; $('#okA').disabled=false; }
+      else $('#rd').innerHTML = `<div class="esito ${esito==='NONFIRMATO'?'warn':'err'}">${esito==='NONFIRMATO'?'L’atto non è ancora firmato dall’USC: completarlo sulla web app e recuperare di nuovo.':'L’intestatario in ANSC non è quello della pratica: nessuna scrittura su SIPO. Verificare l’atto sulla web app.'}</div>`;
+    })();
+    $('#okA').onclick=()=>{ AZ.aggiorna(g); };
+  },
+  aggiorna(g){
+    M={g};
+    const r=g.rec;
+    apri(testa(`Aggiorna SIPO da ANSC · gemello ${g.pos}`,'Scrive sull’atto SIPO i campi obbligatori in ANSC, poi /finalizzaAtto')+`<div class="contenuto">
+      <h4>Che cosa si scrive</h4>${r.diff.map(d=>`<label style="display:block;margin:4px 0"><input type="checkbox" checked disabled> ${d[0]}: <b>${d[2]}</b></label>`).join('')}
+      <label style="display:block;margin:4px 0"><input type="checkbox" checked disabled> tutti gli altri campi obbligatori in ANSC (uguali a SIPO)</label>
+      <label style="display:block;margin:4px 0"><input type="checkbox" checked disabled> Testo dell’atto: quello firmato in ANSC</label>
+      <h4>Avanzamento</h4><div class="avanz"><div id="b1">1 · Dati riportati sull’atto SIPO</div><div id="a2">2 · /finalizzaAtto · 2 DEFINITO</div></div></div>
+      <footer><span class="nota">ANSC è la fonte: si riportano tutti i campi, non solo le differenze</span><button class="btn" data-x>ANNULLA</button><button class="btn prim" id="okG">CONFERMA L’AGGIORNAMENTO</button></footer>`);
+    $('#okG').onclick=async()=>{ M.occupata=true; $('#okG').disabled=true; $('#b1').className='corso'; await attendi(500);
+      registra('aggiornamento atto SIPO',`gemello ${g.pos} · ${r.diff.length} differenze + campi obbligatori ANSC`); $('#b1').className='ok'; $('#b1').textContent='✓ '+$('#b1').textContent;
+      await salva(g,$('#a2'), true); M.occupata=false; await attendi(400); chiudi(); };
+  },
+
+  /* ── testo e comuni ── */
+  stampa(g){ stampa('Atto '+g.num, `<pre style="white-space:pre-wrap;font:13px Georgia">${esc(g.testo)}</pre>`); },
+  stampaTesto(){ AZ.stampa(S.G[S.sel]); },
+  pdf(g){ registra('apertura PDF',`MATR_USR.ATTO_SCANSIONATO.DOCUMENTO · atto ${g.num}`); stampa('PDF atto '+g.num, `<h3>PDF dell’atto (simulato)</h3><pre style="white-space:pre-wrap;font:13px Georgia">${esc(g.testoSalvato)}</pre>`); },
+  copiaTesto(g){ copia(g.testo,'testo del gemello '+g.pos); },
+  copiaTestoSel(){ AZ.copiaTesto(S.G[S.sel]); },
+  salvaTesto(){ const g=S.G[S.sel]; g.testoSalvato=g.testo; registra('salvataggio del testo',`ANSC_SOGGETTO_ATTO · gemello ${g.pos}`); toast('Testo salvato'); disegna(); },
+  anteprima(){ const g=S.G[S.sel]; M={}; registra('R010 POST /anteprima/evento/1',`gemello ${g.pos} · presaVisione`);
+    apri(testa(`Anteprima ANSC · gemello ${g.pos}`,'Come ANSC rende l’atto validato')+`<div class="contenuto"><div class="anteprima" data-filigrana="${g.stato==='FIRMATO_USC'?'':'ANTEPRIMA'}">${esc(g.testoSalvato)}</div></div><footer><button class="btn prim" data-x>CHIUDI</button></footer>`); }
+};
+
+async function salva(g, el, caso2){
+  el.className='corso'; await attendi(700);
+  if (S.scen.salvataggio==='ko' && !caso2){ registra('/finalizzaAtto',`gemello ${g.pos} → errore (simulato)`); el.className='ko'; el.textContent='2 · Salvataggio in SIPO non riuscito: la card offre RIPROVA IL SALVATAGGIO'; g.salvErr=true; g.salvato=false; return; }
+  registra('/finalizzaAtto',`gemello ${g.pos} · PDF dal testo salvato · ATTO 2 DEFINITO`);
+  el.className='ok'; el.textContent='✓ '+el.textContent.replace(/^✓ /,''); g.salvErr=false; g.salvato=true;
+}
+
+function schedaWeb(g){
+  M={g, tab:0};
+  const fr = S.G.filter(x=>x!==g);
+  const prec = fr.filter(x=>+x.pos<+g.pos).map(x=>x.ida).join(', ')||'—', succ = fr.filter(x=>+x.pos>+g.pos).map(x=>x.ida).join(', ')||'—';
+  const tipoN = {'1':'1 · nato vivo','2':'2 · nato morto','3':'3 · nato vivo ma successivamente deceduto'}[g.tip[0]];
+  const [hh,mm]=g.ora.split('.');
+  const sogg = (r)=>[['Cognome','COGNOME'],['Nome','NOME'],['Sesso',r==='Madre'?'F':'M'],['Data nascita','01/01/1990'],['Stato di nascita','ITALIA'],['Comune di nascita','ROMA (RM)'],['Nazionalità','ITALIANA'],['Comune di residenza','ROMA (RM)'],['Indirizzo di residenza','VIA ******** n. **'],['Dichiarante',r==='Padre'?'sì':'no'],['Comparente',r==='Padre'?'sì':'no'],['Firmatario',r==='Padre'?'sì':'no']];
+  const T = [
+    ['Formazione atto', [['Numero comunale',g.num],['Data formazione','18/11/2026'],['Ora formazione','11'],['Minuti formazione','20']]],
+    ['Dati generali', [['Tipologia nascita (ANSC_107)',tipoN],['Data decorrenza','18/11/2026'],['Ora · minuto decorrenza',`${hh} · ${mm}`],['Motivo recupero (ANSC_96)','[DA VERIFICARE · punto I]'],['Atto secretato','no']]],
+    ['Soggetto', [['Cognome','COGNOME'],['Nome','NOME'],['Sesso',g.sesso],['Data nascita','18/11/2026'],['Ora · minuto nascita',`${hh} · ${mm}`],['Stato di nascita','ITALIA'],['Comune di nascita','ROMA (RM)'],['Luogo nascita','Policlinico'],['Assegnazione cognome','cognome del padre']]],
+    ['Madre', sogg('Madre')], ['Padre', sogg('Padre')],
+    ['Dichiarante', [['Chi','il padre (vedi la linguetta Padre)'],['Modalità di firma','su carta: la sola valida sulla web app']]],
+    ['Nel parto', [['Posizione','  '+['1°','2°','3°'][+g.pos-1]+' di 3'],['Numero gemelli','3'],['UC specifico in SIPO',g.ucSpecifico+' (prenotato come 11999999)'],['Gemello precedente',prec],['Gemello successivo',succ]]],
+    ['Composizione libera', null], ['Allegati', null]
+  ];
+  const corpo=()=>{
+    const [n,c]=T[M.tab];
+    if (n==='Composizione libera') return `<div class="riga-az"><button class="btn prim" id="cpT">COPIA TESTO</button><span style="font-size:11px;color:var(--muted)">va in evento.composizioneCompleta · Formula 999.1.1</span></div><div class="anteprima" data-filigrana="">${esc(g.testoSalvato)}</div>`;
+    if (n==='Allegati') return g.docs.map(d=>`<div class="riga-az"><span style="flex:1">${d} · dal Riepilogo</span><button class="btn" data-sc="${esc(d)}">SCARICA</button></div>`).join('')+`<div style="font-size:11px;color:var(--muted);font-style:italic">Da caricare sulla web app se ANSC non ammette R001 sulla bozza di servizio (punto D).</div>`;
+    return c.map(([e,v])=>`<div class="campo"><label>${e}</label><div class="val">${esc(v)}</div><button class="copia" data-cp="${esc(v)}" title="Copia">⧉</button></div>`).join('');
+  };
+  const ridisegna=()=>{ $('#lg').innerHTML=T.map((t,k)=>`<button class="${k===M.tab?'on':''}" data-tab="${k}">${t[0]}</button>`).join(''); $('#cW').innerHTML=corpo();
+    document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{ M.tab=+b.dataset.tab; ridisegna(); });
+    document.querySelectorAll('[data-cp]').forEach(b=>b.onclick=()=>copia(b.dataset.cp.trim(), b.parentElement.querySelector('label').textContent));
+    document.querySelectorAll('[data-sc]').forEach(b=>b.onclick=()=>{ registra('download del documento',b.dataset.sc); toast('Scaricato: '+b.dataset.sc); });
+    if ($('#cpT')) $('#cpT').onclick=()=>copia(g.testoSalvato,'composizione libera'); };
+  apri(testa(`Dati per la web app · gemello ${g.pos} · n. ${g.num}`,`Bozza prenotata <b>${g.ida}</b> · UC 11999999 · sezioni del mapping Dic_Nasc_999, nell’ordine della web app · ogni valore si copia con ⧉`)
+    +`<div class="contenuto"><div class="linguette" id="lg"></div><div id="cW"></div></div>
+    <footer><span class="nota">Nomi e codici fiscali sono fittizi</span><button class="btn" id="cpI">COPIA idAnsc</button><button class="btn" id="stW">STAMPA LA SCHEDA</button><button class="btn" id="wa">APRI WEB APP</button><button class="btn prim" data-x>CHIUDI</button></footer>`);
+  ridisegna();
+  $('#cpI').onclick=()=>copia(g.ida,'idAnsc');
+  $('#wa').onclick=()=>{ g.passi.web=true; registra('apertura della web app ANSC',`bozza prenotata ${g.ida}`); toast('Si aprirebbe la web app ANSC'); };
+  $('#stW').onclick=()=>stampa('Scheda '+g.num, `<h3>Dati per la web app · gemello ${g.pos} · n. ${g.num} · ${g.ida}</h3>`+T.filter(t=>t[1]).map(([n,c])=>`<h4>${n}</h4><table border="1" cellpadding="4" style="border-collapse:collapse">${c.map(([e,v])=>`<tr><td>${e}</td><td>${esc(v)}</td></tr>`).join('')}</table>`).join('')+`<h4>Composizione libera</h4><pre style="white-space:pre-wrap">${esc(g.testoSalvato)}</pre>`);
+}
+
+inizia(1); disegna();
+</script>
+</body>
+</html>
